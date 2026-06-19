@@ -11,9 +11,9 @@ own evidence, and writes a clinician-style draft report.*
 
 ---
 
-> ⚠️ **Research prototype — not a medical device.** MIRROR has not been reviewed
-> or cleared by any regulatory body. Every output is a draft that must be
-> verified by a licensed radiologist. Do not use it for diagnosis or treatment.
+> **Full Disclosure: Prototype — not a medical device.** MIRROR has not been
+> reviewed or cleared by any regulatory body. Every output is a draft that must
+> be verified by a licensed radiologist. Do not use it for diagnosis or treatment.
 
 ## What MIRROR does
 
