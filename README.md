@@ -5,7 +5,10 @@
 **Multimodal Intelligent Radiology Reasoning and Observation Reporter**
 
 *An explainable medical-AI system that reads radiological images, localizes its
-own evidence, and writes a clinician-style draft report.*
+own evidence, and writes a clinician-style draft report. Completed as part of the
+**Global Indian Scientists & Technocrats (GIST) 2026 Summer Internship Program.***
+
+Mentored by **Mr. Sriram Venkatapathy** (AI Research at Capital One, PhD-CS at IIT Hyderabad)
 
 </div>
 
