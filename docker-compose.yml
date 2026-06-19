@@ -1,0 +1,23 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      MIRROR_CONFIG: configs/default.yaml
+      MIRROR_CORS_ORIGINS: http://localhost:3000
+      # Pass through if set on the host; safe to leave empty (template backend).
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    depends_on:
+      - backend
