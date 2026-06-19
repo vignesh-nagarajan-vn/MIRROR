@@ -1,0 +1,9 @@
+# Backend (FastAPI) dependencies.
+fastapi>=0.110,<1.0
+uvicorn[standard]>=0.29,<1.0
+python-multipart>=0.0.9        # required for UploadFile / form data
+pydantic>=2.6,<3.0
+
+# The backend imports the `models` package, which pulls in the ML stack.
+# Those heavier deps live in the repo-root requirements.txt:
+#   torch, torchvision, anthropic, etc.

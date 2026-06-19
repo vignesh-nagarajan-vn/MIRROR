@@ -1,0 +1,38 @@
+# MIRROR default configuration.
+# Copy and edit this file to change backbones, explainability method, or the
+# report backend without touching code:  Config.from_yaml("configs/default.yaml")
+
+model:
+  backbone: densenet121        # densenet121 | efficientnet_b0 | vit_b_16
+  num_classes: 14
+  pretrained: true
+  dropout: 0.2
+  checkpoint_path: null        # path to a trained .pt; null => ImageNet weights
+
+explain:
+  method: gradcam              # gradcam | scorecam
+  target_layer: null           # null => backbone default
+  overlay_alpha: 0.45
+  colormap: jet
+
+report:
+  provider: template           # anthropic | template (offline)
+  model: claude-sonnet-4-6
+  max_tokens: 1024
+  temperature: 0.2
+  confidence_threshold: 0.5
+
+data:
+  dataset: chestxray14
+  data_root: datasets/raw/chestxray14
+  image_size: 224
+  batch_size: 32
+  num_workers: 4
+
+train:
+  epochs: 15
+  lr: 0.0001
+  weight_decay: 0.00001
+  device: cuda                 # auto-falls back to cpu
+  output_dir: models/checkpoints
+  seed: 42

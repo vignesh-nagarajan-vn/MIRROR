@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 360" font-family="monospace">
+  <rect width="720" height="360" fill="#0a0e13"/>
+  <style>
+    .box{fill:#121a23;stroke:#20303d;}
+    .lbl{fill:#e8eef4;font-size:13px;font-weight:bold;}
+    .sub{fill:#8597a6;font-size:10px;}
+    .arr{stroke:#45d3c0;stroke-width:1.5;marker-end:url(#a);}
+    .io{fill:#45d3c0;font-size:12px;font-weight:bold;}
+  </style>
+  <defs>
+    <marker id="a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#45d3c0"/>
+    </marker>
+  </defs>
+
+  <text x="40" y="40" class="io">radiograph</text>
+  <line x1="120" y1="55" x2="120" y2="78" class="arr"/>
+
+  <rect x="40" y="80" width="220" height="56" rx="5" class="box"/>
+  <text x="54" y="104" class="lbl">1 · Classification</text>
+  <text x="54" y="122" class="sub">DenseNet121 / EffNet-B0 / ViT</text>
+  <line x1="150" y1="136" x2="150" y2="160" class="arr"/>
+
+  <rect x="40" y="162" width="220" height="56" rx="5" class="box"/>
+  <text x="54" y="186" class="lbl">2 · Evidence localization</text>
+  <text x="54" y="204" class="sub">Grad-CAM / Score-CAM</text>
+  <line x1="150" y1="218" x2="150" y2="242" class="arr"/>
+
+  <rect x="40" y="244" width="220" height="56" rx="5" class="box"/>
+  <text x="54" y="268" class="lbl">3 · Clinical reasoning</text>
+  <text x="54" y="286" class="sub">LLM / offline template</text>
+
+  <line x1="260" y1="272" x2="430" y2="272" class="arr"/>
+  <rect x="432" y="244" width="248" height="56" rx="5" class="box" stroke="#45d3c0"/>
+  <text x="448" y="268" class="lbl">Human-readable report</text>
+  <text x="448" y="286" class="sub">FINDINGS · IMPRESSION</text>
+
+  <text x="432" y="104" class="sub">Each layer's output is the grounded</text>
+  <text x="432" y="120" class="sub">input to the next, so every report</text>
+  <text x="432" y="136" class="sub">sentence traces to a probability</text>
+  <text x="432" y="152" class="sub">and a saliency region.</text>
+</svg>

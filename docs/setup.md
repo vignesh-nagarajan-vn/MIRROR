@@ -1,0 +1,85 @@
+# Setup
+
+## Prerequisites
+
+- Python 3.10+ (3.11 recommended)
+- Node.js 18+ (for the frontend)
+- ~6 GB disk for pretrained weights and deps; a CUDA GPU is optional but speeds
+  up training and Score-CAM substantially.
+
+## 1. Python environment
+
+```bash
+git clone <your-fork-url> mirror
+cd mirror
+python -m venv .venv && source .venv/bin/activate    # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+The first pipeline run downloads ImageNet-pretrained backbone weights (handled by
+torchvision).
+
+## 2. Smoke test (no data, no servers)
+
+```bash
+python -m demo.run_demo path/to/any_chest_xray.png
+```
+
+You should see predictions, an offline-template report, and saliency overlays
+written to `demo/assets/`.
+
+## 3. Backend API
+
+```bash
+cd backend
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+# Swagger UI at http://localhost:8000/docs
+```
+
+## 4. Frontend
+
+```bash
+cd frontend
+npm install
+cp .env.local.example .env.local      # points at http://localhost:8000
+npm run dev                            # http://localhost:3000
+```
+
+## 5. (Optional) Enable the Claude report backend
+
+The offline template backend needs nothing. To generate richer prose reports
+with Claude, set an API key and switch the provider:
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...     # never commit this
+```
+
+In `configs/default.yaml`:
+
+```yaml
+report:
+  provider: anthropic        # was: template
+  model: claude-sonnet-4-6
+```
+
+If the API call fails for any reason, the generator automatically falls back to
+the template backend, so analysis never hard-fails on a missing key.
+
+## 6. (Optional) Train your own checkpoint
+
+Obtain ChestX-ray14 (see `datasets/README.md`), then:
+
+```bash
+python -m models.classification.train --config configs/default.yaml
+python -m evaluation.evaluate --config configs/default.yaml \
+    --checkpoint models/checkpoints/densenet121_best.pt
+```
+
+Point the pipeline at your checkpoint via `model.checkpoint_path` in the config.
+
+## Docker
+
+```bash
+docker compose up --build      # backend on :8000, frontend on :3000
+```
