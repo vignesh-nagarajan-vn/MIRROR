@@ -52,6 +52,7 @@ from models.common.config import Config
 from models.common.constants import CHESTXRAY14_LABELS
 from models.common.preprocessing import load_image
 from evaluation.metrics import pointing_game, localization_iou
+from evaluation.repro import reproducibility_info
 
 
 # The BBox release spells one label differently from the canonical taxonomy in
@@ -231,6 +232,7 @@ def run(
         "cam_threshold": cam_threshold,
         "iou_threshold": iou_threshold,
         "seed": seed,
+        "reproducibility": reproducibility_info(seed),
         "n_boxes": len(all_records),
         "n_skipped": skipped,
         "overall": _aggregate(all_records),

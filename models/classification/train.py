@@ -57,6 +57,7 @@ def train(config: Config) -> None:
         raise RuntimeError("PyTorch is required to train.")
 
     torch.manual_seed(config.train.seed)
+    np.random.seed(config.train.seed)
     device = _resolve_device(config.train.device)
 
     full = ChestXray14Dataset(
@@ -124,6 +125,7 @@ def train(config: Config) -> None:
                     "backbone": config.model.backbone,
                     "labels": CHESTXRAY14_LABELS,
                     "val_macro_auc": best_auc,
+                    "seed": config.train.seed,
                 },
                 ckpt,
             )
@@ -135,8 +137,16 @@ def train(config: Config) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Train the MIRROR classifier.")
     parser.add_argument("--config", default="configs/default.yaml")
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="Override config train.seed (use to produce multi-seed checkpoints).",
+    )
     args = parser.parse_args()
     config = Config.from_yaml(args.config)
+    if args.seed is not None:
+        config.train.seed = args.seed
     train(config)
 
 

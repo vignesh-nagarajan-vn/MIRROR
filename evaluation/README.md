@@ -8,14 +8,25 @@ comes in two harnesses that write JSON summaries to `evaluation/results/`
 ## 1. Predictive quality — `evaluate.py`
 
 Per-label and macro **AUROC** plus macro **F1** on the official ChestX-ray14
-test split.
+test split, each with a **bootstrap 95% confidence interval** over the test set.
 
 ```bash
 python -m evaluation.evaluate --config configs/default.yaml \
     --checkpoint models/checkpoints/densenet121_best.pt
+# control the bootstrap (0 disables) and CI level:
+python -m evaluation.evaluate --config configs/default.yaml \
+    --checkpoint models/checkpoints/densenet121_best.pt --bootstrap 2000 --ci 0.95
 ```
 
-Writes `results/eval_<backbone>.json`.
+Writes `results/eval_<backbone>.json`, including `macro_auroc_ci`, `macro_f1_ci`,
+`per_label_auroc_ci` (each `{mean, std, lo, hi}`), and a `reproducibility` block
+(seed, git commit, library versions) so every number can be regenerated. The run
+is seeded with `--seed` (default 42).
+
+The bootstrap (`bootstrap_cis` in `metrics.py`) resamples the N test examples
+with replacement; one resample drives all metrics, so the intervals are mutually
+consistent. Point estimates alone can't support "config A beats config B" — the
+CIs are what make the comparison defensible.
 
 ## 2. Explanation quality — `evaluate_localization.py`
 
@@ -94,18 +105,44 @@ the bundled synthetic samples (`--images`, default
 with no downloads. The conditions map directly onto the new `localize` / `report`
 flags on `MirrorPipeline.analyze()`.
 
+## 4. Multi-seed aggregation — `aggregate_seeds.py`
+
+Bootstrap CIs capture test-set sampling noise for *one* model; they say nothing
+about training stochasticity. For that, train under several seeds and summarise
+across them as mean ± std — what reviewers expect on ChestX-ray14.
+
+```bash
+for s in 0 1 2; do
+    python -m models.classification.train --config configs/default.yaml --seed $s
+    python -m evaluation.evaluate --config configs/default.yaml \
+        --checkpoint models/checkpoints/densenet121_best.pt
+    cp evaluation/results/eval_densenet121.json evaluation/results/eval_seed$s.json
+done
+python -m evaluation.aggregate_seeds evaluation/results/eval_seed*.json
+```
+
+`train.py` now takes `--seed` to override `train.seed` (and records the seed in
+the checkpoint). `aggregate_seeds.py` reads each per-seed `eval_*.json` and writes
+`results/aggregate_<backbone>.json` with mean ± std for macro AUROC/F1 and every
+per-label AUROC. Report the two uncertainties together: bootstrap CI (per model)
+and seed std (across models).
+
 ## Metric definitions
 
 All metrics live in [`metrics.py`](metrics.py): `macro_auroc`, `f1_at_threshold`,
-`pointing_game`, and `localization_iou`. The localization harness is a thin
-driver over the latter two, plus box loading and aggregation; the ablation harness
-reuses the JSON they emit.
+`bootstrap_cis`, `pointing_game`, and `localization_iou`. The localization harness
+is a thin driver over the localization metrics plus box loading; the ablation
+harness reuses the JSON the others emit; `aggregate_seeds.py` summarises across
+seeds. Provenance for every run comes from [`repro.py`](repro.py).
 
 ## Tests
 
 - `tests/test_localization_eval.py` — box scaling, per-box scoring, aggregation.
 - `tests/test_ablation.py` — conditions, capability matrix, result merging, table
   assembly.
+- `tests/test_metrics_bootstrap.py` — CI structure, determinism, ordering.
+- `tests/test_aggregate_seeds.py` — multi-seed mean/std math.
+- `tests/test_repro.py` — provenance record fields.
 
-Both cover the torch-free logic with synthetic inputs, so they run without a model
+All cover the torch-free logic with synthetic inputs, so they run without a model
 or any dataset.

@@ -162,7 +162,7 @@ report:  { provider: template }         # or anthropic (needs ANTHROPIC_API_KEY)
 # Train (requires ChestX-ray14 locally)
 python -m models.classification.train --config configs/default.yaml
 
-# Evaluate prediction quality (AUROC/F1) → JSON in evaluation/results/
+# Evaluate prediction quality (AUROC/F1 with bootstrap 95% CIs) → evaluation/results/
 python -m evaluation.evaluate --config configs/default.yaml \
     --checkpoint models/checkpoints/densenet121_best.pt
 
@@ -176,6 +176,10 @@ python -m evaluation.evaluate_localization --config configs/default.yaml \
 python -m evaluation.ablation --config configs/default.yaml \
     --prediction-results evaluation/results/eval_densenet121.json \
     --localization-results evaluation/results/loc_densenet121_gradcam.json
+
+# Robustness across training seeds: train with --seed {0,1,2}, evaluate each,
+# then aggregate to mean ± std → evaluation/results/aggregate_<backbone>.json
+python -m evaluation.aggregate_seeds evaluation/results/eval_seed*.json
 ```
 
 The harnesses answer the project's two questions side by side: `evaluate.py`
@@ -188,9 +192,13 @@ IoU, and localization accuracy at an IoU threshold). `ablation.py` then builds t
 +localization vs. full MIRROR, in one table. Because layers 2–3 are post-hoc, the
 AUROC/F1 column is identical across rows (verified empirically) — so the table
 shows added interpretability *at no predictive cost*, alongside the per-layer
-latency. See [`datasets/README.md`](datasets/README.md#localization-ground-truth)
-for the box file and [`evaluation/README.md`](evaluation/README.md) for the metric
-details.
+latency. Every predictive number carries a **bootstrap 95% CI** (test-set
+sampling noise) and can be summarised across training seeds with
+`aggregate_seeds.py` as **mean ± std** (training noise); each results JSON also
+stamps a `reproducibility` block (seed, git commit, library versions) so the
+numbers regenerate. See
+[`datasets/README.md`](datasets/README.md#localization-ground-truth) for the box
+file and [`evaluation/README.md`](evaluation/README.md) for the metric details.
 
 ## Potential contributions
 

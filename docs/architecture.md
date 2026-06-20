@@ -54,7 +54,13 @@ measure with two parallel harnesses:
   each layer's latency — framing MIRROR's contribution as interpretability at no
   predictive cost.
 
-See [`evaluation/README.md`](../evaluation/README.md) for all three.
+Predictive numbers carry bootstrap 95% CIs (`metrics.bootstrap_cis`) and can be
+aggregated across training seeds via `evaluation/aggregate_seeds.py` (mean ± std);
+every results JSON stamps a `reproducibility` block (`evaluation/repro.py`: seed,
+git commit, library versions) so a number traces back to the exact code that made
+it.
+
+See [`evaluation/README.md`](../evaluation/README.md) for all four harnesses.
 
 ## Layer 1 — Classification (`models/classification/`)
 

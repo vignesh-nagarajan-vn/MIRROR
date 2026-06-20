@@ -13,11 +13,15 @@ paper/
 └── tables/             # generated result tables (from evaluation/results/*.json)
 ```
 
-Result tables can be generated from the JSON written by the two evaluation
+Result tables can be generated from the JSON written by the evaluation
 harnesses:
 
 - **Prediction table** (per-label / macro AUROC, macro F1) — from
-  `evaluation/evaluate.py` → `evaluation/results/eval_<backbone>.json`.
+  `evaluation/evaluate.py` → `evaluation/results/eval_<backbone>.json`. Report
+  each number with its **bootstrap 95% CI** (`*_ci` fields), and where you have
+  multiple seeds, the **mean ± std** from `evaluation/aggregate_seeds.py` →
+  `aggregate_<backbone>.json`. The `reproducibility` block (seed, git commit)
+  belongs in an appendix or footnote so results are regenerable.
 - **Localization table** (pointing game, mean IoU, localization accuracy over the
   8 boxed pathologies) — from `evaluation/evaluate_localization.py` →
   `evaluation/results/loc_<backbone>_<method>.json`. This is the table that

@@ -1,5 +1,5 @@
 # MIRROR convenience targets.
-.PHONY: help install demo backend frontend train eval eval-loc ablation lint clean
+.PHONY: help install demo backend frontend train eval eval-loc ablation aggregate lint clean
 
 help:
 	@echo "MIRROR targets:"
@@ -11,6 +11,7 @@ help:
 	@echo "  make eval CKPT=path.pt   evaluate prediction quality (AUROC/F1)"
 	@echo "  make eval-loc CKPT=path.pt   evaluate explanation quality (pointing game / IoU)"
 	@echo "  make ablation   classification-only vs. full MIRROR comparison table"
+	@echo "  make aggregate RESULTS='a.json b.json'   mean ± std across seeds"
 	@echo "  make clean      remove caches and build artifacts"
 
 install:
@@ -36,6 +37,9 @@ eval-loc:
 
 ablation:
 	python -m evaluation.ablation --config configs/default.yaml
+
+aggregate:
+	python -m evaluation.aggregate_seeds $(RESULTS)
 
 clean:
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
