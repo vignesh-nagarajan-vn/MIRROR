@@ -162,10 +162,24 @@ report:  { provider: template }         # or anthropic (needs ANTHROPIC_API_KEY)
 # Train (requires ChestX-ray14 locally)
 python -m models.classification.train --config configs/default.yaml
 
-# Evaluate a checkpoint → JSON in evaluation/results/
+# Evaluate prediction quality (AUROC/F1) → JSON in evaluation/results/
 python -m evaluation.evaluate --config configs/default.yaml \
     --checkpoint models/checkpoints/densenet121_best.pt
+
+# Evaluate explanation quality (pointing game / localization IoU) against the
+# NIH ground-truth boxes (BBox_List_2017.csv) → JSON in evaluation/results/
+python -m evaluation.evaluate_localization --config configs/default.yaml \
+    --checkpoint models/checkpoints/densenet121_best.pt
 ```
+
+The two harnesses answer the project's two questions side by side: `evaluate.py`
+measures *what* the model predicts (per-label and macro AUROC, macro F1), and
+`evaluate_localization.py` measures *whether the evidence it highlights is in the
+right place* — scoring each Grad-CAM/Score-CAM map against the ~984 hand-drawn
+boxes that NIH ships for 8 of the 14 pathologies (pointing-game accuracy, mean
+IoU, and localization accuracy at an IoU threshold). See
+[`datasets/README.md`](datasets/README.md#localization-ground-truth) for the box
+file and [`evaluation/README.md`](evaluation/README.md) for the metric details.
 
 ## Potential contributions
 

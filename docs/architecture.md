@@ -40,7 +40,14 @@ two layers whose explicit job is to communicate *why* a prediction was made:
 
 The research question is whether these layers improve interpretability and trust
 without degrading predictive performance — which `evaluation/` is set up to
-measure (AUROC/F1 for prediction; pointing-game/IoU for localization).
+measure with two parallel harnesses:
+
+- `evaluation/evaluate.py` — **prediction** quality: per-label/macro AUROC, F1.
+- `evaluation/evaluate_localization.py` — **explanation** quality: scores each
+  Grad-CAM/Score-CAM map against NIH's lesion boxes (`BBox_List_2017.csv`) with
+  pointing-game accuracy, mean IoU, and localization accuracy at an IoU
+  threshold. This is what turns "Layer 2 highlights evidence" from a design claim
+  into a measured one. See [`evaluation/README.md`](../evaluation/README.md).
 
 ## Layer 1 — Classification (`models/classification/`)
 

@@ -55,6 +55,7 @@ Expected layout (what `models/classification/dataset.py` reads):
 datasets/raw/chestxray14/
 ├── images/                 # all *.png, flat
 ├── Data_Entry_2017.csv     # official per-image metadata + Finding Labels
+├── BBox_List_2017.csv      # official lesion boxes (for localization eval)
 ├── train_val_list.txt      # official train/val image IDs
 └── test_list.txt           # official held-out test image IDs
 ```
@@ -63,6 +64,19 @@ The 14 labels, in canonical order, live in `models/common/constants.py`:
 Atelectasis, Cardiomegaly, Effusion, Infiltration, Mass, Nodule, Pneumonia,
 Pneumothorax, Consolidation, Edema, Emphysema, Fibrosis, Pleural_Thickening,
 Hernia.
+
+### Localization ground truth
+
+The NIH release ships `BBox_List_2017.csv` — **~984 hand-drawn bounding boxes**
+over **8** of the 14 pathologies (Atelectasis, Cardiomegaly, Effusion,
+Infiltration, Mass, Nodule, Pneumonia, Pneumothorax; the other six have no box
+ground truth). This is the ground truth `evaluation/evaluate_localization.py`
+scores the Grad-CAM/Score-CAM heatmaps against (pointing game, IoU). It is part
+of the standard ChestX-ray14 download; place it in `data_root` alongside
+`Data_Entry_2017.csv`. Boxes are in original-image pixel coordinates
+(1024×1024); the harness rescales them into the model's heatmap grid. Note the
+CSV labels the infiltration class "Infiltrate" — the harness normalizes this to
+the canonical "Infiltration". See [`evaluation/README.md`](../evaluation/README.md).
 
 Verify a local copy and build a tiny smoke-test split:
 

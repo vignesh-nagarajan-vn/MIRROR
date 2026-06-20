@@ -1,5 +1,5 @@
 # MIRROR convenience targets.
-.PHONY: help install demo backend frontend train eval lint clean
+.PHONY: help install demo backend frontend train eval eval-loc lint clean
 
 help:
 	@echo "MIRROR targets:"
@@ -8,7 +8,8 @@ help:
 	@echo "  make backend    run the FastAPI server on :8000"
 	@echo "  make frontend   run the Next.js dev server on :3000"
 	@echo "  make train      train the classifier (needs ChestX-ray14)"
-	@echo "  make eval CKPT=path.pt   evaluate a checkpoint"
+	@echo "  make eval CKPT=path.pt   evaluate prediction quality (AUROC/F1)"
+	@echo "  make eval-loc CKPT=path.pt   evaluate explanation quality (pointing game / IoU)"
 	@echo "  make clean      remove caches and build artifacts"
 
 install:
@@ -28,6 +29,9 @@ train:
 
 eval:
 	python -m evaluation.evaluate --config configs/default.yaml --checkpoint $(CKPT)
+
+eval-loc:
+	python -m evaluation.evaluate_localization --config configs/default.yaml --checkpoint $(CKPT)
 
 clean:
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true

@@ -13,7 +13,17 @@ paper/
 └── tables/             # generated result tables (from evaluation/results/*.json)
 ```
 
-Result tables can be generated from the JSON written by `evaluation/evaluate.py`.
+Result tables can be generated from the JSON written by the two evaluation
+harnesses:
+
+- **Prediction table** (per-label / macro AUROC, macro F1) — from
+  `evaluation/evaluate.py` → `evaluation/results/eval_<backbone>.json`.
+- **Localization table** (pointing game, mean IoU, localization accuracy over the
+  8 boxed pathologies) — from `evaluation/evaluate_localization.py` →
+  `evaluation/results/loc_<backbone>_<method>.json`. This is the table that
+  substantiates the explainability claim, so it belongs in the main results
+  section next to the prediction table.
+
 Qualitative figures (saliency overlays) come from `demo/run_demo.py` or notebook
 `02_pipeline_walkthrough.ipynb`.
 
