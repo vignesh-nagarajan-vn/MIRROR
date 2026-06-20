@@ -29,7 +29,7 @@ Multipart form upload. Runs the full pipeline.
 
 | field | type | required | notes |
 | --- | --- | --- | --- |
-| `image` | file | yes | PNG/JPEG/BMP/WEBP, ≤ 20 MB |
+| `image` | file | yes | PNG/JPEG/BMP/WEBP or DICOM (`.dcm`), ≤ 20 MB |
 | `modality` | string | no | default `"chest X-ray"` |
 | `indication` | string | no | free-text clinical context |
 
@@ -67,6 +67,16 @@ curl -X POST http://localhost:8000/api/analyze \
 `overlay_png_b64` is a base64-encoded PNG of the Grad-CAM overlay (present only
 for the top-k positive findings). Decode and display, or `data:image/png;base64,`
 inline.
+
+**DICOM uploads.** Native DICOM is accepted. Many clients send `.dcm` as
+`application/dicom`; some send `application/octet-stream` — both are allowed and
+the server confirms the DICOM magic bytes before decoding (applying the
+modality/VOI LUT and MONOCHROME1 inversion). Compressed transfer syntaxes need a
+handler installed server-side (`pylibjpeg` or `gdcm`).
+
+```bash
+curl -X POST http://localhost:8000/api/analyze -F "image=@study.dcm"
+```
 
 **Errors**
 

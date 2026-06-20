@@ -1,0 +1,25 @@
+Image Index,Finding Labels,Patient ID,Patient Age,Patient Gender,View Position
+synth_0000.dcm,Fibrosis,00000,55,M,PA
+synth_0001.png,No Finding,00001,33,M,AP
+synth_0002.png,No Finding,00002,31,M,PA
+synth_0003.png,Consolidation,00003,45,F,PA
+synth_0004.png,No Finding,00004,55,M,PA
+synth_0005.png,Mass|Effusion,00005,47,F,PA
+synth_0006.png,No Finding,00006,32,F,AP
+synth_0007.png,Fibrosis,00007,78,M,AP
+synth_0008.png,No Finding,00008,57,F,PA
+synth_0009.png,Emphysema,00009,49,F,PA
+synth_0010.png,Pneumonia,00010,55,F,AP
+synth_0011.png,No Finding,00011,65,M,AP
+synth_0012.png,Edema,00012,41,M,PA
+synth_0013.png,Emphysema|Fibrosis,00013,48,F,PA
+synth_0014.png,No Finding,00014,24,F,AP
+synth_0015.png,No Finding,00015,47,F,PA
+synth_0016.png,Emphysema|Pneumothorax,00016,38,F,PA
+synth_0017.png,No Finding,00017,53,F,AP
+synth_0018.png,No Finding,00018,37,F,PA
+synth_0019.png,Effusion,00019,40,F,PA
+synth_0020.png,No Finding,00020,79,F,PA
+synth_0021.png,Emphysema,00021,54,F,PA
+synth_0022.png,No Finding,00022,40,F,PA
+synth_0023.png,Consolidation|Pleural_Thickening,00023,42,M,AP

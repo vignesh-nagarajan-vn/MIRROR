@@ -66,12 +66,17 @@ python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
 # 2. Run the full pipeline on one image (no checkpoint or API key needed)
-python -m demo.run_demo path/to/chest_xray.png
+#    A synthetic sample ships with the repo, so this works with zero downloads:
+python -m demo.run_demo datasets/samples/chestxray14/images/synth_0001.png
+#    Native DICOM works too — point it at the bundled .dcm:
+python -m demo.run_demo datasets/samples/chestxray14/images/synth_0000.dcm
 ```
 
 That prints predictions and a draft report, and writes Grad-CAM overlays to
 `demo/assets/`. It runs on ImageNet-pretrained weights with the offline template
-report backend, so it works anywhere.
+report backend, so it works anywhere. Inputs may be **PNG/JPEG/BMP/WEBP or DICOM
+(`.dcm`)** — DICOM is decoded with the modality/VOI LUT and MONOCHROME1 handling
+applied (see [`datasets/README.md`](datasets/README.md#dicom-ingest)).
 
 ### Full stack (web UI)
 
@@ -133,8 +138,11 @@ ideal for initial development and benchmarking.
 **Secondary:** RSNA Pneumonia Detection Challenge, MIMIC-CXR (images + reports),
 Brain Tumor MRI Dataset, COVID-19 Radiography Database.
 
-None are redistributed here. See [`datasets/README.md`](datasets/README.md) for
-the expected layout, licensing notes, and prep scripts.
+None are redistributed here. A tiny **synthetic** stand-in ships under
+`datasets/samples/chestxray14/` (NIH layout, one DICOM included) so the demo,
+loader, and a training smoke test run with zero downloads. See
+[`datasets/README.md`](datasets/README.md) for the expected layout, the NIH
+downloader (`download_chestxray14.py`), licensing notes, and prep scripts.
 
 ## Configuration
 

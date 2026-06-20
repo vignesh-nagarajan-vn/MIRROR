@@ -23,6 +23,7 @@ except ImportError:  # pragma: no cover
     Image = None
 
 from .constants import DEFAULT_IMAGE_SIZE, IMAGENET_MEAN, IMAGENET_STD
+from .dicom import is_dicom, read_dicom
 
 
 def build_transform(image_size: int = DEFAULT_IMAGE_SIZE, train: bool = False):
@@ -54,7 +55,17 @@ def build_transform(image_size: int = DEFAULT_IMAGE_SIZE, train: bool = False):
 
 
 def load_image(source: str | Path | bytes) -> "Image.Image":
-    """Load an image from a path or raw bytes into RGB PIL form."""
+    """Load an image from a path or raw bytes into RGB PIL form.
+
+    Transparently handles DICOM (``.dcm``) sources — applying the modality/VOI
+    LUT and photometric inversion — as well as ordinary PNG/JPEG/etc., so every
+    caller (training, inference, the demo, the API) accepts radiology-native
+    files without special-casing.
+    """
+    # DICOM ingest only needs pydicom + Pillow (read_dicom guards them itself),
+    # so handle it before the torchvision-coupled Image guard below.
+    if is_dicom(source):
+        return read_dicom(source).image
     if Image is None:
         raise RuntimeError("Pillow is required to load images.")
     if isinstance(source, (str, Path)):

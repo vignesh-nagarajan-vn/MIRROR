@@ -5,8 +5,12 @@ draft report, saving any saliency overlays next to the input. Works with no
 trained checkpoint (ImageNet weights) and with the offline template report
 backend, so it runs anywhere with the Python deps installed.
 
+Accepts PNG/JPEG/BMP/WEBP or native DICOM (.dcm) — DICOM is decoded with the
+modality/VOI LUT and MONOCHROME1 inversion applied automatically.
+
 Usage:
     python -m demo.run_demo path/to/xray.png
+    python -m demo.run_demo path/to/study.dcm
     python -m demo.run_demo path/to/xray.png --config configs/default.yaml
 """
 
@@ -22,7 +26,7 @@ from models.pipeline import MirrorPipeline
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run MIRROR on one image.")
-    parser.add_argument("image", help="Path to a radiograph (PNG/JPEG).")
+    parser.add_argument("image", help="Path to a radiograph (PNG/JPEG/BMP/WEBP/DICOM).")
     parser.add_argument("--config", default="configs/default.yaml")
     parser.add_argument("--modality", default="chest X-ray")
     parser.add_argument("--indication", default=None)
