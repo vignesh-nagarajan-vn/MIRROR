@@ -1,5 +1,5 @@
 # MIRROR convenience targets.
-.PHONY: help install demo backend frontend train eval eval-loc lint clean
+.PHONY: help install demo backend frontend train eval eval-loc ablation lint clean
 
 help:
 	@echo "MIRROR targets:"
@@ -10,6 +10,7 @@ help:
 	@echo "  make train      train the classifier (needs ChestX-ray14)"
 	@echo "  make eval CKPT=path.pt   evaluate prediction quality (AUROC/F1)"
 	@echo "  make eval-loc CKPT=path.pt   evaluate explanation quality (pointing game / IoU)"
+	@echo "  make ablation   classification-only vs. full MIRROR comparison table"
 	@echo "  make clean      remove caches and build artifacts"
 
 install:
@@ -32,6 +33,9 @@ eval:
 
 eval-loc:
 	python -m evaluation.evaluate_localization --config configs/default.yaml --checkpoint $(CKPT)
+
+ablation:
+	python -m evaluation.ablation --config configs/default.yaml
 
 clean:
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true

@@ -17,6 +17,7 @@ out of this one object.
 from __future__ import annotations
 
 import base64
+import time
 from dataclasses import dataclass, field
 
 from .common.config import Config
@@ -94,14 +95,33 @@ class MirrorPipeline:
         modality: str = "chest X-ray",
         indication: str | None = None,
         explain_top_k: int = 3,
+        localize: bool = True,
+        report: bool = True,
     ) -> AnalysisResult:
-        """Run the full Image -> Prediction -> Evidence -> Report pipeline."""
+        """Run the Image -> Prediction -> Evidence -> Report pipeline.
+
+        The two later layers can be switched off to recover MIRROR's ablation
+        conditions, which is what ``evaluation/ablation.py`` compares:
+
+        * ``localize=False, report=False`` -> classification-only baseline.
+        * ``localize=True,  report=False`` -> classification + evidence.
+        * ``localize=True,  report=True``  -> full MIRROR (the default).
+
+        Skipping a layer never changes the predictions: layers 2 and 3 are
+        post-hoc, so predictive metrics are identical across conditions. Per-stage
+        wall-clock timings are recorded in ``meta['timings_ms']`` so the ablation
+        can report the latency cost of each added layer.
+        """
         threshold = self.config.report.confidence_threshold
+        timings_ms: dict[str, float] = {}
 
         # 1. Prediction
+        t0 = time.perf_counter()
         predictions = self.classifier.predict(source)
+        timings_ms["prediction"] = (time.perf_counter() - t0) * 1000
 
         # 2 & 3. Evidence localisation + structured findings.
+        t0 = time.perf_counter()
         findings: list[FindingResult] = []
         explained = 0
         for pred in predictions:
@@ -109,8 +129,9 @@ class MirrorPipeline:
             location = "n/a"
             overlay_b64 = None
 
-            # Only spend compute explaining the top-k present findings.
-            if present and explained < explain_top_k:
+            # Only spend compute explaining the top-k present findings, and only
+            # when the localisation layer is enabled.
+            if localize and present and explained < explain_top_k:
                 class_idx = self.labels.index(pred.label)
                 explanation = self.explainer.explain(source, pred.label, class_idx)
                 location = describe_location(explanation.centroid)
@@ -126,25 +147,40 @@ class MirrorPipeline:
                     overlay_png_b64=overlay_b64,
                 )
             )
+        timings_ms["localization"] = (time.perf_counter() - t0) * 1000
 
         # 4. Clinical reasoning -> report.
-        evidence = [
-            {
-                "label": f.label,
-                "probability": f.probability,
-                "present": f.present,
-                "location": f.location,
-            }
-            for f in findings
-        ]
-        report = self.reporter.generate(evidence, modality, indication)
+        t0 = time.perf_counter()
+        if report:
+            evidence = [
+                {
+                    "label": f.label,
+                    "probability": f.probability,
+                    "present": f.present,
+                    "location": f.location,
+                }
+                for f in findings
+            ]
+            generated = self.reporter.generate(evidence, modality, indication)
+            report_text, report_backend = generated.text, generated.backend
+        else:
+            report_text, report_backend = "", "disabled"
+        timings_ms["report"] = (time.perf_counter() - t0) * 1000
 
         return AnalysisResult(
             findings=findings,
-            report=report.text,
-            report_backend=report.backend,
+            report=report_text,
+            report_backend=report_backend,
             modality=modality,
             backbone=self.config.model.backbone,
             explain_method=self.config.explain.method,
-            meta={"num_present": sum(1 for f in findings if f.present)},
+            meta={
+                "num_present": sum(1 for f in findings if f.present),
+                "timings_ms": timings_ms,
+                "stages": {
+                    "prediction": True,
+                    "localization": bool(localize),
+                    "report": bool(report),
+                },
+            },
         )

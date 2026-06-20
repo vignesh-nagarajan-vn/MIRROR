@@ -56,14 +56,56 @@ not scored. The CSV defaults to `<data_root>/BBox_List_2017.csv`; override with
   inference transform's plain resize (no crop / aspect change) — matching
   `models/common/preprocessing.py`.
 
+## 3. Ablation — `ablation.py`
+
+The research question is comparative — does adding the localization and reasoning
+layers help *without* degrading prediction? — so it needs the baseline it names.
+`ablation.py` defines three conditions and assembles the side-by-side table:
+
+| Condition | Prediction | Localization | Report |
+| --- | :---: | :---: | :---: |
+| `classification_only` | ✓ | — | — |
+| `with_localization` | ✓ | ✓ | — |
+| `full_mirror` | ✓ | ✓ | ✓ |
+
+```bash
+python -m evaluation.ablation --config configs/default.yaml \
+    --prediction-results evaluation/results/eval_densenet121.json \
+    --localization-results evaluation/results/loc_densenet121_gradcam.json
+# assemble the table without running a model (capabilities + supplied metrics only):
+python -m evaluation.ablation --config configs/default.yaml --no-latency \
+    --prediction-results evaluation/results/eval_densenet121.json
+```
+
+Writes `results/ablation_<backbone>.json`. What the table demonstrates:
+
+- **No predictive cost.** Layers 2–3 are post-hoc, so AUROC/F1 are identical in
+  every row. The harness verifies this empirically by running all three
+  conditions on a sample and checking the predictions are unchanged
+  (`predictions_invariant`, `max_prob_delta`).
+- **Added capability + its latency.** Localization metrics populate only the rows
+  whose localization layer is on; the report column reflects the reasoning layer;
+  and a live profile records per-stage wall-clock latency per condition.
+
+Predictive and localization numbers are read from the JSON written by harnesses 1
+and 2 (nothing is recomputed). The capability matrix and latency profile run on
+the bundled synthetic samples (`--images`, default
+`datasets/samples/chestxray14/images`), so the table is partially reproducible
+with no downloads. The conditions map directly onto the new `localize` / `report`
+flags on `MirrorPipeline.analyze()`.
+
 ## Metric definitions
 
 All metrics live in [`metrics.py`](metrics.py): `macro_auroc`, `f1_at_threshold`,
 `pointing_game`, and `localization_iou`. The localization harness is a thin
-driver over the latter two, plus box loading and aggregation.
+driver over the latter two, plus box loading and aggregation; the ablation harness
+reuses the JSON they emit.
 
 ## Tests
 
-`tests/test_localization_eval.py` covers the torch-free logic (box scaling,
-per-box scoring, aggregation) with synthetic heatmaps — it runs without a model
-or the NIH box file.
+- `tests/test_localization_eval.py` — box scaling, per-box scoring, aggregation.
+- `tests/test_ablation.py` — conditions, capability matrix, result merging, table
+  assembly.
+
+Both cover the torch-free logic with synthetic inputs, so they run without a model
+or any dataset.

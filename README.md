@@ -170,16 +170,27 @@ python -m evaluation.evaluate --config configs/default.yaml \
 # NIH ground-truth boxes (BBox_List_2017.csv) → JSON in evaluation/results/
 python -m evaluation.evaluate_localization --config configs/default.yaml \
     --checkpoint models/checkpoints/densenet121_best.pt
+
+# Ablation: classification-only baseline vs. +localization vs. full MIRROR.
+# Folds the JSON above into one comparison table + a latency profile.
+python -m evaluation.ablation --config configs/default.yaml \
+    --prediction-results evaluation/results/eval_densenet121.json \
+    --localization-results evaluation/results/loc_densenet121_gradcam.json
 ```
 
-The two harnesses answer the project's two questions side by side: `evaluate.py`
+The harnesses answer the project's two questions side by side: `evaluate.py`
 measures *what* the model predicts (per-label and macro AUROC, macro F1), and
 `evaluate_localization.py` measures *whether the evidence it highlights is in the
 right place* — scoring each Grad-CAM/Score-CAM map against the ~984 hand-drawn
 boxes that NIH ships for 8 of the 14 pathologies (pointing-game accuracy, mean
-IoU, and localization accuracy at an IoU threshold). See
-[`datasets/README.md`](datasets/README.md#localization-ground-truth) for the box
-file and [`evaluation/README.md`](evaluation/README.md) for the metric details.
+IoU, and localization accuracy at an IoU threshold). `ablation.py` then builds the
+**baseline comparison the research question names**: classification-only vs.
++localization vs. full MIRROR, in one table. Because layers 2–3 are post-hoc, the
+AUROC/F1 column is identical across rows (verified empirically) — so the table
+shows added interpretability *at no predictive cost*, alongside the per-layer
+latency. See [`datasets/README.md`](datasets/README.md#localization-ground-truth)
+for the box file and [`evaluation/README.md`](evaluation/README.md) for the metric
+details.
 
 ## Potential contributions
 

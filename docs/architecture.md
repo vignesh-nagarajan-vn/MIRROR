@@ -47,7 +47,14 @@ measure with two parallel harnesses:
   Grad-CAM/Score-CAM map against NIH's lesion boxes (`BBox_List_2017.csv`) with
   pointing-game accuracy, mean IoU, and localization accuracy at an IoU
   threshold. This is what turns "Layer 2 highlights evidence" from a design claim
-  into a measured one. See [`evaluation/README.md`](../evaluation/README.md).
+  into a measured one.
+- `evaluation/ablation.py` — the **baseline comparison**: classification-only vs.
+  +localization vs. full MIRROR, in one table. It confirms the predictions are
+  unchanged by the later layers (so AUROC/F1 hold across conditions) and profiles
+  each layer's latency — framing MIRROR's contribution as interpretability at no
+  predictive cost.
+
+See [`evaluation/README.md`](../evaluation/README.md) for all three.
 
 ## Layer 1 — Classification (`models/classification/`)
 
@@ -79,7 +86,10 @@ measure with two parallel harnesses:
 
 `MirrorPipeline.analyze()` runs all four stages and returns one
 `AnalysisResult` (predictions + overlays + report) that both the API and the
-notebooks consume.
+notebooks consume. The two later layers are toggleable — `analyze(localize=...,
+report=...)` — which recovers the ablation conditions (classification-only,
++localization, full) and records per-stage timings in `meta['timings_ms']`. The
+defaults run everything, so serving is unchanged.
 
 ## Serving
 

@@ -23,6 +23,13 @@ harnesses:
   `evaluation/results/loc_<backbone>_<method>.json`. This is the table that
   substantiates the explainability claim, so it belongs in the main results
   section next to the prediction table.
+- **Ablation table** (classification-only vs. +localization vs. full MIRROR) —
+  from `evaluation/ablation.py` → `evaluation/results/ablation_<backbone>.json`.
+  This is the baseline comparison the research question names: it shows the
+  prediction metrics are unchanged by the added layers (interpretability at no
+  predictive cost) while the localization/report capabilities and their latency
+  appear only in the relevant rows. Pairs naturally with an ablation/discussion
+  section.
 
 Qualitative figures (saliency overlays) come from `demo/run_demo.py` or notebook
 `02_pipeline_walkthrough.ipynb`.
