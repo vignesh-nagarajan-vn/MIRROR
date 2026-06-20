@@ -9,6 +9,11 @@ torchvision>=0.16
 Pillow>=10.0
 numpy>=1.24
 matplotlib>=3.7        # colormaps for saliency overlays
+pydicom>=2.4           # native DICOM (.dcm) ingestion: modality/VOI LUT, windowing
+# Optional: decode compressed DICOM (JPEG/JPEG2000) transfer syntaxes.
+# Uncompressed DICOM works without these.
+pylibjpeg>=2.0; python_version >= "3.8"
+pylibjpeg-libjpeg>=2.1; python_version >= "3.8"
 
 # Data / metrics
 pandas>=2.0
@@ -22,3 +27,6 @@ anthropic>=0.39
 
 # Notebooks (optional)
 jupyter>=1.0
+
+# Tests (dev)
+pytest>=7.0

@@ -1,0 +1,6 @@
+synth_0000.dcm
+synth_0001.png
+synth_0002.png
+synth_0003.png
+synth_0004.png
+synth_0005.png

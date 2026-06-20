@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Secrets / local config
+.env
+.env.local
+*.local
+
+# Large / sensitive data — never commit raw images, PHI, or downloaded archives.
+datasets/raw/
+datasets/processed/
+datasets/**/archives/
+*.tar.gz
+
+# Model weights and run artifacts
+models/checkpoints/
+evaluation/results/
+demo/assets/
+
+# The synthetic sample set IS meant to be committed so the repo runs out of the
+# box — keep it tracked despite the datasets/ rules above.
+!datasets/samples/
+!datasets/samples/**
+
+# Node / frontend
+node_modules/
+.next/
+frontend/.env.local
+
+# OS
+.DS_Store
+Thumbs.db

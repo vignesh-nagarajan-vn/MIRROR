@@ -6,6 +6,33 @@ redistributed in this repository — each must be obtained from its original sou
 under its own license. Download into `datasets/raw/<name>/` and keep processed
 artifacts in `datasets/processed/`.
 
+## Run it now — synthetic samples
+
+The real datasets are large and license-restricted, so the repo ships a tiny
+**synthetic** stand-in under `datasets/samples/chestxray14/` that mirrors the NIH
+layout exactly (images + `Data_Entry_2017.csv` + split lists). It lets the demo,
+the dataset loader, a training smoke test, and the DICOM ingest path all run with
+zero downloads. Regenerate it any time:
+
+```bash
+python -m datasets.scripts.make_synthetic_samples --out datasets/samples/chestxray14 -n 24
+```
+
+> These images are fabricated noise shaped like a thorax — **not** radiographs and
+> with no diagnostic meaning. They exist solely to exercise the plumbing. One of
+> them (`synth_0000.dcm`) is a MONOCHROME1 **DICOM** so the `.dcm` ingest path is
+> covered. Point `data.data_root` at `datasets/samples/chestxray14` in your config
+> to train/evaluate against them.
+
+## DICOM ingest
+
+MIRROR reads native **DICOM** (`.dcm`) directly — `models/common/dicom.py` applies
+the modality LUT (rescale slope/intercept), the VOI LUT (window center/width),
+and MONOCHROME1 inversion, then hands a display-ready RGB image to the same
+pipeline used for PNG/JPEG. Compressed transfer syntaxes (JPEG/JPEG2000) need an
+extra handler — `pip install pylibjpeg pylibjpeg-libjpeg` (or `python-gdcm`);
+uncompressed DICOM needs only pydicom.
+
 ## Primary — NIH ChestX-ray14
 
 - **Scale:** 112,120 frontal chest X-rays from 30,805 patients.
@@ -13,6 +40,14 @@ artifacts in `datasets/processed/`.
 - **Why primary:** large, standardized, widely benchmarked — ideal for initial
   model development and reproducible comparison.
 - **Source:** NIH Clinical Center release ("ChestX-ray8/14").
+
+Fetch the real release (12 archives, ~45 GB) into the expected layout:
+
+```bash
+python -m datasets.scripts.download_chestxray14 --data-root datasets/raw/chestxray14
+# or grab just the first 2 archives while developing:
+python -m datasets.scripts.download_chestxray14 --data-root datasets/raw/chestxray14 --max-archives 2
+```
 
 Expected layout (what `models/classification/dataset.py` reads):
 

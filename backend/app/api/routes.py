@@ -19,6 +19,18 @@ from models.common.constants import CHESTXRAY14_LABELS
 router = APIRouter(prefix="/api")
 
 ALLOWED_CONTENT_TYPES = {"image/png", "image/jpeg", "image/jpg", "image/bmp", "image/webp"}
+# DICOM is the native radiology format. Browsers and PACS exporters are
+# inconsistent here: some send "application/dicom", many send a generic
+# "application/octet-stream", so we also accept by filename / magic bytes below.
+DICOM_CONTENT_TYPES = {"application/dicom", "application/octet-stream", ""}
+DICOM_EXTENSIONS = (".dcm", ".dicom", ".dco")
+
+
+def _looks_like_dicom(image: UploadFile) -> bool:
+    name = (image.filename or "").lower()
+    if name.endswith(DICOM_EXTENSIONS):
+        return True
+    return image.content_type in {"application/dicom"}
 
 
 @router.get("/health", response_model=HealthResponse)
@@ -43,11 +55,16 @@ async def analyze(
     modality: str = Form("chest X-ray"),
     indication: str | None = Form(None),
 ) -> AnalysisResponse:
-    if image.content_type not in ALLOWED_CONTENT_TYPES:
-        raise HTTPException(
-            status_code=415,
-            detail=f"Unsupported image type '{image.content_type}'.",
-        )
+    is_dicom_upload = _looks_like_dicom(image)
+    if not is_dicom_upload and image.content_type not in ALLOWED_CONTENT_TYPES:
+        # Allow generic octet-streams only when they turn out to be DICOM (checked
+        # against the magic bytes after reading); reject anything else up front.
+        if image.content_type not in DICOM_CONTENT_TYPES:
+            raise HTTPException(
+                status_code=415,
+                detail=f"Unsupported image type '{image.content_type}'. "
+                "Accepted: PNG, JPEG, BMP, WEBP, or DICOM (.dcm).",
+            )
 
     settings = get_settings()
     raw = await image.read()
