@@ -17,6 +17,7 @@ Mentored by **Mr. Sriram Venkatapathy** (AI Research at Capital One, PhD-CS at I
 ## Tech Stack
 
 <!--- ML / AI --->
+<p align="center"><sub><b>AI / ML & Frameworks:</b></sub></p>
 <p align="center">
   <img src="https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=for-the-badge&logo=PyTorch&logoColor=white">
   <img src="https://img.shields.io/badge/torchvision-%23EE4C2C.svg?style=for-the-badge&logo=PyTorch&logoColor=white">
@@ -29,18 +30,18 @@ Mentored by **Mr. Sriram Venkatapathy** (AI Research at Capital One, PhD-CS at I
   <img src="https://img.shields.io/badge/Claude-D97757?style=for-the-badge&logo=anthropic&logoColor=white">
   <img src="https://img.shields.io/badge/Jupyter-F37626.svg?style=for-the-badge&logo=Jupyter&logoColor=white">
 </p>
-<p align="center"><sub><b>AI / ML</b></sub></p>
 
 <!--- Backend --->
+<p align="center"><sub><b>Backend:</b></sub></p>
 <p align="center">
   <img src="https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54">
   <img src="https://img.shields.io/badge/FastAPI-005571.svg?style=for-the-badge&logo=fastapi&logoColor=white">
   <img src="https://img.shields.io/badge/Uvicorn-%23499848.svg?style=for-the-badge&logo=gunicorn&logoColor=white">
   <img src="https://img.shields.io/badge/Pydantic-E92063?style=for-the-badge&logo=pydantic&logoColor=white">
 </p>
-<p align="center"><sub><b>Backend</b></sub></p>
 
 <!--- Frontend --->
+<p align="center"><sub><b>Frontend:</b></sub></p>
 <p align="center">
   <img src="https://img.shields.io/badge/Next.js-black?style=for-the-badge&logo=next.js&logoColor=white">
   <img src="https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB">
@@ -48,9 +49,9 @@ Mentored by **Mr. Sriram Venkatapathy** (AI Research at Capital One, PhD-CS at I
   <img src="https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white">
   <img src="https://img.shields.io/badge/npm-%23CB3837.svg?style=for-the-badge&logo=npm&logoColor=white">
 </p>
-<p align="center"><sub><b>Frontend</b></sub></p>
 
 <!--- Data / Tooling --->
+<p align="center"><sub><b>Data & Tooling:</b></sub></p>
 <p align="center">
   <img src="https://img.shields.io/badge/postgresql-%234169E1.svg?style=for-the-badge&logo=postgresql&logoColor=white">
   <img src="https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white">
@@ -58,7 +59,6 @@ Mentored by **Mr. Sriram Venkatapathy** (AI Research at Capital One, PhD-CS at I
   <img src="https://img.shields.io/badge/pytest-%230A9EDC.svg?style=for-the-badge&logo=pytest&logoColor=white">
   <img src="https://img.shields.io/badge/git-%23F05033.svg?style=for-the-badge&logo=git&logoColor=white">
 </p>
-<p align="center"><sub><b>Data / Tooling</b></sub></p>
 
 ## What MIRROR does
 
