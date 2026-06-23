@@ -14,10 +14,6 @@ Mentored by **Mr. Sriram Venkatapathy** (AI Research at Capital One, PhD-CS at I
 
 ---
 
-> **Full Disclosure: Prototype — not a medical device.** MIRROR has not been
-> reviewed or cleared by any regulatory body. Every output is a draft that must
-> be verified by a licensed radiologist. Do not use it for diagnosis or treatment.
-
 ## Tech Stack
 
 <!--- ML / AI --->
@@ -33,6 +29,7 @@ Mentored by **Mr. Sriram Venkatapathy** (AI Research at Capital One, PhD-CS at I
   <img src="https://img.shields.io/badge/Claude-D97757?style=for-the-badge&logo=anthropic&logoColor=white">
   <img src="https://img.shields.io/badge/Jupyter-F37626.svg?style=for-the-badge&logo=Jupyter&logoColor=white">
 </p>
+<p align="center"><sub><b>AI / ML</b></sub></p>
 
 <!--- Backend --->
 <p align="center">
@@ -41,6 +38,7 @@ Mentored by **Mr. Sriram Venkatapathy** (AI Research at Capital One, PhD-CS at I
   <img src="https://img.shields.io/badge/Uvicorn-%23499848.svg?style=for-the-badge&logo=gunicorn&logoColor=white">
   <img src="https://img.shields.io/badge/Pydantic-E92063?style=for-the-badge&logo=pydantic&logoColor=white">
 </p>
+<p align="center"><sub><b>Backend</b></sub></p>
 
 <!--- Frontend --->
 <p align="center">
@@ -50,6 +48,7 @@ Mentored by **Mr. Sriram Venkatapathy** (AI Research at Capital One, PhD-CS at I
   <img src="https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white">
   <img src="https://img.shields.io/badge/npm-%23CB3837.svg?style=for-the-badge&logo=npm&logoColor=white">
 </p>
+<p align="center"><sub><b>Frontend</b></sub></p>
 
 <!--- Data / Tooling --->
 <p align="center">
@@ -59,6 +58,7 @@ Mentored by **Mr. Sriram Venkatapathy** (AI Research at Capital One, PhD-CS at I
   <img src="https://img.shields.io/badge/pytest-%230A9EDC.svg?style=for-the-badge&logo=pytest&logoColor=white">
   <img src="https://img.shields.io/badge/git-%23F05033.svg?style=for-the-badge&logo=git&logoColor=white">
 </p>
+<p align="center"><sub><b>Data / Tooling</b></sub></p>
 
 ## What MIRROR does
 
@@ -91,13 +91,13 @@ explanation metrics (pointing game / localization IoU) live side by side in
 While most medical-imaging systems focus solely on disease classification, MIRROR
 integrates three complementary layers into one framework:
 
-1. **Radiological image understanding** — a CNN/ViT classifier.
-2. **Visual evidence localization** — Grad-CAM / Score-CAM saliency.
-3. **Natural-language clinical report generation** — an LLM (or offline template)
+1. **Radiological image understanding**: a CNN/ViT classifier.
+2. **Visual evidence localization**: Grad-CAM / Score-CAM saliency.
+3. **Natural-language clinical report generation**: an LLM (or offline template)
    that reasons *only* over the structured evidence above.
 
 The result not only predicts abnormalities but communicates **why** the
-prediction was made and **how** it relates to potential clinical findings — and
+prediction was made and **how** it relates to potential clinical findings, and
 every sentence in the report traces back to a probability and a saliency region.
 
 ## Quickstart
@@ -110,14 +110,14 @@ pip install -r requirements.txt
 # 2. Run the full pipeline on one image (no checkpoint or API key needed)
 #    A synthetic sample ships with the repo, so this works with zero downloads:
 python -m demo.run_demo datasets/samples/chestxray14/images/synth_0001.png
-#    Native DICOM works too — point it at the bundled .dcm:
+#    Native DICOM works too; point it at the bundled .dcm:
 python -m demo.run_demo datasets/samples/chestxray14/images/synth_0000.dcm
 ```
 
 That prints predictions and a draft report, and writes Grad-CAM overlays to
 `demo/assets/`. It runs on ImageNet-pretrained weights with the offline template
 report backend, so it works anywhere. Inputs may be **PNG/JPEG/BMP/WEBP or DICOM
-(`.dcm`)** — DICOM is decoded with the modality/VOI LUT and MONOCHROME1 handling
+(`.dcm`)**. DICOM is decoded with the modality/VOI LUT and MONOCHROME1 handling
 applied (see [`datasets/README.md`](datasets/README.md#dicom-ingest)).
 
 ### Full stack (web UI)
@@ -130,7 +130,7 @@ cd backend && uvicorn app.main:app --reload --port 8000
 cd frontend && npm install && cp .env.local.example .env.local && npm run dev
 ```
 
-Open http://localhost:3000 — drop in a radiograph, toggle the evidence overlay,
+Open http://localhost:3000, drop in a radiograph, toggle the evidence overlay,
 read the draft report. Full instructions in [`docs/setup.md`](docs/setup.md).
 
 ## Repository layout
@@ -158,7 +158,7 @@ mirror/
 
 ## Datasets
 
-**Primary:** NIH **ChestX-ray14** — 112,120 chest X-rays, 14 disease categories;
+**Primary:** NIH **ChestX-ray14**: 112,120 chest X-rays, 14 disease categories;
 ideal for initial development and benchmarking.
 
 **Secondary:** RSNA Pneumonia Detection Challenge, MIMIC-CXR (images + reports),
@@ -172,7 +172,7 @@ downloader (`download_chestxray14.py`), licensing notes, and prep scripts.
 
 ## Configuration
 
-Everything tunable lives in [`configs/default.yaml`](configs/default.yaml) — swap
+Everything tunable lives in [`configs/default.yaml`](configs/default.yaml): swap
 the backbone, switch Grad-CAM ↔ Score-CAM, or change the report backend without
 touching code:
 
@@ -211,12 +211,12 @@ python -m evaluation.aggregate_seeds evaluation/results/eval_seed*.json
 The harnesses answer the project's two questions side by side: `evaluate.py`
 measures *what* the model predicts (per-label and macro AUROC, macro F1), and
 `evaluate_localization.py` measures *whether the evidence it highlights is in the
-right place* — scoring each Grad-CAM/Score-CAM map against the ~984 hand-drawn
+right place*, scoring each Grad-CAM/Score-CAM map against the ~984 hand-drawn
 boxes that NIH ships for 8 of the 14 pathologies (pointing-game accuracy, mean
 IoU, and localization accuracy at an IoU threshold). `ablation.py` then builds the
 **baseline comparison the research question names**: classification-only vs.
-+localization vs. full MIRROR, in one table. Because layers 2–3 are post-hoc, the
-AUROC/F1 column is identical across rows (verified empirically) — so the table
++localization vs. full MIRROR, in one table. Because layers 2-3 are post-hoc, the
+AUROC/F1 column is identical across rows (verified empirically), so the table
 shows added interpretability *at no predictive cost*, alongside the per-layer
 latency. Every predictive number carries a **bootstrap 95% CI** (test-set
 sampling noise) and can be summarised across training seeds with
@@ -237,21 +237,21 @@ file and [`evaluation/README.md`](evaluation/README.md) for the metric details.
 
 ## Documentation
 
-- [`docs/architecture.md`](docs/architecture.md) — how the layers connect.
-- [`docs/setup.md`](docs/setup.md) — installation and running locally.
-- [`docs/api.md`](docs/api.md) — REST endpoints and payloads.
-- [`CONTRIBUTING.md`](CONTRIBUTING.md) — development guidelines.
+- [`docs/architecture.md`](docs/architecture.md): how the layers connect.
+- [`docs/setup.md`](docs/setup.md): installation and running locally.
+- [`docs/api.md`](docs/api.md): REST endpoints and payloads.
+- [`CONTRIBUTING.md`](CONTRIBUTING.md): development guidelines.
 
 ## Safety, ethics, and limitations
 
 - **Not for clinical use.** Outputs are drafts for research into explainability
   and trust; they require clinician verification.
 - **No PHI in version control.** Raw images, weights, and results are git-ignored.
-- **Grounded by design.** The language layer never sees pixels — only structured
-  evidence — so it cannot invent findings the classifier didn't produce.
+- **Grounded by design.** The language layer never sees pixels, only structured
+  evidence, so it cannot invent findings the classifier didn't produce.
 - **Honest about uncertainty.** Predictions are probabilities; below-threshold
   findings are reported as pertinent negatives, not silently dropped.
 
 ## License
 
-MIT — see [`LICENSE`](LICENSE), including the research-use medical disclaimer.
+MIT. See [`LICENSE`](LICENSE), including the research-use medical disclaimer.
