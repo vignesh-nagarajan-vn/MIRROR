@@ -18,6 +18,48 @@ Mentored by **Mr. Sriram Venkatapathy** (AI Research at Capital One, PhD-CS at I
 > reviewed or cleared by any regulatory body. Every output is a draft that must
 > be verified by a licensed radiologist. Do not use it for diagnosis or treatment.
 
+## Tech Stack
+
+<!--- ML / AI --->
+<p align="center">
+  <img src="https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=for-the-badge&logo=PyTorch&logoColor=white">
+  <img src="https://img.shields.io/badge/torchvision-%23EE4C2C.svg?style=for-the-badge&logo=PyTorch&logoColor=white">
+  <img src="https://img.shields.io/badge/scikit--learn-%23F7931E.svg?style=for-the-badge&logo=scikit-learn&logoColor=white">
+  <img src="https://img.shields.io/badge/numpy-%23013243.svg?style=for-the-badge&logo=numpy&logoColor=white">
+  <img src="https://img.shields.io/badge/pandas-%23150458.svg?style=for-the-badge&logo=pandas&logoColor=white">
+  <img src="https://img.shields.io/badge/Matplotlib-%23ffffff.svg?style=for-the-badge&logo=Matplotlib&logoColor=black">
+  <img src="https://img.shields.io/badge/Pillow-%23306998.svg?style=for-the-badge&logo=python&logoColor=white">
+  <img src="https://img.shields.io/badge/pydicom%20%2F%20DICOM-%2300A4E4.svg?style=for-the-badge&logo=dicom&logoColor=white">
+  <img src="https://img.shields.io/badge/Claude-D97757?style=for-the-badge&logo=anthropic&logoColor=white">
+  <img src="https://img.shields.io/badge/Jupyter-F37626.svg?style=for-the-badge&logo=Jupyter&logoColor=white">
+</p>
+
+<!--- Backend --->
+<p align="center">
+  <img src="https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54">
+  <img src="https://img.shields.io/badge/FastAPI-005571.svg?style=for-the-badge&logo=fastapi&logoColor=white">
+  <img src="https://img.shields.io/badge/Uvicorn-%23499848.svg?style=for-the-badge&logo=gunicorn&logoColor=white">
+  <img src="https://img.shields.io/badge/Pydantic-E92063?style=for-the-badge&logo=pydantic&logoColor=white">
+</p>
+
+<!--- Frontend --->
+<p align="center">
+  <img src="https://img.shields.io/badge/Next.js-black?style=for-the-badge&logo=next.js&logoColor=white">
+  <img src="https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB">
+  <img src="https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white">
+  <img src="https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white">
+  <img src="https://img.shields.io/badge/npm-%23CB3837.svg?style=for-the-badge&logo=npm&logoColor=white">
+</p>
+
+<!--- Data / Tooling --->
+<p align="center">
+  <img src="https://img.shields.io/badge/postgresql-%234169E1.svg?style=for-the-badge&logo=postgresql&logoColor=white">
+  <img src="https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white">
+  <img src="https://img.shields.io/badge/yaml-%23ffffff.svg?style=for-the-badge&logo=yaml&logoColor=151515">
+  <img src="https://img.shields.io/badge/pytest-%230A9EDC.svg?style=for-the-badge&logo=pytest&logoColor=white">
+  <img src="https://img.shields.io/badge/git-%23F05033.svg?style=for-the-badge&logo=git&logoColor=white">
+</p>
+
 ## What MIRROR does
 
 Most medical-imaging models stop at a prediction. MIRROR adds the two layers that
@@ -113,22 +155,6 @@ mirror/
 ├── configs/default.yaml      # single source of tunables
 └── README.md
 ```
-
-## Technology stack
-
-| Area | Choice |
-| --- | --- |
-| Deep learning | PyTorch |
-| Backbones | DenseNet121 · EfficientNet-B0 · ViT-B/16 |
-| Explainability | Grad-CAM · Score-CAM |
-| Report generation | LLM (Claude) with offline template fallback |
-| Backend | FastAPI |
-| Frontend | Next.js (TypeScript) |
-| Database | PostgreSQL / Supabase *(optional; for persisting studies — see below)* |
-
-> The database is optional and not required to run the pipeline. The current API
-> is stateless; persisting studies/reports to PostgreSQL or Supabase is a natural
-> extension and the schema hook lives behind the service layer.
 
 ## Datasets
 
