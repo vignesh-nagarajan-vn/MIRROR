@@ -1,6 +1,6 @@
-# v1.0.0 Deployment Showcase
+# v1.1.0 Deployment Showcase
 
-This document walks through the **live v1.0.0 deployment** of MIRROR at
+This document walks through the **live v1.1.0 deployment** of MIRROR at
 **[mirror-ten-jet.vercel.app](https://mirror-ten-jet.vercel.app/)**: how it is
 built, how a request flows end to end, and a finding-by-finding read of one real
 session.
@@ -9,7 +9,7 @@ session.
 > produced by an AI system and would require verification by a licensed
 > radiologist. The sample image is a public demonstration radiograph.
 
-## How the v1.0.0 deployment works
+## How the v1.1.0 deployment works
 
 The hosted site is the **Next.js frontend deployed on Vercel**, with no separate
 backend server. The PyTorch pipeline (DenseNet/ViT classifier + Grad-CAM) cannot
@@ -111,9 +111,9 @@ is built to demonstrate: a prediction is not just a number, it is tied to a
 
 ### 3. Draft clinical report
 
-<p align="center">
-  <img src="images/deployment/mirror-sample1-output-analysis.png" width="440" alt="Draft report">
-</p>
+| FINDINGS | IMPRESSION |
+| :---: | :---: |
+| ![Report findings](images/deployment/mirror-sample1-output-analysis-top.png) | ![Report impression](images/deployment/mirror-sample1-output-analysis-bottom.png) |
 
 The report is structured into `FINDINGS` and `IMPRESSION`, and every statement
 traces back to the evidence above:
