@@ -45,7 +45,7 @@ class ReportConfig:
     """LLM report generation settings."""
 
     provider: str = "anthropic"  # anthropic | template (offline fallback)
-    model: str = "claude-sonnet-4-6"
+    model: str = "claude-haiku-4-5"
     max_tokens: int = 1024
     temperature: float = 0.2
     confidence_threshold: float = 0.5  # findings below this are reported as "no acute"

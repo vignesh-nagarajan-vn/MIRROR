@@ -35,7 +35,7 @@ To deploy the repo you have on GitHub:
    | Name | Value | Notes |
    | --- | --- | --- |
    | `ANTHROPIC_API_KEY` | `sk-ant-...` | required for live analysis |
-   | `ANTHROPIC_MODEL` | `claude-sonnet-4-6` | optional override |
+   | `ANTHROPIC_MODEL` | `claude-haiku-4-5` | optional override (default) |
    | `NEXT_PUBLIC_API_URL` | *(leave empty)* | empty → use the built-in serverless route |
 5. **Deploy.** Every push to your default branch redeploys automatically.
 
@@ -69,6 +69,11 @@ vercel --prod     # promote to the public production URL
   per-request time budget (the analyze route sets `maxDuration = 60s`).
 - Each live analysis is one Claude API call billed to **your** Anthropic account.
   The demo (no-key) path costs nothing.
+- The default model is **`claude-haiku-4-5`** to keep that per-call cost low.
+  Haiku 4.5 runs at **$1 / $5** per million input/output tokens, versus Sonnet
+  4.6's **$3 / $15**, so each analysis is about **3× cheaper** (roughly one-third
+  the cost). Set `ANTHROPIC_MODEL` to a different model if you want to trade cost
+  for capability.
 
 ## Safety note
 

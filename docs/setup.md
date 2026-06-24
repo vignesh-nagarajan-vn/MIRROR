@@ -60,7 +60,7 @@ In `configs/default.yaml`:
 ```yaml
 report:
   provider: anthropic        # was: template
-  model: claude-sonnet-4-6
+  model: claude-haiku-4-5
 ```
 
 If the API call fails for any reason, the generator automatically falls back to

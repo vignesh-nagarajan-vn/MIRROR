@@ -38,7 +38,7 @@ const CHESTXRAY14_LABELS = [
 ] as const;
 
 const PRESENCE_THRESHOLD = 0.5;
-const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6";
+const MODEL = process.env.ANTHROPIC_MODEL || "claude-haiku-4-5";
 
 type Finding = {
   label: string;

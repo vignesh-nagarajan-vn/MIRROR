@@ -138,7 +138,7 @@ the deployment topology table), see [`docs/architecture.md`](docs/architecture.m
 
 The hosted build at **[mirror-ten-jet.vercel.app](https://mirror-ten-jet.vercel.app/)**
 runs the full pipeline in the browser via a Next.js serverless route backed by
-Claude vision (`claude-sonnet-4-6`). Below is one real session: a chest X-ray
+Claude vision (`claude-haiku-4-5`). Below is one real session: a chest X-ray
 uploaded with the indication *"productive cough, 3 days."*
 
 **1. Upload and per-label predictions.** All 14 ChestX-ray14 labels are scored;
@@ -273,7 +273,7 @@ appears:
 1. **Root Directory**: set to **`frontend`** (the Next.js app lives there).
 2. **Environment Variables**: set `ANTHROPIC_API_KEY` to your key from
    <https://console.anthropic.com/>. (Optional: `ANTHROPIC_MODEL`, default
-   `claude-sonnet-4-6`.)
+   `claude-haiku-4-5`.)
 3. Click **Deploy** to get a public `*.vercel.app` URL.
 
 Step-by-step instructions (including the Vercel CLI path) are in

@@ -24,7 +24,7 @@ Browser (Next.js UI)
 /api/analyze   ← Next.js serverless route (frontend/app/api/analyze/route.ts)
    │  image + structured prompt, forced tool-call
    ▼
-Claude vision  (claude-sonnet-4-6)
+Claude vision  (claude-haiku-4-5)
    │  returns: 14 per-label probabilities, a bbox per positive
    │           finding, and a FINDINGS / IMPRESSION report
    ▼
@@ -47,7 +47,14 @@ Key properties of this engine:
   deterministic demo result, so the site always renders.
 
 The footer of the report panel surfaces the active engine:
-`backbone: claude-vision (claude-sonnet-4-6) · explain: bbox · report backend: anthropic`.
+`backbone: claude-vision (claude-haiku-4-5) · explain: bbox · report backend: anthropic`.
+
+> **Model note.** The default model is **`claude-haiku-4-5`**, chosen to preserve
+> tokens and cut cost: Haiku 4.5 is **$1 / $5** per million input/output tokens
+> versus Sonnet 4.6's **$3 / $15** — about **3× cheaper** (roughly one-third the
+> cost) per analysis. Override it with the `ANTHROPIC_MODEL` env var. The sample
+> screenshots below were captured on the earlier `claude-sonnet-4-6` default, so
+> their report footer still reads `claude-sonnet-4-6`.
 
 For the architecture and the local-vs-hosted topology table, see
 [`architecture.md`](architecture.md); for the deploy steps, see
