@@ -1,0 +1,30 @@
+{
+  "_note": "ILLUSTRATIVE EXAMPLE in the exact format evaluation/evaluate_localization.py writes. Numbers are literature-scale placeholders, NOT a measured benchmark. Regenerate with `python -m evaluation.evaluate_localization` on a trained checkpoint and NIH BBox_List_2017.csv.",
+  "timestamp": "2026-06-24T15:58:03.117420Z",
+  "backbone": "densenet121",
+  "explain_method": "gradcam",
+  "checkpoint": "models/checkpoints/densenet121_best.pt",
+  "cam_threshold": 0.5,
+  "iou_threshold": 0.1,
+  "seed": 42,
+  "reproducibility": {
+    "seed": 42,
+    "git_commit": "026c9532adffbeb80b4663e0d9bc8fb64ac99b10",
+    "python": "3.11.9",
+    "numpy": "1.26.4",
+    "torch": "2.3.1"
+  },
+  "n_boxes": 984,
+  "n_skipped": 0,
+  "overall": { "n": 984, "pointing_game": 0.6311, "mean_iou": 0.2218, "loc_accuracy": 0.6748 },
+  "per_label": {
+    "Atelectasis": { "n": 180, "pointing_game": 0.5722, "mean_iou": 0.1894, "loc_accuracy": 0.6056 },
+    "Cardiomegaly": { "n": 146, "pointing_game": 0.8493, "mean_iou": 0.3417, "loc_accuracy": 0.8767 },
+    "Effusion": { "n": 153, "pointing_game": 0.6601, "mean_iou": 0.2389, "loc_accuracy": 0.7124 },
+    "Infiltration": { "n": 123, "pointing_game": 0.5285, "mean_iou": 0.1772, "loc_accuracy": 0.5691 },
+    "Mass": { "n": 85, "pointing_game": 0.6118, "mean_iou": 0.2241, "loc_accuracy": 0.6588 },
+    "Nodule": { "n": 79, "pointing_game": 0.4304, "mean_iou": 0.1318, "loc_accuracy": 0.4557 },
+    "Pneumonia": { "n": 120, "pointing_game": 0.6500, "mean_iou": 0.2305, "loc_accuracy": 0.7000 },
+    "Pneumothorax": { "n": 98, "pointing_game": 0.6429, "mean_iou": 0.2356, "loc_accuracy": 0.6837 }
+  }
+}

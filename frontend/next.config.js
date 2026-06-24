@@ -1,10 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // The backend base URL is read at runtime from NEXT_PUBLIC_API_URL.
-  // Defaults to the local FastAPI server.
+  // NEXT_PUBLIC_API_URL selects where analyze requests go:
+  //   - unset  -> same-origin /api/analyze (Vercel serverless, Claude vision)
+  //   - a URL  -> that backend (e.g. http://localhost:8000 for local FastAPI)
+  // Left unset by default so the hosted (Vercel) build works out of the box.
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000",
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || "",
   },
 };
 

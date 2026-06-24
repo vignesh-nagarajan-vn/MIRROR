@@ -1,0 +1,52 @@
+{
+  "_note": "ILLUSTRATIVE EXAMPLE in the exact format evaluation/ablation.py writes. Predictive/localization numbers are read from the sibling eval/loc snapshots; latency is a literature-scale placeholder. NOT a measured benchmark. Regenerate with `python -m evaluation.ablation`.",
+  "timestamp": "2026-06-24T16:05:47.903118Z",
+  "backbone": "densenet121",
+  "explain_method": "gradcam",
+  "report_provider": "template",
+  "capabilities": {
+    "classification_only": { "prediction": true, "localization": false, "report": false },
+    "with_localization": { "prediction": true, "localization": true, "report": false },
+    "full_mirror": { "prediction": true, "localization": true, "report": true }
+  },
+  "metrics_source": {
+    "prediction_results": "results/evaluation/eval_densenet121.json",
+    "localization_results": "results/evaluation/loc_densenet121_gradcam.json"
+  },
+  "profile": {
+    "latency": {
+      "classification_only": { "prediction": 40.6, "localization": 0.3, "report": 0.0, "total": 40.9 },
+      "with_localization": { "prediction": 40.7, "localization": 132.5, "report": 0.0, "total": 173.2 },
+      "full_mirror": { "prediction": 40.8, "localization": 132.9, "report": 0.7, "total": 174.4 }
+    },
+    "predictions_invariant": true,
+    "max_prob_delta": 0.0,
+    "n_images": 24
+  },
+  "table": [
+    {
+      "condition": "classification_only",
+      "description": "prediction only (baseline)",
+      "prediction": true, "localization": false, "report": false,
+      "macro_auroc": 0.8063, "macro_f1": 0.4187,
+      "pointing_game": null, "mean_iou": null, "loc_accuracy": null,
+      "latency_ms": { "prediction": 40.6, "localization": 0.3, "report": 0.0, "total": 40.9 }
+    },
+    {
+      "condition": "with_localization",
+      "description": "prediction + evidence localization",
+      "prediction": true, "localization": true, "report": false,
+      "macro_auroc": 0.8063, "macro_f1": 0.4187,
+      "pointing_game": 0.6311, "mean_iou": 0.2218, "loc_accuracy": 0.6748,
+      "latency_ms": { "prediction": 40.7, "localization": 132.5, "report": 0.0, "total": 173.2 }
+    },
+    {
+      "condition": "full_mirror",
+      "description": "prediction + localization + NL report",
+      "prediction": true, "localization": true, "report": true,
+      "macro_auroc": 0.8063, "macro_f1": 0.4187,
+      "pointing_game": 0.6311, "mean_iou": 0.2218, "loc_accuracy": 0.6748,
+      "latency_ms": { "prediction": 40.8, "localization": 132.9, "report": 0.7, "total": 174.4 }
+    }
+  ]
+}

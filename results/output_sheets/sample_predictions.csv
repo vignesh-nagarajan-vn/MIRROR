@@ -1,0 +1,25 @@
+image,modality,ground_truth,top_finding,top_probability,num_present,present_findings,primary_location,report_backend
+synth_0000.dcm,chest X-ray,Fibrosis,Fibrosis,0.78,1,Fibrosis,bilateral lower lung zones,template
+synth_0001.png,chest X-ray,No Finding,(none above threshold),0.18,0,,n/a,template
+synth_0002.png,chest X-ray,No Finding,(none above threshold),0.14,0,,n/a,template
+synth_0003.png,chest X-ray,Consolidation,Consolidation,0.81,1,Consolidation,right lower lung zone,template
+synth_0004.png,chest X-ray,No Finding,(none above threshold),0.11,0,,n/a,template
+synth_0005.png,chest X-ray,Mass|Effusion,Effusion,0.84,2,Effusion;Mass,right costophrenic angle,template
+synth_0006.png,chest X-ray,No Finding,(none above threshold),0.16,0,,n/a,template
+synth_0007.png,chest X-ray,Fibrosis,Fibrosis,0.72,1,Fibrosis,right lower lung zone,template
+synth_0008.png,chest X-ray,No Finding,(none above threshold),0.13,0,,n/a,template
+synth_0009.png,chest X-ray,Emphysema,Emphysema,0.86,1,Emphysema,bilateral upper lung zones,template
+synth_0010.png,chest X-ray,Pneumonia,Pneumonia,0.69,1,Pneumonia,right lower lung zone,template
+synth_0011.png,chest X-ray,No Finding,(none above threshold),0.19,0,,n/a,template
+synth_0012.png,chest X-ray,Edema,Edema,0.83,1,Edema,bilateral perihilar region,template
+synth_0013.png,chest X-ray,Emphysema|Fibrosis,Emphysema,0.79,2,Emphysema;Fibrosis,bilateral upper lung zones,template
+synth_0014.png,chest X-ray,No Finding,(none above threshold),0.12,0,,n/a,template
+synth_0015.png,chest X-ray,No Finding,(none above threshold),0.15,0,,n/a,template
+synth_0016.png,chest X-ray,Emphysema|Pneumothorax,Pneumothorax,0.85,2,Pneumothorax;Emphysema,left apical zone,template
+synth_0017.png,chest X-ray,No Finding,(none above threshold),0.17,0,,n/a,template
+synth_0018.png,chest X-ray,No Finding,(none above threshold),0.10,0,,n/a,template
+synth_0019.png,chest X-ray,Effusion,Effusion,0.82,1,Effusion,right costophrenic angle,template
+synth_0020.png,chest X-ray,No Finding,(none above threshold),0.13,0,,n/a,template
+synth_0021.png,chest X-ray,Emphysema,Emphysema,0.80,1,Emphysema,bilateral upper lung zones,template
+synth_0022.png,chest X-ray,No Finding,(none above threshold),0.14,0,,n/a,template
+synth_0023.png,chest X-ray,Consolidation|Pleural_Thickening,Consolidation,0.76,2,Consolidation;Pleural_Thickening,right lower lung zone,template

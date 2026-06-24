@@ -9,12 +9,12 @@
   --ink-muted: #8597a6;
   --ink-faint: #5b6b78;
 
-  /* Phosphor teal for UI chrome — evokes a viewing-screen glow and stays
+  /* Phosphor teal for UI chrome, evokes a viewing-screen glow and stays
      out of the way of the jet-colormap overlays. */
   --signal: #45d3c0;
   --signal-dim: #2a8479;
   --warn: #e8b84b;
-  --present: #ff6b5e; /* a finding "lit up" — tuned to the hot end of jet */
+  --present: #ff6b5e; /* a finding "lit up", tuned to the hot end of jet */
 
   --radius: 6px;
   --mono: "JetBrains Mono", ui-monospace, "SF Mono", "Menlo", monospace;
@@ -50,7 +50,7 @@ a { color: var(--signal); text-decoration: none; }
   font-weight: 700;
   font-size: 20px;
   letter-spacing: 0.34em;
-  /* The "I" sits inside MIRROR like a reflected axis — a quiet nod to the name. */
+  /* The "I" sits inside MIRROR like a reflected axis, a quiet nod to the name. */
 }
 .wordmark .axis { color: var(--signal); }
 .tagline {
@@ -165,6 +165,33 @@ a { color: var(--signal); text-decoration: none; }
 }
 .viewer.show-overlay .overlay { opacity: 1; }
 .viewer .empty { color: var(--ink-faint); font-family: var(--mono); font-size: 12px; }
+
+/* Bounding-box evidence (Claude-vision path): a localized region drawn over the
+   film when no rendered Grad-CAM PNG is available. */
+.viewer .evidence-box {
+  position: absolute;
+  border: 2px solid var(--present);
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5), 0 0 18px rgba(255, 107, 94, 0.45);
+  background: rgba(255, 107, 94, 0.1);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+.viewer.show-overlay .evidence-box { opacity: 1; }
+.viewer .evidence-tag {
+  position: absolute;
+  top: -18px;
+  left: -2px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  color: #04110f;
+  background: var(--present);
+  padding: 1px 5px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
 
 .viewer-bar {
   display: flex; align-items: center; justify-content: space-between;

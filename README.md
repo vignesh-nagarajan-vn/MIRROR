@@ -27,7 +27,6 @@ Mentored by **Mr. Sriram Venkatapathy** (AI Research at Capital One, PhD-CS at I
   <img src="https://img.shields.io/badge/Matplotlib-%23ffffff.svg?style=for-the-badge&logo=Matplotlib&logoColor=black">
   <img src="https://img.shields.io/badge/Pillow-%23306998.svg?style=for-the-badge&logo=python&logoColor=white">
   <img src="https://img.shields.io/badge/pydicom%20%2F%20DICOM-%2300A4E4.svg?style=for-the-badge&logo=dicom&logoColor=white">
-  <img src="https://img.shields.io/badge/Claude-D97757?style=for-the-badge&logo=anthropic&logoColor=white">
   <img src="https://img.shields.io/badge/Jupyter-F37626.svg?style=for-the-badge&logo=Jupyter&logoColor=white">
 </p>
 
@@ -74,8 +73,6 @@ saliency overlays, and generates a structured natural-language report.
 Image → Prediction → Evidence Localization → Clinical Reasoning → Human-Readable Report
 ```
 
-![Architecture](docs/images/architecture.svg)
-
 ## Research question
 
 > Can multimodal AI systems that combine image classification, visual
@@ -100,17 +97,94 @@ The result not only predicts abnormalities but communicates **why** the
 prediction was made and **how** it relates to potential clinical findings, and
 every sentence in the report traces back to a probability and a saliency region.
 
+## System architecture
+
+MIRROR turns a single radiograph into a reviewable diagnostic draft by chaining
+**three complementary layers**, where each layer's output becomes the *grounded
+input* to the next, so the final report can always be traced back to a
+probability and a specific image region.
+
+![Architecture](docs/images/architecture.svg)
+
+| Layer | Module | Does | Produces |
+| --- | --- | --- | --- |
+| **1 · Classification** | [`models/classification/`](models/classification/) | A CNN/ViT backbone (DenseNet121 · EfficientNet-B0 · ViT-B/16) with a 14-way multi-label head | Per-label probabilities |
+| **2 · Evidence localization** | [`models/explainability/`](models/explainability/) | Grad-CAM / Score-CAM hooks the target layer for each positive label | Heatmap + region (centroid, bbox) |
+| **3 · Clinical reasoning** | [`models/report_generation/`](models/report_generation/) | An LLM (or an offline template) prompts over the **structured evidence only, never the pixels** | `FINDINGS` / `IMPRESSION` report |
+
+[`models/pipeline.py`](models/pipeline.py) orchestrates the four stages into one
+`AnalysisResult`. The two later layers are individually toggleable, which is
+exactly what recovers the ablation conditions the research question names
+(classification-only → +localization → full MIRROR) and lets the evaluation
+harnesses show *added interpretability at no predictive cost*.
+
+**Two interchangeable serving engines satisfy the same response contract**, so
+the UI is identical in both:
+
+- **Local full stack:** FastAPI ([`backend/`](backend/)) wraps the real PyTorch
+  pipeline; the frontend points at it via `NEXT_PUBLIC_API_URL`. Every input type
+  (PNG/JPEG/BMP/WEBP + DICOM) and rendered Grad-CAM overlays.
+- **Hosted on Vercel:** a Next.js serverless route
+  ([`frontend/app/api/analyze/route.ts`](frontend/app/api/analyze/route.ts)) uses
+  **Claude's vision model** as a drop-in engine (the PyTorch pipeline can't fit
+  serverless), returning the same JSON with a bounding box per finding.
+
+For the full write-up (per-layer module breakdowns, the grounding rationale, and
+the deployment topology table), see [`docs/architecture.md`](docs/architecture.md).
+
 ## Quickstart
 
-```bash
-# 1. Install
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
+Two ways to run MIRROR: **locally** (the real PyTorch pipeline, every input type)
+or as a **live website** (deploy to Vercel, powered by Claude vision).
+Both are below.
 
-# 2. Run the full pipeline on one image (no checkpoint or API key needed)
-#    A synthetic sample ships with the repo, so this works with zero downloads:
+### A. Run locally: every step, from a fresh Git Bash window
+
+These are the *complete* instructions starting from nothing. They assume
+**Windows + [Git Bash](https://git-scm.com/downloads)** (the commands are the
+same on macOS/Linux). Run them top to bottom.
+
+**0. One-time prerequisites** (skip any you already have):
+
+- **Git**: <https://git-scm.com/downloads> (this is what gives you Git Bash).
+- **Python 3.10+**: <https://www.python.org/downloads/> (tick *"Add Python to
+  PATH"* in the installer).
+- **Node.js 18+**: <https://nodejs.org/> (only needed for the web UI in step 6).
+
+Verify they're visible inside Git Bash:
+
+```bash
+git --version && python --version && node --version
+```
+
+**1. Clone the repository and enter it:**
+
+```bash
+git clone https://github.com/vignesh-nagarajan-vn/MIRROR.git
+cd MIRROR
+```
+
+**2. Create and activate a virtual environment:**
+
+```bash
+python -m venv .venv
+source .venv/Scripts/activate     # macOS/Linux: source .venv/bin/activate
+```
+
+Your prompt should now be prefixed with `(.venv)`.
+
+**3. Install the Python dependencies:**
+
+```bash
+pip install -r requirements.txt
+```
+
+**4. Run the full pipeline on one image** (no checkpoint or API key needed; a
+synthetic sample ships with the repo, so this works with zero downloads):
+
+```bash
 python -m demo.run_demo datasets/samples/chestxray14/images/synth_0001.png
-#    Native DICOM works too; point it at the bundled .dcm:
+# Native DICOM works too; point it at the bundled .dcm:
 python -m demo.run_demo datasets/samples/chestxray14/images/synth_0000.dcm
 ```
 
@@ -120,39 +194,102 @@ report backend, so it works anywhere. Inputs may be **PNG/JPEG/BMP/WEBP or DICOM
 (`.dcm`)**. DICOM is decoded with the modality/VOI LUT and MONOCHROME1 handling
 applied (see [`datasets/README.md`](datasets/README.md#dicom-ingest)).
 
-### Full stack (web UI)
+**5. Start the backend API** (leave it running in this terminal):
 
 ```bash
-# Backend
-cd backend && uvicorn app.main:app --reload --port 8000
-
-# Frontend (new terminal)
-cd frontend && npm install && cp .env.local.example .env.local && npm run dev
+cd backend
+uvicorn app.main:app --reload --port 8000     # Swagger UI at http://localhost:8000/docs
 ```
 
-Open http://localhost:3000, drop in a radiograph, toggle the evidence overlay,
-read the draft report. Full instructions in [`docs/setup.md`](docs/setup.md).
+**6. Start the frontend** (open a *new* Git Bash window, then):
+
+```bash
+cd MIRROR/frontend
+npm install
+cp .env.local.example .env.local              # points the UI at the local backend
+npm run dev                                    # http://localhost:3000
+```
+
+**7. Use it.** Open <http://localhost:3000>, drop in a radiograph, toggle the
+evidence overlay, and read the draft report. Stop either server with `Ctrl+C`;
+reactivate the venv later with `source .venv/Scripts/activate`. Full reference in
+[`docs/setup.md`](docs/setup.md).
+
+> **Optional: richer reports with Claude.** The offline template backend needs
+> nothing. To generate prose reports with Claude, `export ANTHROPIC_API_KEY=sk-ant-...`
+> and set `report.provider: anthropic` in [`configs/default.yaml`](configs/default.yaml).
+> It falls back to the template automatically if the key is missing.
+
+### B. Deploy a live public website (Vercel)
+
+Want a shareable URL instead of localhost? Deploy the app to Vercel in about two
+minutes. The hosted site is **fully functional on its own** (no backend to host)
+because a Next.js serverless route uses **Claude's vision model** as the
+inference engine, since the PyTorch pipeline can't run on serverless. You only
+need a free Vercel account and an Anthropic API key.
+
+Import the repo from the Vercel dashboard (**[vercel.com/new](https://vercel.com/new)
+→ Import Git Repository → pick your `MIRROR` repo**). When the configure screen
+appears:
+
+1. **Root Directory**: set to **`frontend`** (the Next.js app lives there).
+2. **Environment Variables**: set `ANTHROPIC_API_KEY` to your key from
+   <https://console.anthropic.com/>. (Optional: `ANTHROPIC_MODEL`, default
+   `claude-sonnet-4-6`.)
+3. Click **Deploy** to get a public `*.vercel.app` URL.
+
+Step-by-step instructions (including the Vercel CLI path) are in
+[`docs/deployment.md`](docs/deployment.md). Deploying without a key still works:
+the analyze route returns a clearly-labelled demo result so the site never
+hard-fails.
 
 ## Repository layout
 
 ```
 mirror/
-├── frontend/                 # Next.js "reading-room" UI
-├── backend/                  # FastAPI service (lazy-loads the pipeline)
-│   └── app/{api,core,services,schemas}
-├── models/                   # the three layers + orchestration
-│   ├── classification/       # DenseNet121 / EfficientNet / ViT, train + infer
-│   ├── explainability/       # Grad-CAM, Score-CAM, overlay rendering
-│   ├── report_generation/    # LLM + offline-template report generator
-│   ├── common/               # constants, config, preprocessing
-│   └── pipeline.py           # Image → Prediction → Evidence → Report
-├── notebooks/                # data exploration + pipeline walkthrough
-├── datasets/                 # dataset docs + prep scripts (no data committed)
-├── evaluation/               # AUROC/F1 + localization metrics
-├── paper/                    # write-up scaffold
-├── docs/                     # architecture, setup, API reference
-├── demo/                     # CLI demo + assets
-├── configs/default.yaml      # single source of tunables
+├── frontend/                     # Next.js "reading-room" UI
+│   ├── app/
+│   │   ├── page.tsx              # the single-page reading room
+│   │   ├── layout.tsx           # root layout + fonts
+│   │   └── api/analyze/route.ts  # serverless analyze route (Vercel, Claude vision)
+│   ├── components/               # UploadPanel · FilmViewer · FindingsList · ReportPanel
+│   ├── lib/api.ts                # typed client + response contract
+│   ├── styles/globals.css        # reading-room theme
+│   ├── vercel.json               # Vercel build/function config
+│   └── .env.local.example        # NEXT_PUBLIC_API_URL + ANTHROPIC_API_KEY
+├── backend/                      # FastAPI service (lazy-loads the pipeline)
+│   └── app/
+│       ├── api/routes.py        # /api/analyze · /api/health · /api/labels
+│       ├── core/config.py       # settings (upload limits, version)
+│       ├── services/            # pipeline_service (singleton, lazy load)
+│       ├── schemas/             # Pydantic request/response models
+│       └── main.py              # app factory + CORS
+├── models/                       # the three layers + orchestration
+│   ├── classification/          # DenseNet121 / EfficientNet / ViT: model, dataset, train, infer
+│   ├── explainability/          # Grad-CAM, Score-CAM, explainer, overlay rendering
+│   ├── report_generation/       # LLM (Claude) + offline-template generator, prompts
+│   ├── common/                  # constants, config, preprocessing (DICOM ingest)
+│   └── pipeline.py              # Image → Prediction → Evidence → Report
+├── evaluation/                   # AUROC/F1, localization IoU, ablation, multi-seed
+│   ├── evaluate.py              # predictive quality + bootstrap CIs
+│   ├── evaluate_localization.py # pointing game / IoU vs. NIH boxes
+│   ├── ablation.py              # classification-only vs. +localization vs. full
+│   ├── aggregate_seeds.py       # mean ± std across training seeds
+│   └── metrics.py · repro.py    # metric defs + reproducibility stamping
+├── results/                      # committed example outputs (see results/README.md)
+│   ├── output_sheets/           # per-image prediction CSV + structured findings JSON
+│   └── evaluation/              # eval / localization / ablation / aggregate snapshots
+├── datasets/                     # dataset docs + prep scripts (+ tiny synthetic sample set)
+│   └── samples/chestxray14/     # 24 synthetic studies (NIH layout, one DICOM), committed
+├── notebooks/                    # data exploration + pipeline walkthrough
+├── tests/                        # torch-free unit tests (metrics, ablation, repro, …)
+├── docs/                         # architecture · setup · deployment · API reference
+│   └── images/architecture.svg  # the system diagram
+├── paper/                        # write-up scaffold
+├── demo/                         # CLI demo (run_demo.py) + generated assets/
+├── configs/default.yaml          # single source of tunables (backbone, CAM, report backend)
+├── docker-compose.yml            # backend :8000 + frontend :3000
+├── Makefile · requirements.txt
 └── README.md
 ```
 
@@ -226,6 +363,11 @@ numbers regenerate. See
 [`datasets/README.md`](datasets/README.md#localization-ground-truth) for the box
 file and [`evaluation/README.md`](evaluation/README.md) for the metric details.
 
+`evaluation/results/` is git-ignored; a committed, curated snapshot of every
+harness's output, plus per-image **output sheets** for the synthetic sample set,
+lives in [`results/`](results/) so the numbers' *format* is visible in the repo
+(clearly marked illustrative, not benchmark claims).
+
 ## Potential contributions
 
 - An end-to-end multimodal radiology analysis pipeline.
@@ -237,9 +379,13 @@ file and [`evaluation/README.md`](evaluation/README.md) for the metric details.
 
 ## Documentation
 
-- [`docs/architecture.md`](docs/architecture.md): how the layers connect.
+- [`docs/architecture.md`](docs/architecture.md): how the layers connect + the
+  local/Vercel deployment topology.
 - [`docs/setup.md`](docs/setup.md): installation and running locally.
+- [`docs/deployment.md`](docs/deployment.md): deploy a live public site on Vercel.
 - [`docs/api.md`](docs/api.md): REST endpoints and payloads.
+- [`results/README.md`](results/README.md): committed example outputs and metric
+  snapshots.
 - [`CONTRIBUTING.md`](CONTRIBUTING.md): development guidelines.
 
 ## Safety, ethics, and limitations
