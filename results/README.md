@@ -39,8 +39,8 @@ of findings above threshold, and which report backend wrote the draft. It is the
 per-image companion to the aggregate metrics in `evaluation/`.
 
 `sample_findings.json` is the full structured result (the
-`MirrorPipeline.analyze().to_dict()` payload) for three representative studies —
-one normal, one single-finding, one multi-finding — minus the base64 overlay
+`MirrorPipeline.analyze().to_dict()` payload) for three representative studies
+(one normal, one single-finding, one multi-finding), minus the base64 overlay
 blobs, which are regenerated on demand into `demo/assets/`.
 
 ## Evaluation snapshots (`evaluation/`)

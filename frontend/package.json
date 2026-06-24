@@ -2,7 +2,7 @@
   "name": "mirror-frontend",
   "version": "0.1.0",
   "private": true,
-  "description": "MIRROR reading-room UI — upload a radiograph, inspect saliency evidence, read the draft report.",
+  "description": "MIRROR reading-room UI: upload a radiograph, inspect saliency evidence, read the draft report.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

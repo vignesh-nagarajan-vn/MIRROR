@@ -9,12 +9,12 @@
   --ink-muted: #8597a6;
   --ink-faint: #5b6b78;
 
-  /* Phosphor teal for UI chrome — evokes a viewing-screen glow and stays
+  /* Phosphor teal for UI chrome, evokes a viewing-screen glow and stays
      out of the way of the jet-colormap overlays. */
   --signal: #45d3c0;
   --signal-dim: #2a8479;
   --warn: #e8b84b;
-  --present: #ff6b5e; /* a finding "lit up" — tuned to the hot end of jet */
+  --present: #ff6b5e; /* a finding "lit up", tuned to the hot end of jet */
 
   --radius: 6px;
   --mono: "JetBrains Mono", ui-monospace, "SF Mono", "Menlo", monospace;
@@ -50,7 +50,7 @@ a { color: var(--signal); text-decoration: none; }
   font-weight: 700;
   font-size: 20px;
   letter-spacing: 0.34em;
-  /* The "I" sits inside MIRROR like a reflected axis — a quiet nod to the name. */
+  /* The "I" sits inside MIRROR like a reflected axis, a quiet nod to the name. */
 }
 .wordmark .axis { color: var(--signal); }
 .tagline {

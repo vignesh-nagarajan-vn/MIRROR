@@ -1,8 +1,8 @@
 # Deployment (Vercel)
 
 This guide stands up a **live, publicly shareable** MIRROR site on
-[Vercel](https://vercel.com). The deployed site is fully functional on its own —
-no separate backend to host — because the Next.js app ships a serverless
+[Vercel](https://vercel.com). The deployed site is fully functional on its own
+(no separate backend to host) because the Next.js app ships a serverless
 analysis route that uses **Claude's vision model** as the inference engine.
 
 > **How the hosted path differs from local.** The local full stack runs the real
@@ -11,7 +11,7 @@ analysis route that uses **Claude's vision model** as the inference engine.
 > ceiling, cold-start model loads), so on Vercel the route
 > [`frontend/app/api/analyze/route.ts`](../frontend/app/api/analyze/route.ts)
 > asks Claude to read the radiograph, score the 14 ChestX-ray14 labels, localize
-> each positive finding with a bounding box, and draft the report — returning the
+> each positive finding with a bounding box, and draft the report, returning the
 > **same JSON contract** the UI already consumes. The frontend code is identical
 > either way; only `NEXT_PUBLIC_API_URL` changes which engine answers.
 
@@ -22,23 +22,9 @@ analysis route that uses **Claude's vision model** as the inference engine.
   a server-side environment variable on Vercel; it is never exposed to browsers
   and never committed.
 
-## One-click deploy (button)
+## Deploy from the Vercel dashboard
 
-The README's **Deploy to Vercel** button opens Vercel's import flow pre-filled to
-ask for `ANTHROPIC_API_KEY`. It clones this repo into your own GitHub account and
-deploys it.
-
-When the configure screen appears:
-
-1. **Root Directory** → set to **`frontend`** (the Next.js app lives in a
-   subdirectory). This is the one setting Vercel can't infer from the URL.
-2. **Environment Variables** → set `ANTHROPIC_API_KEY` to your key.
-   Optionally set `ANTHROPIC_MODEL` (defaults to `claude-sonnet-4-6`).
-3. Click **Deploy**. In ~1–2 minutes you get a public `*.vercel.app` URL.
-
-## Deploy your existing repo (recommended for your own fork)
-
-To deploy the repo you already have on GitHub (rather than a fresh clone):
+To deploy the repo you have on GitHub:
 
 1. Go to **<https://vercel.com/new>** → **Import Git Repository** → pick your
    `MIRROR` repo.
@@ -75,7 +61,7 @@ vercel --prod     # promote to the public production URL
 - The hosted route accepts **PNG / JPEG / WEBP**. Native **DICOM (`.dcm`)** and
   **BMP** ingest are local-stack only (they need the Python decode path); see
   [`datasets/README.md`](../datasets/README.md#dicom-ingest).
-- Share the URL — it's a fully working public demo.
+- Share the URL: it's a fully working public demo.
 
 ## Costs and limits
 
@@ -86,6 +72,6 @@ vercel --prod     # promote to the public production URL
 
 ## Safety note
 
-The hosted demo is a research prototype, **not for clinical use** — the same
+The hosted demo is a research prototype, **not for clinical use**, the same
 disclaimer the app surfaces and that every generated report carries. Don't upload
 real patient images / PHI to a public deployment.

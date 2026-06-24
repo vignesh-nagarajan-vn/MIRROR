@@ -108,7 +108,7 @@ every sentence in the report traces back to a probability and a saliency region.
 
 MIRROR turns a single radiograph into a reviewable diagnostic draft by chaining
 **three complementary layers**, where each layer's output becomes the *grounded
-input* to the next — so the final report can always be traced back to a
+input* to the next, so the final report can always be traced back to a
 probability and a specific image region.
 
 ![Architecture](docs/images/architecture.svg)
@@ -117,7 +117,7 @@ probability and a specific image region.
 | --- | --- | --- | --- |
 | **1 · Classification** | [`models/classification/`](models/classification/) | A CNN/ViT backbone (DenseNet121 · EfficientNet-B0 · ViT-B/16) with a 14-way multi-label head | Per-label probabilities |
 | **2 · Evidence localization** | [`models/explainability/`](models/explainability/) | Grad-CAM / Score-CAM hooks the target layer for each positive label | Heatmap + region (centroid, bbox) |
-| **3 · Clinical reasoning** | [`models/report_generation/`](models/report_generation/) | An LLM (or an offline template) prompts over the **structured evidence only — never the pixels** | `FINDINGS` / `IMPRESSION` report |
+| **3 · Clinical reasoning** | [`models/report_generation/`](models/report_generation/) | An LLM (or an offline template) prompts over the **structured evidence only, never the pixels** | `FINDINGS` / `IMPRESSION` report |
 
 [`models/pipeline.py`](models/pipeline.py) orchestrates the four stages into one
 `AnalysisResult`. The two later layers are individually toggleable, which is
@@ -128,24 +128,24 @@ harnesses show *added interpretability at no predictive cost*.
 **Two interchangeable serving engines satisfy the same response contract**, so
 the UI is identical in both:
 
-- **Local full stack** — FastAPI ([`backend/`](backend/)) wraps the real PyTorch
+- **Local full stack:** FastAPI ([`backend/`](backend/)) wraps the real PyTorch
   pipeline; the frontend points at it via `NEXT_PUBLIC_API_URL`. Every input type
   (PNG/JPEG/BMP/WEBP + DICOM) and rendered Grad-CAM overlays.
-- **Hosted on Vercel** — a Next.js serverless route
+- **Hosted on Vercel:** a Next.js serverless route
   ([`frontend/app/api/analyze/route.ts`](frontend/app/api/analyze/route.ts)) uses
   **Claude's vision model** as a drop-in engine (the PyTorch pipeline can't fit
   serverless), returning the same JSON with a bounding box per finding.
 
-For the full write-up — per-layer module breakdowns, the grounding rationale, and
-the deployment topology table — see [`docs/architecture.md`](docs/architecture.md).
+For the full write-up (per-layer module breakdowns, the grounding rationale, and
+the deployment topology table), see [`docs/architecture.md`](docs/architecture.md).
 
 ## Quickstart
 
 Two ways to run MIRROR: **locally** (the real PyTorch pipeline, every input type)
-or as a **live website** (one-click deploy to Vercel, powered by Claude vision).
+or as a **live website** (deploy to Vercel, powered by Claude vision).
 Both are below.
 
-### A. Run locally — every step, from a fresh Git Bash window
+### A. Run locally: every step, from a fresh Git Bash window
 
 These are the *complete* instructions starting from nothing. They assume
 **Windows + [Git Bash](https://git-scm.com/downloads)** (the commands are the
@@ -153,10 +153,10 @@ same on macOS/Linux). Run them top to bottom.
 
 **0. One-time prerequisites** (skip any you already have):
 
-- **Git** — <https://git-scm.com/downloads> (this is what gives you Git Bash).
-- **Python 3.10+** — <https://www.python.org/downloads/> (tick *"Add Python to
+- **Git**: <https://git-scm.com/downloads> (this is what gives you Git Bash).
+- **Python 3.10+**: <https://www.python.org/downloads/> (tick *"Add Python to
   PATH"* in the installer).
-- **Node.js 18+** — <https://nodejs.org/> (only needed for the web UI in step 6).
+- **Node.js 18+**: <https://nodejs.org/> (only needed for the web UI in step 6).
 
 Verify they're visible inside Git Bash:
 
@@ -186,7 +186,7 @@ Your prompt should now be prefixed with `(.venv)`.
 pip install -r requirements.txt
 ```
 
-**4. Run the full pipeline on one image** (no checkpoint or API key needed — a
+**4. Run the full pipeline on one image** (no checkpoint or API key needed; a
 synthetic sample ships with the repo, so this works with zero downloads):
 
 ```bash
@@ -222,33 +222,33 @@ evidence overlay, and read the draft report. Stop either server with `Ctrl+C`;
 reactivate the venv later with `source .venv/Scripts/activate`. Full reference in
 [`docs/setup.md`](docs/setup.md).
 
-> **Optional — richer reports with Claude.** The offline template backend needs
+> **Optional: richer reports with Claude.** The offline template backend needs
 > nothing. To generate prose reports with Claude, `export ANTHROPIC_API_KEY=sk-ant-...`
 > and set `report.provider: anthropic` in [`configs/default.yaml`](configs/default.yaml).
 > It falls back to the template automatically if the key is missing.
 
 ### B. Deploy a live public website (Vercel)
 
-Want a shareable URL instead of localhost? Deploy the app to Vercel in ~2
-minutes. The hosted site is **fully functional on its own** — no backend to
-host — because a Next.js serverless route uses **Claude's vision model** as the
-inference engine (the PyTorch pipeline can't run on serverless). You only need a
-free Vercel account and an Anthropic API key.
+Want a shareable URL instead of localhost? Deploy the app to Vercel in about two
+minutes. The hosted site is **fully functional on its own** (no backend to host)
+because a Next.js serverless route uses **Claude's vision model** as the
+inference engine, since the PyTorch pipeline can't run on serverless. You only
+need a free Vercel account and an Anthropic API key.
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvignesh-nagarajan-vn%2FMIRROR&env=ANTHROPIC_API_KEY&envDescription=Anthropic%20API%20key%20for%20the%20serverless%20analysis%20route&envLink=https%3A%2F%2Fconsole.anthropic.com%2F&project-name=mirror&repository-name=mirror)
+Import the repo from the Vercel dashboard (**[vercel.com/new](https://vercel.com/new)
+→ Import Git Repository → pick your `MIRROR` repo**). When the configure screen
+appears:
 
-When the Vercel configure screen appears:
-
-1. **Root Directory** → set to **`frontend`** (the Next.js app lives there).
-2. **Environment Variables** → set `ANTHROPIC_API_KEY` to your key from
+1. **Root Directory**: set to **`frontend`** (the Next.js app lives there).
+2. **Environment Variables**: set `ANTHROPIC_API_KEY` to your key from
    <https://console.anthropic.com/>. (Optional: `ANTHROPIC_MODEL`, default
    `claude-sonnet-4-6`.)
-3. Click **Deploy** → you get a public `*.vercel.app` URL.
+3. Click **Deploy** to get a public `*.vercel.app` URL.
 
-Step-by-step instructions (including deploying your own existing repo and the
-Vercel CLI path) are in [`docs/deployment.md`](docs/deployment.md). Deploying
-without a key still works — the analyze route returns a clearly-labelled demo
-result so the site never hard-fails.
+Step-by-step instructions (including the Vercel CLI path) are in
+[`docs/deployment.md`](docs/deployment.md). Deploying without a key still works:
+the analyze route returns a clearly-labelled demo result so the site never
+hard-fails.
 
 ## Repository layout
 
@@ -287,7 +287,7 @@ mirror/
 │   ├── output_sheets/           # per-image prediction CSV + structured findings JSON
 │   └── evaluation/              # eval / localization / ablation / aggregate snapshots
 ├── datasets/                     # dataset docs + prep scripts (+ tiny synthetic sample set)
-│   └── samples/chestxray14/     # 24 synthetic studies (NIH layout, one DICOM) — committed
+│   └── samples/chestxray14/     # 24 synthetic studies (NIH layout, one DICOM), committed
 ├── notebooks/                    # data exploration + pipeline walkthrough
 ├── tests/                        # torch-free unit tests (metrics, ablation, repro, …)
 ├── docs/                         # architecture · setup · deployment · API reference
@@ -371,8 +371,8 @@ numbers regenerate. See
 file and [`evaluation/README.md`](evaluation/README.md) for the metric details.
 
 `evaluation/results/` is git-ignored; a committed, curated snapshot of every
-harness's output — plus per-image **output sheets** for the synthetic sample set
-— lives in [`results/`](results/) so the numbers' *format* is visible in the repo
+harness's output, plus per-image **output sheets** for the synthetic sample set,
+lives in [`results/`](results/) so the numbers' *format* is visible in the repo
 (clearly marked illustrative, not benchmark claims).
 
 ## Potential contributions

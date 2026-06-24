@@ -6,7 +6,7 @@
 // loads), so the hosted site uses Claude's vision model as a drop-in inference
 // engine instead: it reads the uploaded radiograph, scores the 14 ChestX-ray14
 // labels, localizes each positive finding with a bounding box, and drafts the
-// FINDINGS/IMPRESSION report — returning the exact same JSON contract the
+// FINDINGS/IMPRESSION report, returning the exact same JSON contract the
 // frontend already consumes from the FastAPI backend.
 //
 // Set ANTHROPIC_API_KEY in the Vercel project to enable this. With no key the
@@ -18,7 +18,7 @@ import Anthropic from "@anthropic-ai/sdk";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-// NIH ChestX-ray14 taxonomy — kept in lockstep with
+// NIH ChestX-ray14 taxonomy, kept in lockstep with
 // models/common/constants.py so the hosted and local paths agree on label order.
 const CHESTXRAY14_LABELS = [
   "Atelectasis",

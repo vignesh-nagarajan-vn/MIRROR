@@ -18,7 +18,7 @@ function isExplained(f: Finding): boolean {
 // Map a normalized bbox (fractions of the *image*) onto the square viewer.
 // The film is shown with object-fit: contain, which letterboxes non-square
 // images, so we offset/scale by the image's displayed content rect rather than
-// the container — keeping the box aligned for any aspect ratio.
+// the container, keeping the box aligned for any aspect ratio.
 function boxStyle(
   bbox: [number, number, number, number],
   natural: { w: number; h: number } | null,

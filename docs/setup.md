@@ -86,7 +86,7 @@ docker compose up --build      # backend on :8000, frontend on :3000
 
 ## Deploy a public site (Vercel)
 
-To put MIRROR online as a live, shareable website — no backend to host, powered
-by Claude vision through a Next.js serverless route — see
-[`deployment.md`](deployment.md). It covers the one-click **Deploy to Vercel**
-button, the import flow for your own repo, and the `ANTHROPIC_API_KEY` setup.
+To put MIRROR online as a live, shareable website (no backend to host, powered
+by Claude vision through a Next.js serverless route), see
+[`deployment.md`](deployment.md). It covers the Vercel import flow for your repo
+and the `ANTHROPIC_API_KEY` setup.
