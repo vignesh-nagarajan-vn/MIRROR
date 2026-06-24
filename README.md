@@ -10,6 +10,12 @@ own evidence, and writes a clinician-style draft report. Completed as part of th
 
 Mentored by **Mr. Sriram Venkatapathy** (AI Research at Capital One, PhD-CS at IIT Hyderabad)
 
+<br/>
+
+### 🔴 Live demo: **[mirror-ten-jet.vercel.app](https://mirror-ten-jet.vercel.app/)**
+
+*Upload a chest X-ray and get predictions, evidence overlays, and a draft report in your browser.*
+
 </div>
 
 ---
@@ -96,6 +102,38 @@ integrates three complementary layers into one framework:
 The result not only predicts abnormalities but communicates **why** the
 prediction was made and **how** it relates to potential clinical findings, and
 every sentence in the report traces back to a probability and a saliency region.
+
+## Live demo (v1.0.0)
+
+The hosted build at **[mirror-ten-jet.vercel.app](https://mirror-ten-jet.vercel.app/)**
+runs the full pipeline in the browser via a Next.js serverless route backed by
+Claude vision (`claude-sonnet-4-6`). Below is one real session: a chest X-ray
+uploaded with the indication *"productive cough, 3 days."*
+
+**1. Upload and per-label predictions.** All 14 ChestX-ray14 labels are scored;
+Pneumonia (78%), Infiltration (72%), and Consolidation (65%) rise above
+threshold, each with a saliency-derived location.
+
+![Study input and predictions](docs/images/deployment/mirror-sample1-input-predictions-ui.png)
+
+**2. Evidence localization.** Each positive finding gets a bounding box on the
+film, toggled by the chips. Consolidation localizes to the right lower lobe;
+Infiltration spans the bilateral lower zones.
+
+| Consolidation | Infiltration |
+| :---: | :---: |
+| ![Consolidation overlay](docs/images/deployment/mirror-sample1-diagnosis-consolidation.png) | ![Infiltration overlay](docs/images/deployment/mirror-sample1-diagnosis-infiltration.png) |
+
+**3. Draft clinical report.** A structured `FINDINGS` / `IMPRESSION` report,
+grounded in the evidence above, with pertinent negatives and the AI-generated
+disclaimer.
+
+<p align="center">
+  <img src="docs/images/deployment/mirror-sample1-output-analysis.png" width="420" alt="Draft report">
+</p>
+
+A full walkthrough of these outputs and how the v1.0.0 deployment works is in
+[`docs/deployment-showcase.md`](docs/deployment-showcase.md).
 
 ## System architecture
 
@@ -221,6 +259,10 @@ reactivate the venv later with `source .venv/Scripts/activate`. Full reference i
 > It falls back to the template automatically if the key is missing.
 
 ### B. Deploy a live public website (Vercel)
+
+A live deployment of this repo is already running at
+**[mirror-ten-jet.vercel.app](https://mirror-ten-jet.vercel.app/)** (see the
+[deployment showcase](#live-demo-v100) below). To stand up your own:
 
 Want a shareable URL instead of localhost? Deploy the app to Vercel in about two
 minutes. The hosted site is **fully functional on its own** (no backend to host)
@@ -383,6 +425,8 @@ lives in [`results/`](results/) so the numbers' *format* is visible in the repo
   local/Vercel deployment topology.
 - [`docs/setup.md`](docs/setup.md): installation and running locally.
 - [`docs/deployment.md`](docs/deployment.md): deploy a live public site on Vercel.
+- [`docs/deployment-showcase.md`](docs/deployment-showcase.md): how the v1.0.0
+  live deployment works, with an analyzed sample session.
 - [`docs/api.md`](docs/api.md): REST endpoints and payloads.
 - [`results/README.md`](results/README.md): committed example outputs and metric
   snapshots.
