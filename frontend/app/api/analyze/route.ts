@@ -160,8 +160,13 @@ function normalizeFindings(raw: unknown): Finding[] {
 // Deterministic stand-in used when no API key is configured, so the deployed
 // site still demonstrates the full UI flow end to end.
 function demoResult(modality: string) {
-  const findings: Finding[] = CHESTXRAY14_LABELS.map((label) => {
+  const findings: Finding[] = CHESTXRAY14_LABELS.map((label): Finding => {
     const present = label === "Effusion" || label === "Cardiomegaly";
+    const bbox: Finding["bbox"] = present
+      ? label === "Effusion"
+        ? [0.55, 0.62, 0.32, 0.3]
+        : [0.34, 0.5, 0.36, 0.28]
+      : null;
     return {
       label,
       probability: present ? (label === "Effusion" ? 0.81 : 0.66) : 0.07,
@@ -172,11 +177,7 @@ function demoResult(modality: string) {
           : "cardiac silhouette"
         : "n/a",
       overlay_png_b64: null,
-      bbox: present
-        ? label === "Effusion"
-          ? [0.55, 0.62, 0.32, 0.3]
-          : [0.34, 0.5, 0.36, 0.28]
-        : null,
+      bbox,
     };
   });
   return {
@@ -268,10 +269,10 @@ export async function POST(req: Request) {
       ],
     });
 
-    const toolUse = message.content.find(
-      (b): b is Anthropic.ToolUseBlock => b.type === "tool_use",
-    );
-    if (!toolUse) throw new Error("Model returned no structured analysis.");
+    const toolUse = message.content.find((b) => b.type === "tool_use");
+    if (!toolUse || toolUse.type !== "tool_use") {
+      throw new Error("Model returned no structured analysis.");
+    }
     const out = toolUse.input as { findings?: unknown; report?: string };
 
     const findings = normalizeFindings(out.findings);

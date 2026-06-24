@@ -15,6 +15,10 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        # NEXT_PUBLIC_* is baked at build time, so set it here (not just at
+        # runtime) to point the containerised UI at the backend service.
+        NEXT_PUBLIC_API_URL: http://localhost:8000
     ports:
       - "3000:3000"
     environment:
