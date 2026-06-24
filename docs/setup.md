@@ -10,9 +10,9 @@
 ## 1. Python environment
 
 ```bash
-git clone <your-fork-url> mirror
+git clone https://github.com/vignesh-nagarajan-vn/MIRROR.git mirror
 cd mirror
-python -m venv .venv && source .venv/bin/activate    # Windows: .venv\Scripts\activate
+python -m venv .venv && source .venv/bin/activate    # Windows / Git Bash: source .venv/Scripts/activate
 pip install -r requirements.txt
 ```
 
@@ -83,3 +83,10 @@ Point the pipeline at your checkpoint via `model.checkpoint_path` in the config.
 ```bash
 docker compose up --build      # backend on :8000, frontend on :3000
 ```
+
+## Deploy a public site (Vercel)
+
+To put MIRROR online as a live, shareable website — no backend to host, powered
+by Claude vision through a Next.js serverless route — see
+[`deployment.md`](deployment.md). It covers the one-click **Deploy to Vercel**
+button, the import flow for your own repo, and the `ANTHROPIC_API_KEY` setup.

@@ -6,6 +6,10 @@ export type Finding = {
   present: boolean;
   location: string;
   overlay_png_b64: string | null;
+  // Normalized [x, y, width, height] in [0,1]. Returned by the Vercel
+  // serverless path (Claude-vision localization); the FastAPI path ships a
+  // rendered Grad-CAM PNG in overlay_png_b64 instead.
+  bbox?: [number, number, number, number] | null;
 };
 
 export type AnalysisResponse = {
@@ -18,7 +22,13 @@ export type AnalysisResponse = {
   meta: Record<string, unknown>;
 };
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+// Where the analyze call is sent.
+//
+// - Hosted on Vercel: leave NEXT_PUBLIC_API_URL unset. Requests go to the
+//   same-origin Next.js serverless route at /api/analyze (Claude-vision engine).
+// - Local full stack: set NEXT_PUBLIC_API_URL=http://localhost:8000 to target
+//   the FastAPI backend running the real PyTorch pipeline.
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 export async function analyze(
   file: File,

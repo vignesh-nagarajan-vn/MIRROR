@@ -1,0 +1,52 @@
+{
+  "_note": "ILLUSTRATIVE EXAMPLE in the exact format evaluation/evaluate.py writes. Numbers are literature-scale placeholders, NOT a measured benchmark. Regenerate with `python -m evaluation.evaluate` on a trained checkpoint.",
+  "timestamp": "2026-06-24T15:42:11.482190Z",
+  "backbone": "densenet121",
+  "checkpoint": "models/checkpoints/densenet121_best.pt",
+  "n_test": 25596,
+  "threshold": 0.5,
+  "macro_auroc": 0.8063,
+  "macro_f1": 0.4187,
+  "per_label_auroc": {
+    "Atelectasis": 0.7712,
+    "Cardiomegaly": 0.8841,
+    "Effusion": 0.8307,
+    "Infiltration": 0.7029,
+    "Mass": 0.8265,
+    "Nodule": 0.7488,
+    "Pneumonia": 0.7314,
+    "Pneumothorax": 0.8579,
+    "Consolidation": 0.7503,
+    "Edema": 0.8492,
+    "Emphysema": 0.8901,
+    "Fibrosis": 0.8024,
+    "Pleural_Thickening": 0.7791,
+    "Hernia": 0.9137
+  },
+  "macro_auroc_ci": { "mean": 0.8061, "std": 0.0046, "lo": 0.7972, "hi": 0.8151 },
+  "macro_f1_ci": { "mean": 0.4185, "std": 0.0079, "lo": 0.4031, "hi": 0.4339 },
+  "per_label_auroc_ci": {
+    "Atelectasis": { "mean": 0.7710, "std": 0.0081, "lo": 0.7551, "hi": 0.7868 },
+    "Cardiomegaly": { "mean": 0.8840, "std": 0.0093, "lo": 0.8657, "hi": 0.9021 },
+    "Effusion": { "mean": 0.8306, "std": 0.0058, "lo": 0.8192, "hi": 0.8419 },
+    "Infiltration": { "mean": 0.7028, "std": 0.0071, "lo": 0.6889, "hi": 0.7166 },
+    "Mass": { "mean": 0.8263, "std": 0.0089, "lo": 0.8089, "hi": 0.8436 },
+    "Nodule": { "mean": 0.7486, "std": 0.0102, "lo": 0.7286, "hi": 0.7685 },
+    "Pneumonia": { "mean": 0.7311, "std": 0.0143, "lo": 0.7031, "hi": 0.7591 },
+    "Pneumothorax": { "mean": 0.8578, "std": 0.0074, "lo": 0.8432, "hi": 0.8723 },
+    "Consolidation": { "mean": 0.7502, "std": 0.0083, "lo": 0.7339, "hi": 0.7664 },
+    "Edema": { "mean": 0.8491, "std": 0.0096, "lo": 0.8302, "hi": 0.8679 },
+    "Emphysema": { "mean": 0.8900, "std": 0.0101, "lo": 0.8702, "hi": 0.9098 },
+    "Fibrosis": { "mean": 0.8022, "std": 0.0138, "lo": 0.7751, "hi": 0.8292 },
+    "Pleural_Thickening": { "mean": 0.7789, "std": 0.0112, "lo": 0.7570, "hi": 0.8009 },
+    "Hernia": { "mean": 0.9131, "std": 0.0211, "lo": 0.8717, "hi": 0.9544 }
+  },
+  "bootstrap": { "n_boot": 1000, "ci_level": 0.95 },
+  "reproducibility": {
+    "seed": 42,
+    "git_commit": "026c9532adffbeb80b4663e0d9bc8fb64ac99b10",
+    "python": "3.11.9",
+    "numpy": "1.26.4",
+    "torch": "2.3.1"
+  }
+}

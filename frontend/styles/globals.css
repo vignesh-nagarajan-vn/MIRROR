@@ -166,6 +166,33 @@ a { color: var(--signal); text-decoration: none; }
 .viewer.show-overlay .overlay { opacity: 1; }
 .viewer .empty { color: var(--ink-faint); font-family: var(--mono); font-size: 12px; }
 
+/* Bounding-box evidence (Claude-vision path): a localized region drawn over the
+   film when no rendered Grad-CAM PNG is available. */
+.viewer .evidence-box {
+  position: absolute;
+  border: 2px solid var(--present);
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5), 0 0 18px rgba(255, 107, 94, 0.45);
+  background: rgba(255, 107, 94, 0.1);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+.viewer.show-overlay .evidence-box { opacity: 1; }
+.viewer .evidence-tag {
+  position: absolute;
+  top: -18px;
+  left: -2px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  color: #04110f;
+  background: var(--present);
+  padding: 1px 5px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
 .viewer-bar {
   display: flex; align-items: center; justify-content: space-between;
   margin-top: 12px;

@@ -1,0 +1,25 @@
+{
+  "_note": "ILLUSTRATIVE EXAMPLE in the exact format evaluation/aggregate_seeds.py writes (mean +/- std across training seeds 0/1/2). Numbers are literature-scale placeholders, NOT a measured benchmark. Regenerate per the multi-seed workflow in the evaluation README.",
+  "timestamp": "2026-06-24T16:11:22.640915Z",
+  "n_seeds": 3,
+  "seeds": [0, 1, 2],
+  "backbone": "densenet121",
+  "macro_auroc": { "mean": 0.8051, "std": 0.0031, "n": 3 },
+  "macro_f1": { "mean": 0.4172, "std": 0.0045, "n": 3 },
+  "per_label_auroc": {
+    "Atelectasis": { "mean": 0.7704, "std": 0.0028, "n": 3 },
+    "Cardiomegaly": { "mean": 0.8829, "std": 0.0036, "n": 3 },
+    "Consolidation": { "mean": 0.7495, "std": 0.0041, "n": 3 },
+    "Edema": { "mean": 0.8480, "std": 0.0033, "n": 3 },
+    "Effusion": { "mean": 0.8298, "std": 0.0024, "n": 3 },
+    "Emphysema": { "mean": 0.8887, "std": 0.0039, "n": 3 },
+    "Fibrosis": { "mean": 0.8011, "std": 0.0052, "n": 3 },
+    "Hernia": { "mean": 0.9102, "std": 0.0078, "n": 3 },
+    "Infiltration": { "mean": 0.7019, "std": 0.0027, "n": 3 },
+    "Mass": { "mean": 0.8252, "std": 0.0044, "n": 3 },
+    "Nodule": { "mean": 0.7471, "std": 0.0049, "n": 3 },
+    "Pleural_Thickening": { "mean": 0.7778, "std": 0.0038, "n": 3 },
+    "Pneumonia": { "mean": 0.7298, "std": 0.0061, "n": 3 },
+    "Pneumothorax": { "mean": 0.8566, "std": 0.0035, "n": 3 }
+  }
+}

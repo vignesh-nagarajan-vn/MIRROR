@@ -8,14 +8,21 @@ type Props = {
   findings: Finding[];
 };
 
+// A finding is "explainable" if it carries either a rendered Grad-CAM overlay
+// (FastAPI / PyTorch path) or a normalized bounding box (Vercel / Claude-vision
+// path). The viewer renders whichever the active finding provides.
+function isExplained(f: Finding): boolean {
+  return Boolean(f.overlay_png_b64) || Boolean(f.bbox);
+}
+
 // The film viewer is the page's signature: a darkened lightbox where the
-// original radiograph and the Grad-CAM evidence overlay register exactly, with
-// a switch to fade between them and chips to pick which finding to inspect.
+// original radiograph and the evidence overlay register exactly, with a switch
+// to fade the evidence in and chips to pick which finding to inspect.
 export default function FilmViewer({ imageUrl, findings }: Props) {
   const [showOverlay, setShowOverlay] = useState(true);
   const [activeIdx, setActiveIdx] = useState(0);
 
-  const explained = findings.filter((f) => f.overlay_png_b64);
+  const explained = findings.filter(isExplained);
   const active = explained[activeIdx];
 
   if (!imageUrl) {
@@ -30,12 +37,25 @@ export default function FilmViewer({ imageUrl, findings }: Props) {
     <>
       <div className={`viewer ${showOverlay && active ? "show-overlay" : ""}`}>
         <img src={imageUrl} alt="Uploaded radiograph" />
-        {active && (
+        {active?.overlay_png_b64 && (
           <img
             className="overlay"
             src={`data:image/png;base64,${active.overlay_png_b64}`}
             alt={`Saliency overlay for ${active.label}`}
           />
+        )}
+        {active && !active.overlay_png_b64 && active.bbox && (
+          <div
+            className="evidence-box"
+            style={{
+              left: `${active.bbox[0] * 100}%`,
+              top: `${active.bbox[1] * 100}%`,
+              width: `${active.bbox[2] * 100}%`,
+              height: `${active.bbox[3] * 100}%`,
+            }}
+          >
+            <span className="evidence-tag">{active.label.replace(/_/g, " ")}</span>
+          </div>
         )}
       </div>
 
