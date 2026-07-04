@@ -1,0 +1,373 @@
+% =============================================================================
+%  MIRROR - Multimodal Intelligent Radiology Reasoning and Observation Reporter
+%  Workshop / arXiv preprint draft.
+%
+%  STATUS: partial draft. Sections that do not depend on trained-model results
+%  are written; every results-dependent claim is wrapped in \pending{...} or
+%  pulled from paper/tables/*.tex (currently placeholders). Search for "PENDING"
+%  to find everything still blocked on experiments.
+%
+%  Build:  pdflatex main && bibtex main && pdflatex main && pdflatex main
+%
+%  This uses a neutral single-column `article` layout so it compiles anywhere
+%  with a stock TeX install. To submit to a specific workshop (MIDL, ML4H, etc.),
+%  swap \documentclass for that venue's PMLR/JMLR style and move the title block
+%  into its macros; the body sections transfer unchanged.
+% =============================================================================
+\documentclass[10pt,twocolumn]{article}
+
+\usepackage[margin=0.9in]{geometry}
+\usepackage{times}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[colorlinks=true,allcolors=blue!55!black]{hyperref}
+\usepackage{url}
+
+% ---- Draft helper: highlights content still blocked on experiments ----------
+\newcommand{\pending}[1]{{\color{red!75!black}\textbf{[PENDING:} \textit{#1}\textbf{]}}}
+
+\title{\textbf{MIRROR}: Grounded, Explainable Chest-Radiograph\\
+Analysis with Evidence Localization and Report Generation}
+
+% PENDING: confirm final author list / order and affiliations with your mentor.
+\author{%
+  Vignesh Nagarajan\\
+  \small Global Indian Scientists \& Technocrats (GIST) 2026 Summer Internship\\
+  \small \texttt{nrvignesh08@gmail.com}\\[2pt]
+  \small Mentor: Sriram Venkatapathy
+}
+\date{}
+
+\begin{document}
+\maketitle
+
+% -----------------------------------------------------------------------------
+\begin{abstract}
+Most medical-imaging models stop at a prediction, offering neither the location
+of the evidence nor an account a clinician can read. We present \textbf{MIRROR}
+(Multimodal Intelligent Radiology Reasoning and Observation Reporter), a
+three-layer chest-radiograph pipeline that composes (i) a multi-label disease
+classifier, (ii) class-activation based evidence localization, and (iii) an
+evidence-grounded natural-language report generator into a single traceable
+system. The defining design choice is that each layer's output is the grounded
+input to the next, and the language layer never sees pixels, so every sentence in
+the generated report traces back to a predicted probability and a saliency
+region, and the reasoning layer cannot invent findings the classifier did not
+produce. We pair the system with an evaluation framework that measures predictive
+quality (AUROC/F1) and explanation quality (pointing game, localization IoU) side
+by side, and an ablation that isolates the cost of the added interpretability
+layers. All predictive numbers carry bootstrap $95\%$ confidence intervals and
+can be aggregated across training seeds, and every run stamps a reproducibility
+record.
+\pending{one-sentence quantitative headline once the classifier is trained on
+ChestX-ray14, for example macro AUROC, localization accuracy, and the ablation's
+``interpretability at no predictive cost'' result.}
+\end{abstract}
+
+% -----------------------------------------------------------------------------
+\section{Introduction}
+
+Deep networks now match specialists on narrow chest-radiograph reading
+tasks~\cite{rajpurkar2017chexnet}, yet adoption in the clinic remains limited by
+a trust gap: a bare probability tells a radiologist neither \emph{where} the
+model is looking nor \emph{why} it reached its conclusion. High-stakes decisions
+demand models that can be interrogated, not merely queried~\cite{rudin2019stop}.
+Post-hoc saliency methods such as Grad-CAM~\cite{selvaraju2017gradcam} and
+Score-CAM~\cite{wang2020scorecam} expose \emph{where} a prediction comes from,
+and large language models can render structured evidence as prose, but these
+capabilities are rarely composed into one system whose outputs remain mutually
+consistent and auditable end to end.
+
+\textbf{MIRROR} integrates all three into a single pipeline:
+\[
+\text{Image}\rightarrow\text{Prediction}\rightarrow\text{Localization}
+\rightarrow\text{Reasoning}\rightarrow\text{Report}.
+\]
+Its central design constraint is \emph{grounding}: the language layer is given
+only the structured evidence produced upstream (labels, probabilities, and named
+saliency regions), never the raw image. This makes hallucinated findings
+structurally impossible, since the report can only discuss what the classifier
+predicted and the localizer situated, and it makes the whole chain traceable.
+
+\paragraph{Research question.} Can a multimodal system that combines image
+classification, visual explainability, and language generation improve
+interpretability without degrading predictive performance, relative to a
+classification-only baseline? We build the system so this question is
+\emph{measurable}: predictive and explanation metrics live side by side, and an
+ablation reproduces the classification-only baseline the question names.
+
+\paragraph{Contributions.}
+\begin{enumerate}[leftmargin=1.4em,itemsep=2pt]
+  \item A three-layer, evidence-grounded radiology pipeline in which the language
+  layer reasons only over structured upstream evidence, so every report sentence
+  is traceable to a probability and a saliency region.
+  \item An open-source implementation spanning interchangeable backbones
+  (DenseNet-121, EfficientNet-B0, ViT-B/16), two explainability methods
+  (Grad-CAM, Score-CAM), an LLM report backend with a deterministic offline
+  fallback, native DICOM ingest, and a web front end.
+  \item An evaluation framework that scores prediction and explanation quality
+  jointly, with bootstrap confidence intervals, multi-seed aggregation, and an
+  ablation isolating the predictive cost of interpretability, so the research
+  question can be answered quantitatively. \pending{fold in the measured result
+  once the model is trained.}
+\end{enumerate}
+
+% -----------------------------------------------------------------------------
+\section{Literature Review}
+\label{sec:litreview}
+
+\paragraph{Datasets and classification.} Large, labeled chest-radiograph corpora
+made supervised deep learning on this modality practical. The NIH ChestX-ray8/14
+release~\cite{wang2017chestxray} provides 112{,}120 frontal radiographs over 14
+pathologies and remains a standard benchmark; CheXpert~\cite{irvin2019chexpert}
+and MIMIC-CXR~\cite{johnson2019mimiccxr} extended scale, uncertainty labeling,
+and paired free-text reports. On these benchmarks CheXNet~\cite{rajpurkar2017chexnet}
+showed a 121-layer DenseNet~\cite{huang2017densenet} reaching radiologist-level
+pneumonia detection. Convolutional backbones such as
+EfficientNet~\cite{tan2019efficientnet} and, more recently, Vision
+Transformers~\cite{dosovitskiy2021vit} now form the standard toolkit; MIRROR
+keeps all three interchangeable and adopts DenseNet-121 as its primary
+configuration for comparability.
+
+\paragraph{Visual explanation.} Class Activation Mapping~\cite{zhou2016cam}
+localized the evidence behind a CNN prediction; Grad-CAM~\cite{selvaraju2017gradcam}
+generalized it to arbitrary architectures via gradients, and
+Score-CAM~\cite{wang2020scorecam} removed the gradient dependence with a
+perturbation-based weighting. Model-agnostic attribution methods, notably
+LIME~\cite{ribeiro2016lime} and SHAP~\cite{lundberg2017shap}, explain individual
+predictions without access to model internals. To move from qualitative heatmaps
+to measurable evidence, the pointing-game protocol~\cite{zhang2016pointing}
+and intersection-over-union against annotated lesions provide quantitative
+localization scores, which MIRROR reports directly.
+
+\paragraph{Rigor and critique of saliency.} Explanations are only useful if they
+are faithful. Adebayo et al.~\cite{adebayo2018sanity} showed several saliency
+methods can be insensitive to model and data, and argued for sanity checks; Rudin
+~\cite{rudin2019stop} cautioned against post-hoc explanation of black boxes for
+high-stakes decisions; and Doshi-Velez and Kim~\cite{doshivelez2017rigorous}
+called for a rigorous, measurable science of interpretability. These critiques
+motivate two of MIRROR's design choices: quantitative localization evaluation
+against ground-truth boxes, and hard grounding so the language layer cannot
+outrun the evidence.
+
+\paragraph{Report generation.} Systems that emit radiology prose range from
+TieNet~\cite{wang2018tienet}, which jointly embeds image and text, to
+memory-driven transformers such as R2Gen~\cite{chen2020r2gen}, to clinically
+focused decoders optimized for factual correctness~\cite{liu2019clinically}. A
+recurring failure mode is hallucination: prose generated directly from pixels can
+assert findings the underlying model never detected. MIRROR sidesteps this by
+restricting generation to structured, verified evidence, trading open-ended
+fluency for auditability.
+
+\paragraph{Explainable AI in medicine and positioning.} Surveys of explainable AI
+for medical imaging~\cite{tjoa2021survey} note that interpretability and report
+generation are usually studied in isolation. MIRROR's contribution is not a new
+classifier or a new saliency method, but their \emph{grounded composition} into
+one traceable pipeline, together with a framework that measures whether adding
+the explanation and reasoning layers helps interpretability without a predictive
+penalty.
+
+% -----------------------------------------------------------------------------
+\section{System Architecture}
+\label{sec:method}
+
+MIRROR chains three layers; each layer's output is the grounded input to the
+next (Fig.~\ref{fig:arch}).
+
+\begin{figure}[t]
+  \centering
+  % PENDING: export docs/images/architecture.svg to paper/figures/architecture.pdf
+  % and replace the placeholder box below with:
+  % \includegraphics[width=\linewidth]{figures/architecture.pdf}
+  \fbox{\parbox[c][3.2cm][c]{0.92\linewidth}{\centering
+    \small\itshape [architecture figure, export from
+    \texttt{docs/images/architecture.svg}]}}
+  \caption{The MIRROR pipeline. Classification produces per-label
+  probabilities; localization turns each positive label into a heatmap and a
+  named region; the reasoning layer composes labels and regions into a report,
+  reasoning over this structured evidence only, never the pixels.}
+  \label{fig:arch}
+\end{figure}
+
+\subsection{Layer 1: Classification}
+The classifier is a factory over three ImageNet-pretrained backbones: DenseNet-121
+(default), EfficientNet-B0, and ViT-B/16, with a shared 14-way multi-label head
+(sigmoid applied at loss and inference time). Inputs are resized to
+$224\times224$ and normalized with ImageNet statistics. Training uses
+\texttt{BCEWithLogitsLoss}, AdamW (learning rate $10^{-4}$, weight decay
+$10^{-5}$), a cosine schedule, and dropout $0.2$; checkpoints are selected on
+best validation macro-AUROC. The 14 labels follow the canonical NIH ChestX-ray14
+taxonomy, kept as a single source of truth shared by the classifier head, the
+report generator, and the evaluation scripts.
+
+\subsection{Layer 2: Evidence Localization}
+For each positive label, the explainability layer computes a class-activation
+map, either Grad-CAM (forward/backward hooks on a resolved target layer) or
+Score-CAM (gradient-free, perturbation-based), and reduces it to a named region
+(centroid and bounding box) so the evidence can be referred to in words. Target
+layers are resolved per backbone; ViT maps are recovered by reshaping token
+activations back to a spatial grid. A colormap overlay is rendered for the UI.
+
+\subsection{Layer 3: Clinical Reasoning}
+The reasoning layer converts structured evidence (labels, probabilities, and
+named regions) into a \textsc{Findings}/\textsc{Impression} report via a system
+prompt plus an evidence-grounded user prompt. Per-label plain-English
+descriptions ground the model so it need not recall what each token means. The
+backend is an LLM (Claude) with a deterministic offline template fallback so the
+system always yields a coherent report; generation runs at low temperature for
+stability. Predictions below the confidence threshold ($0.5$) are surfaced as
+pertinent negatives rather than silently dropped. Crucially, the layer never
+receives the image, so it cannot introduce findings absent from the upstream
+evidence.
+
+\subsection{Orchestration}
+A single \texttt{analyze()} entry point runs the stages and returns one result
+object (predictions, overlays, report) consumed by both the REST API and the
+notebooks. The two later layers are individually toggleable, which recovers the
+ablation conditions of Section~\ref{sec:setup} and records per-stage wall-clock
+timings.
+
+% -----------------------------------------------------------------------------
+\section{Experimental Setup}
+\label{sec:setup}
+
+The evaluation is designed to answer the research question's two halves,
+prediction and explanation, with parallel harnesses that emit machine-readable
+summaries the tables below are generated from. \emph{The design is fixed; the
+numbers await a trained checkpoint.}
+
+\paragraph{Data.} We use NIH ChestX-ray14~\cite{wang2017chestxray}: 112{,}120
+frontal radiographs from 30{,}805 patients, labeled across 14 pathologies
+(multi-label), with the official train/validation and held-out test splits.
+
+\paragraph{Localization ground truth.} We score heatmaps against the official
+\texttt{BBox\_List\_2017.csv}: $\sim$984 hand-drawn boxes over 8 of the 14
+pathologies (Atelectasis, Cardiomegaly, Effusion, Infiltration, Mass, Nodule,
+Pneumonia, Pneumothorax). Boxes are given in original $1024\times1024$ pixel
+coordinates and rescaled into the model's heatmap grid; the remaining six labels
+have no box ground truth and are not scored.
+
+\paragraph{Predictive metrics.} Per-label and macro AUROC, plus macro F1 at a
+$0.5$ threshold, on the official test split. Each metric carries a bootstrap
+$95\%$ confidence interval: the test set is resampled with replacement and a
+single resample drives all metrics at once, so the intervals are mutually
+consistent and support statements of the form ``config A beats config B.''
+
+\paragraph{Explanation metrics.} Following~\cite{zhang2016pointing} and the
+ChestX-ray8 localization protocol~\cite{wang2017chestxray}: (i) \emph{pointing
+game}, does the heatmap's peak fall inside the lesion box; (ii) \emph{mean IoU},
+overlap between the box and the heatmap thresholded at $0.5$; and (iii)
+\emph{localization accuracy}, the fraction of boxes with IoU $\ge 0.1$ (the
+T(IoU) measure).
+
+\paragraph{Ablation.} Three conditions isolate the effect of the added layers
+(Table~\ref{tab:ablation}): \texttt{classification\_only}, \texttt{with\_localization},
+and \texttt{full\_mirror}. Because layers 2--3 are post-hoc, the predictive
+metrics are expected to be identical across conditions; the harness verifies this
+empirically and reports the maximum prediction delta, so any change in
+interpretability can be attributed cleanly to added capability rather than a
+different model.
+
+\paragraph{Reproducibility.} Runs are seeded (default $42$); robustness to
+training stochasticity is summarized across seeds $\{0,1,2\}$ as mean~$\pm$~std,
+reported alongside the per-model bootstrap CIs. Every results file stamps a
+reproducibility record (seed, git commit, library versions).
+
+% -----------------------------------------------------------------------------
+\section{Results}
+\label{sec:results}
+
+\pending{This section is blocked on training a classifier on ChestX-ray14. Once
+\texttt{models/checkpoints/densenet121\_best.pt} exists, run
+\texttt{evaluation/\{evaluate,evaluate\_localization,ablation,aggregate\_seeds\}.py};
+each table below is generated from the resulting JSON so no number is hand-copied.}
+
+\begin{table}[t]
+  \centering
+  \caption{Predictive quality on the ChestX-ray14 test split (macro/per-label
+  AUROC, macro F1), with bootstrap $95\%$ CIs and multi-seed mean~$\pm$~std.}
+  \label{tab:prediction}
+  \input{tables/prediction_table}
+\end{table}
+
+\begin{table}[t]
+  \centering
+  \caption{Explanation quality against the NIH lesion boxes: pointing game, mean
+  IoU, and localization accuracy, per method (Grad-CAM vs.\ Score-CAM).}
+  \label{tab:localization}
+  \input{tables/localization_table}
+\end{table}
+
+\begin{table}[t]
+  \centering
+  \caption{Ablation: classification-only vs.\ +localization vs.\ full MIRROR.
+  Predictive metrics are invariant across rows (interpretability at no predictive
+  cost); added capability and its latency appear only in the relevant rows.}
+  \label{tab:ablation}
+  \input{tables/ablation_table}
+\end{table}
+
+% -----------------------------------------------------------------------------
+\section{Discussion}
+
+\pending{Interpret the tables once available. Anticipated storyline: (1) the
+classifier reaches the CheXNet-range AUROC expected on ChestX-ray14; (2) the
+localization table substantiates the novelty claim that the heatmaps land on
+annotated lesions; (3) the ablation shows the added layers leave AUROC/F1
+unchanged, framing MIRROR's contribution as interpretability at no predictive
+cost; (4) contrast Grad-CAM vs.\ Score-CAM localization.}
+
+Independent of the trained numbers, MIRROR's grounding constraint is a
+qualitative contribution: because the language layer sees only structured
+evidence, the generated report is auditable by construction and cannot assert
+findings the classifier did not produce. This trades open-ended fluency for a
+form of safety that matters in a clinical setting.
+
+% -----------------------------------------------------------------------------
+\section{Ethics, Safety, and Limitations}
+
+\textbf{Not a medical device.} MIRROR is a research prototype, not reviewed or
+cleared by any regulatory body; every output is a draft that must be verified by
+a licensed radiologist and must not be used for diagnosis or treatment.
+
+\textbf{Grounded by design.} The language layer never sees pixels, only
+structured evidence, so it cannot invent findings; below-threshold predictions
+are reported as pertinent negatives rather than dropped, and predictions are
+surfaced as probabilities to keep uncertainty explicit.
+
+\textbf{Data governance.} The benchmark datasets are governed by their own data
+use agreements; no raw images, weights, or protected health information are
+committed to version control.
+
+\textbf{Limitations.} Evaluation is currently confined to a single dataset
+(ChestX-ray14) and to chest radiographs; CT and brain-MRI paths are scaffolded
+but unvalidated. Localization ground truth exists for only 8 of 14 pathologies.
+Report quality is presently assessed qualitatively; a quantitative comparison
+against real radiologist reports (for example MIMIC-CXR~\cite{johnson2019mimiccxr})
+is future work. Class-activation maps are coarse and can highlight context rather
+than the lesion itself.
+
+% -----------------------------------------------------------------------------
+\section{Conclusion}
+
+MIRROR composes classification, evidence localization, and grounded report
+generation into a single traceable chest-radiograph pipeline, paired with an
+evaluation framework that measures prediction and explanation quality side by
+side. \pending{state the measured outcome and the ablation result once the model
+is trained.} The system and its evaluation harnesses are released open-source to
+support reproducible study of interpretability and trust in medical imaging.
+
+% -----------------------------------------------------------------------------
+\section*{Acknowledgments}
+This work was completed as part of the Global Indian Scientists \& Technocrats
+(GIST) 2026 Summer Internship Program, mentored by Sriram Venkatapathy.
+
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}
