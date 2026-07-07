@@ -3,12 +3,26 @@
 Scaffold for the MIRROR write-up. Drafts and figures live here; nothing in this
 directory is required to run the system.
 
-Suggested structure:
+## Compiling the draft
+
+[`main.tex`](main.tex) is a **single, self-contained** manuscript draft that
+compiles as-is in [Overleaf](https://www.overleaf.com/) (or with local
+`pdflatex`) to produce a PDF. It needs no external assets: the architecture
+figure is drawn inline with TikZ, the bibliography is embedded, and the three
+result tables are inlined from the `results/evaluation/*.json` snapshots. Drop it
+into a blank Overleaf project and hit *Recompile*.
+
+> The result numbers in `main.tex` are the **illustrative, literature-scale
+> placeholders** from `results/` (flagged as such in the manuscript's integrity
+> note). Replace them with real values after training on ChestX-ray14 and running
+> the `evaluation/` harnesses before making any performance claim.
+
+Suggested structure as the draft grows:
 
 ```
 paper/
-├── main.tex            # manuscript source
-├── references.bib      # citations (Grad-CAM, Score-CAM, ChestX-ray14, MIMIC-CXR…)
+├── main.tex            # manuscript source (self-contained draft — provided)
+├── references.bib      # optional: externalize the embedded bibliography
 ├── figures/            # exported figures (architecture, qualitative overlays)
 └── tables/             # generated result tables (from evaluation/results/*.json)
 ```
