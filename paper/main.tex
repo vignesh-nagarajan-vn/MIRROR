@@ -2,7 +2,7 @@
 %  MIRROR - Multimodal Intelligent Radiology Reasoning and Observation Reporter
 %  Workshop / arXiv preprint draft.
 %
-%  HOW TO USE: compiles in Overleaf (engine: pdfLaTeX) in a SINGLE pass -- the
+%  HOW TO USE: compiles in Overleaf (engine: pdfLaTeX) in a SINGLE pass; the
 %  architecture figure and the two result graphs are drawn inline (TikZ/pgfplots),
 %  the tables are inlined, and the bibliography is embedded (no bibtex step).
 %  The only external assets are the three UI screenshots in paper/figures/*.png;
@@ -65,29 +65,41 @@
 \begin{document}
 
 % =============================================================================
-%  Title block --- spans both columns.
+%  Title block spans both columns.
 % =============================================================================
 \twocolumn[{%
 \centering
-\vspace{4pt}
-{\Huge\bfseries MIRROR}\\[5pt]
-{\large\bfseries Multimodal Intelligent Radiology Reasoning and Observation Reporter}\\[9pt]
+\vspace{6pt}
+{\Huge\bfseries MIRROR}\\[6pt]
+{\large\bfseries Multimodal Intelligent Radiology Reasoning and Observation Reporter}\\[10pt]
 {\itshape\normalsize A grounded, explainable chest-radiograph pipeline that predicts
 fourteen thoracic pathologies, localizes the visual evidence behind each finding,
-and drafts a clinician-style report --- with predictive quality and explanation
-quality measured side by side.}\\[18pt]
+and drafts a clinician-style report, with predictive quality and explanation
+quality measured side by side.}\\[22pt]
 
+% ---- Two authors, side by side, each in a fixed-width box so the long
+%      affiliation lines wrap inside their column instead of overlapping. ----
 \normalsize
-\begin{tabular}{@{}c@{\hspace{4em}}c@{}}
-\textbf{Vignesh Nagarajan} & \textbf{Sriram Venkatapathy} \\[2pt]
-\small Brown Foundation Scholar        & \small AI Research at Capital One \\
-\small Texas A\&M University            & \small PhD-CS at IIT Hyderabad \\
-\small Dept.\ of Computer Science \& Engineering & \small \textit{Mentor} \\
-\small \texttt{nrvignesh08@gmail.com}  & \\
-\end{tabular}\\[8pt]
-{\small Global Indian Scientists \& Technocrats (GIST) 2026 Summer Research Internship}\\[16pt]
+\begin{minipage}[t]{0.45\textwidth}
+\centering
+{\large\textbf{Vignesh Nagarajan}}\\[3pt]
+{\small\itshape Corresponding Author}\\[4pt]
+{\small Brown Foundation Scholar, Texas A\&M University}\\[2pt]
+{\small Department of Computer Science \& Engineering}\\[2pt]
+{\small\texttt{vigneshn26@tamu.edu}}
+\end{minipage}%
+\hspace{0.06\textwidth}%
+\begin{minipage}[t]{0.45\textwidth}
+\centering
+{\large\textbf{Sriram Venkatapathy}}\\[3pt]
+{\small\itshape Research Mentor}\\[4pt]
+{\small Applied AI Researcher, Capital One}\\[2pt]
+{\small PhD in Computer Science, IIT Hyderabad}\\[2pt]
+{\small\texttt{sriram.venkatapathy@gmail.com}}
+\end{minipage}\\[14pt]
+{\small Global Indian Scientists \& Technocrats (GIST) 2026 Summer Research Internship}\\[20pt]
 
-\begin{minipage}{0.86\textwidth}
+\begin{minipage}{0.88\textwidth}
 \small
 \textbf{Abstract.}
 Most medical-imaging models stop at a prediction, offering neither the location of
@@ -441,7 +453,7 @@ localization), the two sides of the research question.
 Grad-CAM heatmap and bounding box for a positive finding (Consolidation, right
 lower lobe). (b) The reasoning layer drafts a structured
 \textsc{Findings}/\textsc{Impression} report from the same structured evidence
-(labels, probabilities, named regions) --- never the pixels --- ending with the
+(labels, probabilities, named regions), never the pixels, ending with the
 mandatory AI-generated-draft disclaimer.}
 \label{fig:qual}
 \end{figure*}
@@ -466,9 +478,10 @@ Mass          & 0.826 (0.809--0.844) & Fibrosis           & 0.802 (0.775--0.829)
 Nodule        & 0.749 (0.729--0.769) & Pleural Thickening & 0.779 (0.757--0.801) \\
 Pneumonia     & 0.731 (0.703--0.759) & Hernia             & 0.914 (0.872--0.954) \\
 \midrule
-\multicolumn{4}{@{}l}{\textbf{Macro AUROC} \ph{0.806 (0.797--0.815)}\quad$\bullet$\quad
-\textbf{Macro F1} \ph{0.419 (0.403--0.434)}\quad$\bullet$\quad
-\textbf{Multi-seed} \ph{macro AUROC $0.805\pm0.003$, macro F1 $0.417\pm0.005$} (seeds 0/1/2)} \\
+\multicolumn{4}{@{}l}{\textbf{Macro AUROC} \ph{0.806 (0.797--0.815)}
+\qquad \textbf{Macro F1} \ph{0.419 (0.403--0.434)}} \\[2pt]
+\multicolumn{4}{@{}l}{\textbf{Across seeds 0/1/2:} \ph{macro AUROC $0.805\pm0.003$,
+\ \ macro F1 $0.417\pm0.005$}} \\
 \bottomrule
 \end{tabular}
 \end{table*}
@@ -581,7 +594,7 @@ accuracy (IoU$\ge$0.1) over the 8 boxed pathologies, sorted ascending.
 \begin{table*}[t]
 \centering
 \caption{Ablation (DenseNet-121). Predictive metrics are \emph{identical} across
-rows (max probability delta $=0$) --- the added layers are post-hoc --- so
+rows (max probability delta $=0$; the added layers are post-hoc), so
 interpretability is added at no predictive cost; localization capability and its
 latency appear only where enabled. {\color{pendingred}\itshape Red = illustrative
 placeholder.}}
@@ -591,7 +604,7 @@ placeholder.}}
 \toprule
 \textbf{Condition} & \textbf{Macro AUROC} & \textbf{Macro F1} & \textbf{Pointing game} & \textbf{Mean IoU} & \textbf{Latency (ms)} \\
 \midrule
-Classification only            & 0.806 & 0.419 & ---   & ---   & \phantom{0}40.9 \\
+Classification only            & 0.806 & 0.419 & n/a   & n/a   & \phantom{0}40.9 \\
 + Localization                 & 0.806 & 0.419 & 0.631 & 0.222 & 173.2 \\
 Full MIRROR (+ report)         & 0.806 & 0.419 & 0.631 & 0.222 & 174.4 \\
 \bottomrule
@@ -675,7 +688,7 @@ interpretability and trust in medical imaging.
 Code: \url{https://github.com/vignesh-nagarajan-vn/MIRROR}. Live demo:
 \url{https://mirror-ten-jet.vercel.app/}. A zero-setup CLI demo
 (\code{python -m demo.run\_demo <image>}) runs the full pipeline on ImageNet
-weights with the offline template backend --- no checkpoint or API key required.
+weights with the offline template backend, with no checkpoint or API key required.
 All evaluation harnesses live in \code{evaluation/}; every results JSON stamps a
 \code{reproducibility} block (seed, git commit, library versions), and the unit
 tests are torch-free so they run without a model or dataset.
