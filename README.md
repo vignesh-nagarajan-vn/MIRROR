@@ -61,6 +61,15 @@ Mentored by **Mr. Sriram Venkatapathy** (AI Research at Capital One, PhD-CS at I
   <img src="https://img.shields.io/badge/git-%23F05033.svg?style=for-the-badge&logo=git&logoColor=white">
 </p>
 
+<!--- Paper / Writing --->
+<p align="center"><sub><b>Paper & Writing:</b></sub></p>
+<p align="center">
+  <img src="https://img.shields.io/badge/LaTeX-008080.svg?style=for-the-badge&logo=latex&logoColor=white">
+  <img src="https://img.shields.io/badge/Overleaf-47A141.svg?style=for-the-badge&logo=overleaf&logoColor=white">
+  <img src="https://img.shields.io/badge/BibTeX-008080.svg?style=for-the-badge&logo=latex&logoColor=white">
+  <img src="https://img.shields.io/badge/arXiv-B31B1B.svg?style=for-the-badge&logo=arxiv&logoColor=white">
+</p>
+
 ## What MIRROR does
 
 Most medical-imaging models stop at a prediction. MIRROR adds the two layers that
@@ -323,7 +332,7 @@ mirror/
 ├── tests/                        # torch-free unit tests (metrics, ablation, repro, …)
 ├── docs/                         # architecture · setup · deployment · API reference
 │   └── images/architecture.svg  # the system diagram
-├── paper/                        # write-up scaffold
+├── paper/                        # self-contained LaTeX draft (main.tex) + build notes
 ├── demo/                         # CLI demo (run_demo.py) + generated assets/
 ├── configs/default.yaml          # single source of tunables (backbone, CAM, report backend)
 ├── docker-compose.yml            # backend :8000 + frontend :3000
@@ -415,6 +424,33 @@ lives in [`results/`](results/) so the numbers' *format* is visible in the repo
 - An open-source benchmark for combining computer vision with LLM-based reasoning
   in healthcare.
 
+## Paper
+
+**Goal:** a short (5 to 8 page) paper for a medical-imaging workshop that doubles
+as an arXiv preprint and GIST 2026 internship report. It answers MIRROR's
+research question with evidence: *does adding evidence localization and grounded
+report generation to a chest-radiograph classifier improve interpretability
+without a predictive penalty?* The headline result is the ablation, framing the
+contribution as **interpretability at no predictive cost**.
+
+A **single, self-contained** LaTeX draft lives in
+[`paper/main.tex`](paper/main.tex): one file with an inline TikZ architecture
+figure, the three result tables, and an embedded 20-source bibliography (including
+a one-page literature review). The results-independent sections (introduction,
+literature review, architecture, experimental setup, ethics and limitations) are
+written, and the result tables are populated with the **illustrative** snapshot
+numbers from [`results/`](results/); everything still blocked on a trained model is
+a `\pending{}` stub (search the source for `PENDING`). Build it in **Overleaf** or
+with a local TeX install — one pdfLaTeX pass, no `bibtex` step:
+
+```bash
+cd paper
+pdflatex main
+```
+
+See [`paper/README.md`](paper/README.md) for the section map and how the tables
+are generated.
+
 ## Documentation
 
 - [`docs/architecture.md`](docs/architecture.md): how the layers connect + the
@@ -426,6 +462,8 @@ lives in [`results/`](results/) so the numbers' *format* is visible in the repo
 - [`docs/api.md`](docs/api.md): REST endpoints and payloads.
 - [`results/README.md`](results/README.md): committed example outputs and metric
   snapshots.
+- [`paper/README.md`](paper/README.md): the workshop/preprint draft, its section
+  map, and how result tables are generated.
 - [`CONTRIBUTING.md`](CONTRIBUTING.md): development guidelines.
 
 ## Safety, ethics, and limitations
