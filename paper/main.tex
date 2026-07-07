@@ -1,44 +1,57 @@
 % =============================================================================
 %  MIRROR - Multimodal Intelligent Radiology Reasoning and Observation Reporter
-%  Workshop / arXiv preprint draft --- SINGLE-FILE, self-contained.
+%  Workshop / arXiv preprint draft.
 %
-%  HOW TO USE: drop this one file into a blank Overleaf project and click
-%  "Recompile" (engine: pdfLaTeX). It needs NO other files: the architecture
-%  figure is drawn inline with TikZ, all result tables are inlined, and the
-%  bibliography is embedded as a `thebibliography` environment (so a single
-%  pdfLaTeX pass suffices --- no bibtex step, no undefined references).
+%  HOW TO USE: compiles in Overleaf (engine: pdfLaTeX) in a SINGLE pass -- the
+%  architecture figure and the two result graphs are drawn inline (TikZ/pgfplots),
+%  the tables are inlined, and the bibliography is embedded (no bibtex step).
+%  The only external assets are the three UI screenshots in paper/figures/*.png;
+%  upload that folder alongside this file. Each screenshot is guarded by
+%  \IfFileExists, so the document still compiles (with a red placeholder box) if
+%  the images are missing.
 %
-%  STATUS: results-independent sections (intro, literature review, architecture,
-%  setup, ethics) are complete. Result numbers in Section 6 are ILLUSTRATIVE
-%  placeholders from results/evaluation/*.json (each stamped with an "_note"
-%  saying so); they document the OUTPUT FORMAT, not a measured benchmark. Every
-%  claim still blocked on a trained checkpoint is wrapped in \pending{...} ---
-%  search for "PENDING" to find every gap.
+%  DRAFT COLOR CONVENTION (per author request):
+%    * BLACK  text  = finalized / complete content.
+%    * RED    text  = filler / placeholder / pending a trained model. Every
+%                     placeholder number, chart datum, and \pending{...} note is
+%                     red. Search for "PENDING" to find each remaining gap; when a
+%                     real value replaces a red one, set it black.
 %
 %  To submit to a specific venue (MIDL, ML4H, ...), swap \documentclass for that
-%  venue's PMLR/JMLR style and move the title block into its macros; the body
-%  transfers unchanged.
+%  venue's PMLR/JMLR style; the body transfers unchanged.
 % =============================================================================
 \documentclass[10pt,twocolumn]{article}
 
-\usepackage[margin=0.9in]{geometry}
+\usepackage[margin=0.85in]{geometry}
 \usepackage{times}
 \usepackage{microtype}
 \usepackage{graphicx}
 \usepackage{booktabs}
+\usepackage{array}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{enumitem}
 \usepackage{xcolor}
 \usepackage{caption}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
 \usepackage[colorlinks=true,allcolors=blue!55!black]{hyperref}
 \usepackage{url}
-\usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning}
 
-% ---- Draft helper: highlights content still blocked on experiments ----------
-\newcommand{\pending}[1]{{\color{red!75!black}\textbf{[PENDING:} \textit{#1}\textbf{]}}}
+% ---- Draft convention: red = filler / pending, black = complete --------------
+\colorlet{pendingred}{red!75!black}
+\newcommand{\pending}[1]{{\color{pendingred}\textbf{[PENDING:} \textit{#1}\textbf{]}}}
+\newcommand{\ph}[1]{\textcolor{pendingred}{#1}}        % inline placeholder value
+\newcolumntype{K}{>{\color{pendingred}}c}              % placeholder numeric column
 \newcommand{\code}[1]{\texttt{\small #1}}
+
+% ---- Compile even without the screenshot files -------------------------------
+% #1 = path, #2 = width, #3 = fallback caption text.
+\newcommand{\figorbox}[3]{%
+  \IfFileExists{#1}{\includegraphics[width=#2]{#1}}%
+  {\fbox{\parbox[c][2.8cm][c]{#2}{\centering\color{pendingred}\itshape #3\\(add image to paper/figures/)}}}}
 
 \definecolor{mirrorblue}{RGB}{31,86,145}
 \definecolor{mirrorgray}{RGB}{90,96,104}
@@ -46,45 +59,60 @@
 
 \captionsetup{font=small,labelfont=bf}
 
-\title{\textbf{MIRROR}: Grounded, Explainable Chest-Radiograph\\
-Analysis with Evidence Localization and Report Generation}
-
-% PENDING: confirm final author list / order and affiliations with your mentor.
-\author{%
-  Vignesh Nagarajan\\
-  \small Global Indian Scientists \& Technocrats (GIST) 2026 Summer Internship\\
-  \small \texttt{nrvignesh08@gmail.com}\\[2pt]
-  \small Mentor: Sriram Venkatapathy
-}
-\date{}
+\title{MIRROR}   % for PDF metadata only; the visible title block is built below
+\hypersetup{pdftitle={MIRROR: Multimodal Intelligent Radiology Reasoning and Observation Reporter}}
 
 \begin{document}
-\maketitle
 
-% -----------------------------------------------------------------------------
-\begin{abstract}
-Most medical-imaging models stop at a prediction, offering neither the location
-of the evidence nor an account a clinician can read. We present \textbf{MIRROR}
-(Multimodal Intelligent Radiology Reasoning and Observation Reporter), a
+% =============================================================================
+%  Title block --- spans both columns.
+% =============================================================================
+\twocolumn[{%
+\centering
+\vspace{4pt}
+{\Huge\bfseries MIRROR}\\[5pt]
+{\large\bfseries Multimodal Intelligent Radiology Reasoning and Observation Reporter}\\[9pt]
+{\itshape\normalsize A grounded, explainable chest-radiograph pipeline that predicts
+fourteen thoracic pathologies, localizes the visual evidence behind each finding,
+and drafts a clinician-style report --- with predictive quality and explanation
+quality measured side by side.}\\[18pt]
+
+\normalsize
+\begin{tabular}{@{}c@{\hspace{4em}}c@{}}
+\textbf{Vignesh Nagarajan} & \textbf{Sriram Venkatapathy} \\[2pt]
+\small Brown Foundation Scholar        & \small AI Research at Capital One \\
+\small Texas A\&M University            & \small PhD-CS at IIT Hyderabad \\
+\small Dept.\ of Computer Science \& Engineering & \small \textit{Mentor} \\
+\small \texttt{nrvignesh08@gmail.com}  & \\
+\end{tabular}\\[8pt]
+{\small Global Indian Scientists \& Technocrats (GIST) 2026 Summer Research Internship}\\[16pt]
+
+\begin{minipage}{0.86\textwidth}
+\small
+\textbf{Abstract.}
+Most medical-imaging models stop at a prediction, offering neither the location of
+the evidence nor an account a clinician can read. We present \textbf{MIRROR}, a
 three-layer chest-radiograph pipeline that composes (i) a multi-label disease
 classifier, (ii) class-activation-based evidence localization, and (iii) an
 evidence-grounded natural-language report generator into a single traceable
 system. The defining design choice is that each layer's output is the grounded
 input to the next, and the language layer never sees pixels, so every sentence in
-the generated report traces back to a predicted probability and a saliency
-region, and the reasoning layer cannot invent findings the classifier did not
-produce. We pair the system with an evaluation framework that measures predictive
-quality (AUROC/F1) and explanation quality (pointing game, localization IoU) side
-by side, and an ablation that isolates the cost of the added interpretability
-layers. Because those layers are strictly post-hoc, predictive metrics are
-provably invariant to them, which lets us frame the contribution as
-\emph{interpretability at no predictive cost}. All predictive numbers carry
-bootstrap $95\%$ confidence intervals and can be aggregated across training seeds,
-and every run stamps a reproducibility record.
+the generated report traces back to a predicted probability and a saliency region,
+and the reasoning layer cannot invent findings the classifier did not produce. We
+pair the system with an evaluation framework that measures predictive quality
+(AUROC/F1) and explanation quality (pointing game, localization IoU) side by side,
+and an ablation that isolates the cost of the added interpretability layers.
+Because those layers are strictly post-hoc, predictive metrics are provably
+invariant to them, which lets us frame the contribution as \emph{interpretability
+at no predictive cost}. All predictive numbers carry bootstrap $95\%$ confidence
+intervals and can be aggregated across training seeds, and every run stamps a
+reproducibility record.
 \pending{fold in a one-sentence quantitative headline (macro AUROC, localization
 accuracy, and the ablation's invariance result) once the classifier is trained on
 ChestX-ray14.}
-\end{abstract}
+\end{minipage}
+\vspace{16pt}
+}]
 
 % -----------------------------------------------------------------------------
 \section{Introduction}
@@ -130,7 +158,7 @@ ablation reproduces the classification-only baseline the question names.
   (DenseNet-121, EfficientNet-B0, ViT-B/16), two explainability methods
   (Grad-CAM, Score-CAM), an LLM report backend with a deterministic offline
   fallback, native DICOM ingest, and a web front end served by two interchangeable
-  inference engines behind one response contract.
+  inference engines behind one response contract (Fig.~\ref{fig:ui}).
   \item An evaluation framework that scores prediction and explanation quality
   jointly, with bootstrap confidence intervals, multi-seed aggregation, and an
   ablation isolating the predictive cost of interpretability, so the research
@@ -261,7 +289,7 @@ recovered by reshaping the patch-token sequence back to a $14\times14$ spatial
 grid. The activated region's centroid is mapped into a $3\times3$ anatomical grid
 in radiology convention (patient-right on the viewer's left), yielding a
 plain-English location such as ``the right lower zone,'' and a colormap overlay is
-rendered for the UI.
+rendered for the UI (Fig.~\ref{fig:qual}, left).
 
 \subsection{Layer 3: Clinical Reasoning}
 The reasoning layer converts structured evidence (labels, probabilities, and
@@ -275,7 +303,8 @@ template on any error. Predictions below the confidence threshold ($0.5$) are
 surfaced as pertinent negatives rather than silently dropped. Because both
 backends consume identical evidence, swapping them changes \emph{how fluently} the
 report reads, never \emph{what} it may say; and because the layer never receives
-the image, it cannot introduce findings absent from the upstream evidence.
+the image, it cannot introduce findings absent from the upstream evidence
+(Fig.~\ref{fig:qual}, right).
 
 \subsection{Orchestration and Serving}
 A single \code{analyze()} entry point runs the stages and returns one result
@@ -283,14 +312,27 @@ object (predictions, overlays, report) consumed by both the REST API and the
 notebooks; the two later layers are individually toggleable, which recovers the
 ablation conditions of Section~\ref{sec:setup} and records per-stage wall-clock
 timings. Two interchangeable serving engines satisfy the \emph{same} JSON response
-contract (Table~\ref{tab:topology}), so the web UI is identical regardless of
-which engine answered: a finding carries \emph{either} a rendered Grad-CAM overlay
-(local) \emph{or} a normalized bounding box (hosted), and the same viewer draws
-whichever is present. The hosted engine exists because the PyTorch pipeline cannot
-fit typical serverless limits (no GPU, a small bundle ceiling, cold-start model
-loads); it substitutes a vision LLM constrained to a structured tool schema that
-emits the identical JSON, and with no API key returns a clearly-labelled
-deterministic demo result so the deployed site never hard-fails.
+contract (Table~\ref{tab:topology}), so the web UI (Fig.~\ref{fig:ui}) is identical
+regardless of which engine answered: a finding carries \emph{either} a rendered
+Grad-CAM overlay (local) \emph{or} a normalized bounding box (hosted), and the same
+viewer draws whichever is present. The hosted engine exists because the PyTorch
+pipeline cannot fit typical serverless limits (no GPU, a small bundle ceiling,
+cold-start model loads); it substitutes a vision LLM constrained to a structured
+tool schema that emits the identical JSON, and with no API key returns a
+clearly-labelled deterministic demo result so the deployed site never hard-fails.
+
+\begin{figure*}[t]
+\centering
+\figorbox{figures/ui-predictions.png}{0.74\textwidth}{MIRROR reading-room UI screenshot}
+\caption{The MIRROR ``reading-room'' web UI on a real session from the live demo:
+a chest radiograph is uploaded with the indication \emph{``productive cough, 3
+days,''} all 14 ChestX-ray14 labels are scored, and findings above threshold
+(here Pneumonia, Infiltration, Consolidation) surface with a saliency-derived
+location. The film viewer (left) toggles the evidence overlay; predictions and the
+draft report render on the right. Both serving engines produce this identical
+interface.}
+\label{fig:ui}
+\end{figure*}
 
 \begin{table}[t]
 \centering
@@ -364,22 +406,55 @@ reproducibility record (seed, git commit, library versions).
 \section{Results}
 \label{sec:results}
 
-\pending{The numbers in Tables~\ref{tab:prediction}--\ref{tab:ablation} are
-\emph{illustrative, literature-scale placeholders} taken from the committed
+\pending{Every number in Tables~\ref{tab:prediction}--\ref{tab:ablation} and in
+Figures~\ref{fig:auroc}--\ref{fig:loc} is shown in red because it is an
+\emph{illustrative, literature-scale placeholder} taken from the committed
 \code{results/evaluation/*.json} snapshots (each stamped with an \code{\_note}
-field stating exactly this). They document the OUTPUT FORMAT of each harness, not
-a measured benchmark. Once \code{models/checkpoints/densenet121\_best.pt} exists,
-run \code{evaluation/\{evaluate,evaluate\_localization,ablation,aggregate\_seeds\}.py};
-each table is regenerated from the resulting JSON so no number is hand-copied.}
+field stating exactly this); the values document the OUTPUT FORMAT of each
+harness, not a measured benchmark. Once
+\code{models/checkpoints/densenet121\_best.pt} exists, run
+\code{evaluation/\{evaluate,evaluate\_localization,ablation,aggregate\_seeds\}.py};
+each table and graph regenerates from the resulting JSON. Replace the red values
+with the measured ones and set them black.}
+
+The qualitative behavior is already visible end to end: Fig.~\ref{fig:qual} shows,
+for one real study, the Grad-CAM evidence overlay on the film and the grounded
+\textsc{Findings}/\textsc{Impression} draft it produces. The quantitative tables
+and graphs below report the three harnesses' outputs in their released format.
+Figure~\ref{fig:auroc} visualizes the predictive half (per-label AUROC with
+bootstrap CIs) and Figure~\ref{fig:loc} the explanation half (per-lesion
+localization), the two sides of the research question.
+
+\begin{figure*}[t]
+\centering
+\begin{minipage}[t]{0.34\textwidth}
+\centering
+\figorbox{figures/overlay-consolidation.png}{\linewidth}{Grad-CAM evidence overlay}
+\\[2pt]{\footnotesize (a) Evidence localization}
+\end{minipage}\hspace{0.04\textwidth}%
+\begin{minipage}[t]{0.34\textwidth}
+\centering
+\figorbox{figures/report-findings.png}{\linewidth}{Grounded draft report}
+\\[2pt]{\footnotesize (b) Grounded draft report}
+\end{minipage}
+\caption{One real study end to end. (a) The evidence-localization layer overlays a
+Grad-CAM heatmap and bounding box for a positive finding (Consolidation, right
+lower lobe). (b) The reasoning layer drafts a structured
+\textsc{Findings}/\textsc{Impression} report from the same structured evidence
+(labels, probabilities, named regions) --- never the pixels --- ending with the
+mandatory AI-generated-draft disclaimer.}
+\label{fig:qual}
+\end{figure*}
 
 \begin{table*}[t]
 \centering
-\caption{\textbf{Illustrative} predictive quality (DenseNet-121, ChestX-ray14
-test split; $N_{\text{test}}{=}25{,}596$): per-label and macro AUROC with bootstrap
-$95\%$ CIs, and macro F1. Placeholder values --- see the \textsc{Pending} note above.}
+\caption{Predictive quality (DenseNet-121, ChestX-ray14 test split;
+$N_{\text{test}}{=}25{,}596$): per-label and macro AUROC with bootstrap $95\%$
+CIs, and macro F1. {\color{pendingred}\itshape Red = illustrative placeholder,
+pending a trained checkpoint.}}
 \label{tab:prediction}
 \footnotesize
-\begin{tabular}{@{}lc@{\hspace{2.5em}}lc@{}}
+\begin{tabular}{@{}lK@{\hspace{2.5em}}lK@{}}
 \toprule
 \textbf{Pathology} & \textbf{AUROC (95\% CI)} & \textbf{Pathology} & \textbf{AUROC (95\% CI)} \\
 \midrule
@@ -391,20 +466,64 @@ Mass          & 0.826 (0.809--0.844) & Fibrosis           & 0.802 (0.775--0.829)
 Nodule        & 0.749 (0.729--0.769) & Pleural Thickening & 0.779 (0.757--0.801) \\
 Pneumonia     & 0.731 (0.703--0.759) & Hernia             & 0.914 (0.872--0.954) \\
 \midrule
-\multicolumn{4}{@{}l}{\textbf{Macro AUROC} 0.806 (0.797--0.815)\quad$\bullet$\quad
-\textbf{Macro F1} 0.419 (0.403--0.434)\quad$\bullet$\quad
-\textbf{Multi-seed} macro AUROC $0.805\pm0.003$, macro F1 $0.417\pm0.005$ (seeds 0/1/2)} \\
+\multicolumn{4}{@{}l}{\textbf{Macro AUROC} \ph{0.806 (0.797--0.815)}\quad$\bullet$\quad
+\textbf{Macro F1} \ph{0.419 (0.403--0.434)}\quad$\bullet$\quad
+\textbf{Multi-seed} \ph{macro AUROC $0.805\pm0.003$, macro F1 $0.417\pm0.005$} (seeds 0/1/2)} \\
 \bottomrule
 \end{tabular}
 \end{table*}
 
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=\linewidth, height=8.4cm,
+  xbar, xmin=0.60, xmax=0.99,
+  bar width=5.5pt,
+  enlarge y limits=0.04,
+  symbolic y coords={Infiltration,Pneumonia,Nodule,Consolidation,Atelectasis,
+    Pleural Thickening,Fibrosis,Mass,Effusion,Edema,Pneumothorax,Cardiomegaly,
+    Emphysema,Hernia},
+  ytick=data,
+  xlabel={AUROC (with bootstrap 95\% CI)},
+  xmajorgrids, grid style={gray!25},
+  tick label style={font=\scriptsize},
+  label style={font=\footnotesize},
+  axis line style={mirrorgray},
+]
+\addplot[fill=pendingred!35, draw=pendingred, error bars/.cd,
+         x dir=both, x explicit] coordinates {
+  (0.703,Infiltration)       +- (0.014,0)
+  (0.731,Pneumonia)          +- (0.028,0)
+  (0.749,Nodule)             +- (0.020,0)
+  (0.750,Consolidation)      +- (0.016,0)
+  (0.771,Atelectasis)        +- (0.016,0)
+  (0.779,Pleural Thickening) +- (0.022,0)
+  (0.802,Fibrosis)           +- (0.027,0)
+  (0.826,Mass)               +- (0.017,0)
+  (0.831,Effusion)           +- (0.012,0)
+  (0.849,Edema)              +- (0.019,0)
+  (0.858,Pneumothorax)       +- (0.015,0)
+  (0.884,Cardiomegaly)       +- (0.018,0)
+  (0.890,Emphysema)          +- (0.020,0)
+  (0.914,Hernia)             +- (0.041,0)
+};
+\end{axis}
+\end{tikzpicture}
+\caption{Per-label predictive quality: AUROC with bootstrap $95\%$ CI whiskers,
+sorted ascending. {\color{pendingred}\itshape Red = illustrative placeholder data,
+pending a trained checkpoint.}}
+\label{fig:auroc}
+\end{figure}
+
 \begin{table}[t]
 \centering
-\caption{\textbf{Illustrative} explanation quality (DenseNet-121, Grad-CAM) against
-the NIH lesion boxes, over the 8 boxed pathologies. Placeholder values.}
+\caption{Explanation quality (DenseNet-121, Grad-CAM) against the NIH lesion
+boxes, over the 8 boxed pathologies. {\color{pendingred}\itshape Red = illustrative
+placeholder.}}
 \label{tab:localization}
 \footnotesize
-\begin{tabular}{@{}lrccc@{}}
+\begin{tabular}{@{}lrKKK@{}}
 \toprule
 \textbf{Pathology} & \textbf{\#box} & \textbf{Point.} & \textbf{IoU} & \textbf{Loc.\ acc.} \\
 \midrule
@@ -417,23 +536,58 @@ Nodule        &  79 & 0.430 & 0.132 & 0.456 \\
 Pneumonia     & 120 & 0.650 & 0.231 & 0.700 \\
 Pneumothorax  &  98 & 0.643 & 0.236 & 0.684 \\
 \midrule
-\textbf{Overall} & \textbf{984} & \textbf{0.631} & \textbf{0.222} & \textbf{0.675} \\
+\textbf{Overall} & \textbf{984} & 0.631 & 0.222 & 0.675 \\
 \bottomrule
 \end{tabular}
 \\[2pt]
-{\scriptsize Score-CAM figures are produced by the same harness
+{\scriptsize Score-CAM figures come from the same harness
 (\code{--method scorecam}); \pending{run once trained}.}
 \end{table}
 
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=\linewidth, height=6.6cm,
+  xbar, xmin=0, xmax=1.0,
+  bar width=4pt,
+  enlarge y limits=0.10,
+  symbolic y coords={Nodule,Infiltration,Atelectasis,Mass,Pneumothorax,
+    Pneumonia,Effusion,Cardiomegaly},
+  ytick=data,
+  xlabel={score},
+  xmajorgrids, grid style={gray!25},
+  tick label style={font=\scriptsize},
+  label style={font=\footnotesize},
+  legend style={font=\scriptsize, at={(0.98,0.03)}, anchor=south east,
+                draw=gray!40},
+  axis line style={mirrorgray},
+]
+\addplot[fill=pendingred!70, draw=pendingred!85!black] coordinates {
+  (0.430,Nodule) (0.529,Infiltration) (0.572,Atelectasis) (0.612,Mass)
+  (0.643,Pneumothorax) (0.650,Pneumonia) (0.660,Effusion) (0.849,Cardiomegaly)};
+\addplot[fill=pendingred!25, draw=pendingred!55] coordinates {
+  (0.456,Nodule) (0.569,Infiltration) (0.606,Atelectasis) (0.659,Mass)
+  (0.684,Pneumothorax) (0.700,Pneumonia) (0.712,Effusion) (0.877,Cardiomegaly)};
+\legend{Pointing game, Localization accuracy}
+\end{axis}
+\end{tikzpicture}
+\caption{Per-lesion explanation quality: pointing-game accuracy and localization
+accuracy (IoU$\ge$0.1) over the 8 boxed pathologies, sorted ascending.
+{\color{pendingred}\itshape Red = illustrative placeholder data.}}
+\label{fig:loc}
+\end{figure}
+
 \begin{table*}[t]
 \centering
-\caption{\textbf{Illustrative} ablation (DenseNet-121). Predictive metrics are
-\emph{identical} across rows (max probability delta $=0$) --- the added layers are
-post-hoc --- so interpretability is added at no predictive cost; localization
-capability and its latency appear only where enabled. Placeholder values.}
+\caption{Ablation (DenseNet-121). Predictive metrics are \emph{identical} across
+rows (max probability delta $=0$) --- the added layers are post-hoc --- so
+interpretability is added at no predictive cost; localization capability and its
+latency appear only where enabled. {\color{pendingred}\itshape Red = illustrative
+placeholder.}}
 \label{tab:ablation}
 \footnotesize
-\begin{tabular}{@{}lccccc@{}}
+\begin{tabular}{@{}lKKKKK@{}}
 \toprule
 \textbf{Condition} & \textbf{Macro AUROC} & \textbf{Macro F1} & \textbf{Pointing game} & \textbf{Mean IoU} & \textbf{Latency (ms)} \\
 \midrule
@@ -444,23 +598,20 @@ Full MIRROR (+ report)         & 0.806 & 0.419 & 0.631 & 0.222 & 174.4 \\
 \end{tabular}
 \end{table*}
 
-Tables~\ref{tab:prediction}--\ref{tab:ablation} report the three harnesses'
-outputs in their released format. The predictive table gives per-label and macro
-AUROC/F1 with bootstrap CIs and the across-seed spread; the localization table
-substantiates the explainability claim against NIH's boxes; and the ablation makes
-the headline argument explicit: the macro AUROC/F1 columns are constant across all
-three rows (maximum probability delta $=0$), so interpretability is added at no
-predictive cost, while the latency column shows the cost is instead a modest,
-bounded increase in wall-clock time (dominated by the localization pass).
+The ablation makes the headline argument explicit: the macro AUROC/F1 columns are
+constant across all three rows (maximum probability delta $=0$), so
+interpretability is added at no predictive cost, while the latency column shows the
+cost is instead a modest, bounded increase in wall-clock time (dominated by the
+localization pass).
 
 % -----------------------------------------------------------------------------
 \section{Discussion}
 
-\pending{Interpret the tables once real numbers are available. Anticipated
-storyline: (1) the classifier reaches the CheXNet-range AUROC expected on
-ChestX-ray14; (2) the localization table substantiates the novelty claim that the
-heatmaps land on annotated lesions; (3) the ablation shows the added layers leave
-AUROC/F1 unchanged; (4) contrast Grad-CAM vs.\ Score-CAM localization.}
+\pending{Interpret the tables and graphs once real numbers are available.
+Anticipated storyline: (1) the classifier reaches the CheXNet-range AUROC expected
+on ChestX-ray14; (2) the localization results substantiate the novelty claim that
+the heatmaps land on annotated lesions; (3) the ablation shows the added layers
+leave AUROC/F1 unchanged; (4) contrast Grad-CAM vs.\ Score-CAM localization.}
 
 Independent of the trained numbers, MIRROR's grounding constraint is a
 qualitative contribution. Because the language layer sees only structured
@@ -533,7 +684,7 @@ tests are torch-free so they run without a model or dataset.
 \section*{Acknowledgments}
 \small
 This work was completed as part of the Global Indian Scientists \& Technocrats
-(GIST) 2026 Summer Internship Program, mentored by Sriram Venkatapathy.
+(GIST) 2026 Summer Research Internship, mentored by Sriram Venkatapathy.
 
 % =============================================================================
 %  Bibliography embedded so this stays a single, self-contained file (one

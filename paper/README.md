@@ -5,36 +5,46 @@ directory is required to run the system.
 
 ## Current draft
 
-[`main.tex`](main.tex) is a **single, self-contained** draft targeting a short
-(5–8 page) medical-imaging workshop paper / arXiv preprint. It merges the written
-literature review, architecture, and experimental-setup sections with an inline
-TikZ architecture figure, the three result tables, and an embedded bibliography
-(20 sources) — everything lives in the one file.
+[`main.tex`](main.tex) is a two-column workshop/preprint draft (5–8 pages)
+targeting a top medical-imaging venue. Everything textual lives in the one file:
+the literature review, architecture, and experimental-setup sections, an inline
+TikZ architecture figure, two inline `pgfplots` result graphs, the three result
+tables, and an embedded 20-source bibliography. The only external assets are the
+three UI screenshots in [`figures/`](figures/) (`ui-predictions.png`,
+`overlay-consolidation.png`, `report-findings.png`) — upload that folder alongside
+`main.tex`. Each screenshot is guarded by `\IfFileExists`, so the document still
+compiles (showing a red placeholder box) if the images are missing.
 
-The results-independent sections (introduction, literature review, architecture,
-experimental setup, ethics and limitations) are complete. The result numbers are
-**illustrative, literature-scale placeholders** pulled from the committed
-`results/evaluation/*.json` snapshots (they document each harness's output
-*format*, not a measured benchmark). Everything still blocked on a trained model
-is wrapped in a red `\pending{...}` note — **search the source for `PENDING` to
-find every gap.**
+### Draft color convention (black = done, red = pending)
+
+Per the current working style, the draft encodes its own to-do list in color:
+
+- **Black** text is finalized/complete content.
+- **Red** text is filler awaiting a trained model — every placeholder number,
+  chart datum, and `\pending{...}` note. The result tables and both graphs render
+  their numbers in red because they are **illustrative, literature-scale
+  placeholders** from the committed `results/evaluation/*.json` snapshots (output
+  *format*, not a measured benchmark).
+
+**Search the source for `PENDING` to find every gap.** When a real value replaces
+a red one, set it black.
 
 ### Build
 
-It compiles as-is in [Overleaf](https://www.overleaf.com/) (or any TeX install)
-with a **single pdfLaTeX pass** — the bibliography is embedded as a
-`thebibliography` environment, so there is no separate `bibtex` step and no
-"undefined references" on first compile. Drop `main.tex` into a blank Overleaf
-project and hit *Recompile*, or locally:
+Compiles in [Overleaf](https://www.overleaf.com/) (or any TeX install) in a
+**single pdfLaTeX pass** — the bibliography is embedded as a `thebibliography`
+environment, so there is no separate `bibtex` step. Create an Overleaf project,
+upload `main.tex` **and the `figures/` folder**, and hit *Recompile*, or locally:
 
 ```bash
 cd paper
 pdflatex main
 ```
 
-> **Before making any performance claim**, replace the placeholder numbers with
-> real values: train on ChestX-ray14, run the `evaluation/` harnesses, and copy
-> the figures from the resulting JSON into the tables in `main.tex`.
+> **Before making any performance claim**, replace the red placeholder numbers
+> with real values: train on ChestX-ray14, run the `evaluation/` harnesses, and
+> copy the figures from the resulting JSON into the tables and graphs in
+> `main.tex` (then set them black).
 
 ## Extending the draft
 

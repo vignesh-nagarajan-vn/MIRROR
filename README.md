@@ -332,7 +332,7 @@ mirror/
 ├── tests/                        # torch-free unit tests (metrics, ablation, repro, …)
 ├── docs/                         # architecture · setup · deployment · API reference
 │   └── images/architecture.svg  # the system diagram
-├── paper/                        # self-contained LaTeX draft (main.tex) + build notes
+├── paper/                        # LaTeX draft (main.tex + figures/) + build notes
 ├── demo/                         # CLI demo (run_demo.py) + generated assets/
 ├── configs/default.yaml          # single source of tunables (backbone, CAM, report backend)
 ├── docker-compose.yml            # backend :8000 + frontend :3000
@@ -433,23 +433,27 @@ report generation to a chest-radiograph classifier improve interpretability
 without a predictive penalty?* The headline result is the ablation, framing the
 contribution as **interpretability at no predictive cost**.
 
-A **single, self-contained** LaTeX draft lives in
+A two-column workshop/preprint LaTeX draft lives in
 [`paper/main.tex`](paper/main.tex): one file with an inline TikZ architecture
-figure, the three result tables, and an embedded 20-source bibliography (including
-a one-page literature review). The results-independent sections (introduction,
-literature review, architecture, experimental setup, ethics and limitations) are
-written, and the result tables are populated with the **illustrative** snapshot
-numbers from [`results/`](results/); everything still blocked on a trained model is
-a `\pending{}` stub (search the source for `PENDING`). Build it in **Overleaf** or
-with a local TeX install — one pdfLaTeX pass, no `bibtex` step:
+figure, two inline `pgfplots` result graphs, the three result tables, real UI
+screenshots (in [`paper/figures/`](paper/figures/)), and an embedded 20-source
+bibliography (including a one-page literature review). The results-independent
+sections (introduction, literature review, architecture, experimental setup,
+ethics and limitations) are written, and the result tables/graphs are populated
+with the **illustrative** snapshot numbers from [`results/`](results/). The draft
+encodes its own to-do list in color: **black = finalized, red = filler/pending a
+trained model** (every placeholder number and `\pending{}` stub is red — search
+the source for `PENDING`). Build it in **Overleaf** (upload `main.tex` and the
+`figures/` folder) or with a local TeX install — one pdfLaTeX pass, no `bibtex`
+step:
 
 ```bash
 cd paper
 pdflatex main
 ```
 
-See [`paper/README.md`](paper/README.md) for the section map and how the tables
-are generated.
+See [`paper/README.md`](paper/README.md) for the section map, the color
+convention, and how the tables are generated.
 
 ## Documentation
 
