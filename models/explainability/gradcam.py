@@ -32,14 +32,31 @@ class GradCAM:
         self.reshape_transform = reshape_transform
         self._activations = None
         self._gradients = None
+        # Capture the activation, and the gradient via a *tensor* hook registered
+        # on that activation, both from forward hooks. Using a module-level
+        # ``register_full_backward_hook`` here instead breaks on backbones whose
+        # next op modifies the target layer's output in place (e.g. DenseNet's
+        # ``F.relu(..., inplace=True)`` right after ``features.norm5``): the
+        # backward hook wraps the output in a view and the in-place op then raises
+        # "a view is being modified inplace ... forbidden". The tensor-hook
+        # approach is the version-independent pattern the standard Grad-CAM
+        # libraries use.
         self._fwd_handle = target_layer.register_forward_hook(self._save_activation)
-        self._bwd_handle = target_layer.register_full_backward_hook(self._save_gradient)
+        self._grad_handle = target_layer.register_forward_hook(self._register_grad_hook)
 
     def _save_activation(self, _module, _inp, output):
-        self._activations = output.detach()
+        # Clone so a subsequent in-place op on the layer output (DenseNet relu_)
+        # cannot corrupt the saved pre-activation via shared storage.
+        self._activations = output.detach().clone()
 
-    def _save_gradient(self, _module, _grad_in, grad_out):
-        self._gradients = grad_out[0].detach()
+    def _register_grad_hook(self, _module, _inp, output):
+        if not getattr(output, "requires_grad", False):
+            return
+
+        def _store(grad):
+            self._gradients = grad.detach()
+
+        output.register_hook(_store)
 
     def _format(self, tensor):
         """Reshape ViT token sequences into a spatial grid if needed."""
@@ -83,7 +100,7 @@ class GradCAM:
 
     def remove_hooks(self) -> None:
         self._fwd_handle.remove()
-        self._bwd_handle.remove()
+        self._grad_handle.remove()
 
     def __enter__(self):
         return self

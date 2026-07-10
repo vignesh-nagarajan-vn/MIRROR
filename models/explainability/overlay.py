@@ -11,13 +11,18 @@ from io import BytesIO
 
 import numpy as np
 
+# Guarded independently so a missing colormap dep isn't misreported as a missing
+# image dep (and vice versa): each error message then names the package to install.
 try:
     import matplotlib
     matplotlib.use("Agg")  # headless rendering
     import matplotlib.cm as cm
-    from PIL import Image
 except ImportError:  # pragma: no cover
     cm = None
+
+try:
+    from PIL import Image
+except ImportError:  # pragma: no cover
     Image = None
 
 
