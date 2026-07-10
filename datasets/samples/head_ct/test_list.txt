@@ -1,0 +1,3 @@
+ct_0000.dcm
+ct_0001.png
+ct_0002.png

@@ -39,11 +39,20 @@ def test_capability_matrix_prediction_always_on():
 
 
 def test_merge_metric_results_pulls_headline_numbers():
-    pred = {"macro_auroc": 0.82, "macro_f1": 0.41, "extra": "ignored"}
+    pred = {
+        "macro_auroc": 0.82,
+        "macro_auprc": 0.55,
+        "macro_f1": 0.41,
+        "operating_point": {"macro": {"sensitivity": 0.7, "specificity": 0.9}},
+        "extra": "ignored",
+    }
     loc = {"overall": {"pointing_game": 0.7, "mean_iou": 0.25, "loc_accuracy": 0.6}}
     merged = merge_metric_results(pred, loc)
     assert merged["macro_auroc"] == 0.82
+    assert merged["macro_auprc"] == 0.55
     assert merged["macro_f1"] == 0.41
+    assert merged["sensitivity"] == 0.7
+    assert merged["specificity"] == 0.9
     assert merged["pointing_game"] == 0.7
     assert merged["mean_iou"] == 0.25
     assert merged["loc_accuracy"] == 0.6
@@ -53,7 +62,10 @@ def test_merge_metric_results_tolerates_missing():
     merged = merge_metric_results(None, None)
     assert set(merged) == {
         "macro_auroc",
+        "macro_auprc",
         "macro_f1",
+        "sensitivity",
+        "specificity",
         "pointing_game",
         "mean_iou",
         "loc_accuracy",

@@ -1,0 +1,3 @@
+mri_0000.dcm
+mri_0001.png
+mri_0002.png

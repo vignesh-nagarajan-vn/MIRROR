@@ -23,7 +23,8 @@ from pydicom.uid import (  # noqa: E402
     generate_uid,
 )
 
-from models.common.dicom import is_dicom, read_dicom  # noqa: E402
+from models.common.dicom import dicom_modality_tag, is_dicom, read_dicom  # noqa: E402
+from models.common.modalities import modality_from_dicom_tag  # noqa: E402
 from models.common.preprocessing import load_image  # noqa: E402
 
 
@@ -112,3 +113,13 @@ def test_load_image_routes_dicom_from_bytes():
     img = load_image(_make_dicom_bytes())
     assert img.mode == "RGB"
     assert img.size == (32, 32)
+
+
+def test_dicom_modality_tag_reads_without_pixels():
+    """The cheap tag read used to auto-route a study to the right modality."""
+    # The fixture is a CR (chest) study.
+    assert dicom_modality_tag(_make_dicom_bytes()) == "CR"
+    # Not DICOM -> no tag.
+    assert dicom_modality_tag(b"\x89PNG\r\n\x1a\n" + b"\x00" * 200) is None
+    # And the CR tag maps to the chest modality.
+    assert modality_from_dicom_tag(dicom_modality_tag(_make_dicom_bytes())) == "chest_xray"
