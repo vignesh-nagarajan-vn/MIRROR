@@ -63,14 +63,43 @@ def aggregate(summaries: list[dict]) -> dict:
         for label, value in s.get("per_label_auroc", {}).items():
             per_label.setdefault(label, []).append(value)
 
+    # Aggregate the clinical macro metrics too, when the runs carry them (newer
+    # eval_*.json). Each is extracted by a path so nested blocks work; a metric is
+    # aggregated over the runs that actually report it.
+    optional_paths = {
+        "macro_auprc": ("macro_auprc",),
+        "macro_sensitivity": ("operating_point", "macro", "sensitivity"),
+        "macro_specificity": ("operating_point", "macro", "specificity"),
+        "macro_ppv": ("operating_point", "macro", "ppv"),
+        "macro_npv": ("operating_point", "macro", "npv"),
+        "brier": ("calibration", "brier"),
+        "ece": ("calibration", "ece"),
+    }
+
+    def _dig(d: dict, path: tuple[str, ...]):
+        for key in path:
+            if not isinstance(d, dict) or key not in d:
+                return None
+            d = d[key]
+        return d
+
+    optional: dict[str, dict] = {}
+    for name, path in optional_paths.items():
+        vals = [v for s in summaries if (v := _dig(s, path)) is not None]
+        if vals:
+            optional[name] = _mean_std(vals)
+
     backbones = sorted({s.get("backbone") for s in summaries if s.get("backbone")})
+    modalities = sorted({s.get("modality") for s in summaries if s.get("modality")})
     return {
         "timestamp": datetime.utcnow().isoformat() + "Z",
         "n_seeds": len(summaries),
         "seeds": seeds,
         "backbone": backbones[0] if len(backbones) == 1 else backbones,
+        "modality": modalities[0] if len(modalities) == 1 else modalities,
         "macro_auroc": macro_auroc,
         "macro_f1": macro_f1,
+        **optional,
         "per_label_auroc": {k: _mean_std(v) for k, v in sorted(per_label.items())},
     }
 

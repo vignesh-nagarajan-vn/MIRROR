@@ -105,9 +105,13 @@ def merge_metric_results(
     """Pull the headline numbers out of the two evaluation JSON summaries."""
     pred = prediction_results or {}
     loc = (localization_results or {}).get("overall", {})
+    op = pred.get("operating_point", {}).get("macro", {})
     return {
         "macro_auroc": pred.get("macro_auroc"),
+        "macro_auprc": pred.get("macro_auprc"),
         "macro_f1": pred.get("macro_f1"),
+        "sensitivity": op.get("sensitivity"),
+        "specificity": op.get("specificity"),
         "pointing_game": loc.get("pointing_game"),
         "mean_iou": loc.get("mean_iou"),
         "loc_accuracy": loc.get("loc_accuracy"),
@@ -138,7 +142,10 @@ def assemble_table(
                 "report": c.report,
                 # Predictive quality — same across conditions by construction.
                 "macro_auroc": metrics.get("macro_auroc"),
+                "macro_auprc": metrics.get("macro_auprc"),
                 "macro_f1": metrics.get("macro_f1"),
+                "sensitivity": metrics.get("sensitivity"),
+                "specificity": metrics.get("specificity"),
                 # Explanation quality — only where the localisation layer is on.
                 "pointing_game": metrics.get("pointing_game") if c.localize else None,
                 "mean_iou": metrics.get("mean_iou") if c.localize else None,
@@ -324,7 +331,7 @@ def main() -> None:
         inv = "yes" if profile["predictions_invariant"] else "NO (!)"
         print(
             f"\npredictions invariant across conditions: {inv} "
-            f"(max Δprob = {profile['max_prob_delta']:.2e}, "
+            f"(max prob delta = {profile['max_prob_delta']:.2e}, "
             f"n={profile['n_images']} images)"
         )
         for name, stages in profile["latency"].items():
