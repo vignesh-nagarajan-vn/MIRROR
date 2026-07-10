@@ -21,13 +21,21 @@ except ImportError:  # pragma: no cover - yaml is a declared dependency
 
 @dataclass
 class ModelConfig:
-    """Backbone + classifier head settings."""
+    """Backbone + classifier head settings.
+
+    ``checkpoint_path`` is the weights for the default (chest X-ray) modality.
+    ``checkpoints`` optionally maps a modality key (``chest_xray`` / ``brain_mri``
+    / ``head_ct``) to its own trained checkpoint, so one deployment can serve
+    several modalities each with the right head. Any modality without an entry
+    runs on ImageNet-pretrained weights (structurally valid, not benchmarked).
+    """
 
     backbone: str = "densenet121"  # one of: densenet121, efficientnet_b0, vit_b_16
     num_classes: int = 14
     pretrained: bool = True
     dropout: float = 0.2
     checkpoint_path: str | None = None
+    checkpoints: dict[str, str] | None = None
 
 
 @dataclass

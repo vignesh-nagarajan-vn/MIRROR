@@ -21,9 +21,19 @@ import time
 from dataclasses import dataclass, field
 
 from .common.config import Config
+from .common.modalities import ModalitySpec, resolve_modality, modality_from_dicom_tag
+from .common.dicom import dicom_modality_tag
 from .classification.infer import Classifier
 from .explainability.explainer import Explainer, describe_location
 from .report_generation.generator import ReportGenerator
+
+
+@dataclass
+class _ModalityEngine:
+    """The classifier + explainer built for one modality (lazily, then cached)."""
+
+    classifier: Classifier
+    explainer: Explainer
 
 
 @dataclass
@@ -67,18 +77,52 @@ class AnalysisResult:
 
 
 class MirrorPipeline:
-    """Load all three layers once, then analyze images on demand."""
+    """Load the layers once per modality, then analyze images on demand.
+
+    The classifier + explainer are modality-specific (the head width and label
+    set differ between a chest X-ray, a brain MRI, and a head CT), so they are
+    built lazily and cached per modality in ``self._engines``. The default
+    (chest X-ray) engine is built eagerly so the backend can report ``backbone``
+    and stay backward compatible. The report generator is modality-agnostic and
+    shared.
+    """
 
     def __init__(self, config: Config | None = None) -> None:
         self.config = config or Config()
+        self.reporter = ReportGenerator(self.config.report)
+        self._engines: dict[str, _ModalityEngine] = {}
 
-        self.classifier = Classifier(
-            checkpoint_path=self.config.model.checkpoint_path,
+        # Eagerly build the default modality so ``pipeline.classifier`` /
+        # ``pipeline.labels`` / ``pipeline.explainer`` remain available.
+        default_spec = resolve_modality(None)
+        default_engine = self._engine_for(default_spec)
+        self.classifier = default_engine.classifier
+        self.explainer = default_engine.explainer
+        self.labels = self.classifier.labels
+
+    def _checkpoint_for(self, spec: ModalitySpec) -> str | None:
+        """Resolve the checkpoint for a modality (per-modality map, then default)."""
+        checkpoints = self.config.model.checkpoints or {}
+        if spec.key in checkpoints:
+            return checkpoints[spec.key]
+        if spec.key == resolve_modality(None).key:
+            return self.config.model.checkpoint_path
+        return None
+
+    def _engine_for(self, spec: ModalitySpec) -> _ModalityEngine:
+        """Get (or lazily build and cache) the classifier + explainer for ``spec``."""
+        engine = self._engines.get(spec.key)
+        if engine is not None:
+            return engine
+
+        classifier = Classifier(
+            checkpoint_path=self._checkpoint_for(spec),
             backbone=self.config.model.backbone,
             image_size=self.config.data.image_size,
+            labels=spec.labels,
         )
-        self.explainer = Explainer(
-            model=self.classifier.model,
+        explainer = Explainer(
+            model=classifier.model,
             backbone=self.config.model.backbone,
             method=self.config.explain.method,
             target_layer=self.config.explain.target_layer,
@@ -86,8 +130,22 @@ class MirrorPipeline:
             overlay_alpha=self.config.explain.overlay_alpha,
             colormap=self.config.explain.colormap,
         )
-        self.reporter = ReportGenerator(self.config.report)
-        self.labels = self.classifier.labels
+        engine = _ModalityEngine(classifier=classifier, explainer=explainer)
+        self._engines[spec.key] = engine
+        return engine
+
+    def _resolve_modality(self, source, modality: str | None) -> ModalitySpec:
+        """Resolve the modality string, sniffing a DICOM Modality tag when 'auto'.
+
+        Passing ``modality="auto"`` (or leaving it empty) routes by the DICOM
+        (0008,0060) Modality tag when the source is DICOM, otherwise falls back to
+        the default modality. An explicit modality string always wins.
+        """
+        if modality and str(modality).strip().lower() not in ("", "auto"):
+            return resolve_modality(modality)
+        tag = dicom_modality_tag(source)
+        key = modality_from_dicom_tag(tag)
+        return resolve_modality(key)
 
     def analyze(
         self,
@@ -100,8 +158,11 @@ class MirrorPipeline:
     ) -> AnalysisResult:
         """Run the Image -> Prediction -> Evidence -> Report pipeline.
 
-        The two later layers can be switched off to recover MIRROR's ablation
-        conditions, which is what ``evaluation/ablation.py`` compares:
+        ``modality`` selects the label set / classifier head and the anatomical
+        vocabulary (see ``models/common/modalities.py``); pass ``"auto"`` to route
+        a DICOM study by its Modality tag. The two later layers can be switched off
+        to recover MIRROR's ablation conditions, which is what
+        ``evaluation/ablation.py`` compares:
 
         * ``localize=False, report=False`` -> classification-only baseline.
         * ``localize=True,  report=False`` -> classification + evidence.
@@ -112,12 +173,16 @@ class MirrorPipeline:
         wall-clock timings are recorded in ``meta['timings_ms']`` so the ablation
         can report the latency cost of each added layer.
         """
+        spec = self._resolve_modality(source, modality)
+        engine = self._engine_for(spec)
+        classifier, explainer = engine.classifier, engine.explainer
+        labels = classifier.labels
         threshold = self.config.report.confidence_threshold
         timings_ms: dict[str, float] = {}
 
         # 1. Prediction
         t0 = time.perf_counter()
-        predictions = self.classifier.predict(source)
+        predictions = classifier.predict(source)
         timings_ms["prediction"] = (time.perf_counter() - t0) * 1000
 
         # 2 & 3. Evidence localisation + structured findings.
@@ -132,9 +197,9 @@ class MirrorPipeline:
             # Only spend compute explaining the top-k present findings, and only
             # when the localisation layer is enabled.
             if localize and present and explained < explain_top_k:
-                class_idx = self.labels.index(pred.label)
-                explanation = self.explainer.explain(source, pred.label, class_idx)
-                location = describe_location(explanation.centroid)
+                class_idx = labels.index(pred.label)
+                explanation = explainer.explain(source, pred.label, class_idx)
+                location = describe_location(explanation.centroid, spec.plane)
                 overlay_b64 = base64.b64encode(explanation.overlay_png).decode()
                 explained += 1
 
@@ -161,7 +226,7 @@ class MirrorPipeline:
                 }
                 for f in findings
             ]
-            generated = self.reporter.generate(evidence, modality, indication)
+            generated = self.reporter.generate(evidence, spec, indication)
             report_text, report_backend = generated.text, generated.backend
         else:
             report_text, report_backend = "", "disabled"
@@ -171,11 +236,13 @@ class MirrorPipeline:
             findings=findings,
             report=report_text,
             report_backend=report_backend,
-            modality=modality,
+            modality=spec.display_name,
             backbone=self.config.model.backbone,
             explain_method=self.config.explain.method,
             meta={
+                "modality_key": spec.key,
                 "num_present": sum(1 for f in findings if f.present),
+                "num_labels": len(labels),
                 "timings_ms": timings_ms,
                 "stages": {
                     "prediction": True,

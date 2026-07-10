@@ -97,16 +97,41 @@ class Explainer:
         )
 
 
-def describe_location(centroid: tuple[float, float]) -> str:
-    """Convert a normalised centroid into anatomical-ish plain English.
-
-    A rough mapping into a 3x3 grid of the film; good enough to ground the
-    language model and to give clinicians a quick orientation.
-    """
-    x, y = centroid
+def _describe_frontal(x: float, y: float) -> str:
+    """Chest-radiograph vocabulary: a 3x3 grid of lung zones."""
     vertical = "upper" if y < 0.33 else "mid" if y < 0.66 else "lower"
     # Radiology convention: patient's right is on the viewer's left.
     horizontal = "right" if x < 0.33 else "central" if x < 0.66 else "left"
     if horizontal == "central":
         return f"the {vertical} central zone"
     return f"the {vertical} {horizontal} zone"
+
+
+def _describe_axial(x: float, y: float) -> str:
+    """Cross-sectional (brain MRI / head CT) vocabulary: lobar regions.
+
+    On an axial slice displayed in radiological convention the patient's right is
+    on the viewer's left (same flip as a frontal film), and the top of the image
+    is anterior. We map the vertical axis to anterior->posterior lobes and the
+    horizontal axis to laterality.
+    """
+    region = "frontal" if y < 0.33 else "parietal" if y < 0.66 else "occipital"
+    side = "right" if x < 0.33 else "midline" if x < 0.66 else "left"
+    if side == "midline":
+        return f"the {region} midline region"
+    return f"the {side} {region} region"
+
+
+def describe_location(centroid: tuple[float, float], plane: str = "frontal") -> str:
+    """Convert a normalised centroid into anatomical-ish plain English.
+
+    ``plane`` selects the vocabulary: ``"frontal"`` (a chest film -> lung zones)
+    or ``"axial"`` (a cross-sectional brain MRI / head CT -> lobar regions). A
+    rough 3x3 mapping in both cases: enough to ground the language model and give
+    a clinician a quick orientation. Defaults to ``"frontal"`` for backward
+    compatibility with the original chest-only pipeline.
+    """
+    x, y = centroid
+    if plane == "axial":
+        return _describe_axial(x, y)
+    return _describe_frontal(x, y)

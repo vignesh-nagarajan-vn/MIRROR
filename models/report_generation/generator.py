@@ -18,7 +18,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from ..common.config import ReportConfig, get_anthropic_api_key
+from ..common.modalities import ModalitySpec, resolve_modality
 from .prompts import SYSTEM_PROMPT, build_user_prompt
+
+# ASCII hyphen (not an em dash) so the deterministic report prints cleanly on
+# any terminal, including Windows cp1252 consoles.
+DISCLAIMER = "AI-GENERATED DRAFT - requires verification by a licensed radiologist."
 
 
 @dataclass
@@ -36,8 +41,13 @@ def _qualitative_confidence(p: float) -> str:
     return "low confidence"
 
 
-def _template_report(findings: list[dict], modality: str) -> str:
-    """Offline deterministic report from structured evidence."""
+def _template_report(findings: list[dict], spec: ModalitySpec) -> str:
+    """Offline deterministic report from structured evidence.
+
+    Modality-aware: the "normal" impression phrasing comes from the modality spec
+    so a normal brain study is not described as "no acute cardiopulmonary
+    abnormality".
+    """
     present = [f for f in findings if f["present"]]
     absent_major = [
         f["label"] for f in findings if not f["present"]
@@ -71,10 +81,10 @@ def _template_report(findings: list[dict], modality: str) -> str:
         ):
             lines.append(f"{i}. Possible {f['label'].replace('_', ' ')}.")
     else:
-        lines.append("1. No acute cardiopulmonary abnormality detected.")
+        lines.append(f"1. {spec.normal_impression}")
 
     lines.append("")
-    lines.append("AI-GENERATED DRAFT — requires verification by a licensed radiologist.")
+    lines.append(DISCLAIMER)
     return "\n".join(lines)
 
 
@@ -84,7 +94,7 @@ class ReportGenerator:
     def __init__(self, config: ReportConfig | None = None) -> None:
         self.config = config or ReportConfig()
 
-    def _anthropic_report(self, findings: list[dict], modality: str,
+    def _anthropic_report(self, findings: list[dict], spec: ModalitySpec,
                           indication: str | None) -> str:
         try:
             import anthropic
@@ -106,7 +116,7 @@ class ReportGenerator:
             messages=[
                 {
                     "role": "user",
-                    "content": build_user_prompt(findings, modality, indication),
+                    "content": build_user_prompt(findings, spec, indication),
                 }
             ],
         )
@@ -117,18 +127,26 @@ class ReportGenerator:
     def generate(
         self,
         findings: list[dict],
-        modality: str = "chest X-ray",
+        modality: ModalitySpec | str = "chest X-ray",
         indication: str | None = None,
     ) -> Report:
-        """Produce a report, falling back to the template backend on any error."""
+        """Produce a report, falling back to the template backend on any error.
+
+        ``modality`` may be a resolved :class:`ModalitySpec` (as the pipeline
+        passes) or a free-text string (resolved via the registry), so this stays
+        usable standalone.
+        """
+        spec = (
+            modality if isinstance(modality, ModalitySpec) else resolve_modality(modality)
+        )
         backend = self.config.provider
         if backend == "anthropic":
             try:
-                text = self._anthropic_report(findings, modality, indication)
+                text = self._anthropic_report(findings, spec, indication)
                 return Report(text=text, backend="anthropic", findings_used=findings)
             except Exception as exc:  # noqa: BLE001 - graceful degradation
                 print(f"[report] anthropic backend failed ({exc}); using template.")
                 backend = "template"
 
-        text = _template_report(findings, modality)
+        text = _template_report(findings, spec)
         return Report(text=text, backend="template", findings_used=findings)

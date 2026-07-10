@@ -140,6 +140,29 @@ def _to_display_array(ds) -> np.ndarray:
     return (arr * 255.0).astype(np.uint8)
 
 
+def dicom_modality_tag(source: str | Path | bytes) -> str | None:
+    """Read only the DICOM (0008,0060) Modality value, without decoding pixels.
+
+    Returns e.g. ``"MR"``, ``"CT"``, ``"CR"`` so the pipeline can auto-route a
+    study to the right label set, or ``None`` if the source is not DICOM / the
+    tag is absent / pydicom is unavailable. Deliberately cheap: it stops before
+    the (potentially large, possibly compressed) pixel data.
+    """
+    if pydicom is None:
+        return None
+    if not is_dicom(source):
+        return None
+    reader = BytesIO(source) if isinstance(source, bytes) else str(source)
+    try:
+        ds = pydicom.dcmread(
+            reader, force=True, stop_before_pixels=True, specific_tags=["Modality"]
+        )
+    except Exception:  # noqa: BLE001 - a malformed header must not crash routing
+        return None
+    value = getattr(ds, "Modality", None)
+    return str(value) if value not in (None, "") else None
+
+
 def read_dicom(source: str | Path | bytes) -> DicomImage:
     """Decode a DICOM source into a display-ready RGB image plus metadata.
 

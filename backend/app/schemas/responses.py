@@ -6,10 +6,16 @@ from pydantic import BaseModel, Field
 
 
 class FindingSchema(BaseModel):
-    label: str = Field(..., description="Disease/finding name (ChestX-ray14 taxonomy).")
+    label: str = Field(
+        ...,
+        description="Finding name from the study's modality taxonomy "
+        "(ChestX-ray14, brain MRI, or head CT).",
+    )
     probability: float = Field(..., ge=0.0, le=1.0)
     present: bool = Field(..., description="True if probability >= threshold.")
-    location: str = Field(..., description="Plain-English zone from the saliency map.")
+    location: str = Field(
+        ..., description="Plain-English region from the saliency map."
+    )
     overlay_png_b64: str | None = Field(
         None, description="Base64-encoded PNG of the Grad-CAM overlay, if computed."
     )

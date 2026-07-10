@@ -3,7 +3,8 @@
 Endpoints
 ---------
 GET  /api/health        liveness + whether the model is loaded
-GET  /api/labels        the ChestX-ray14 label set
+GET  /api/labels        the label set for a modality (default chest X-ray)
+GET  /api/modalities    every supported modality + its label set
 POST /api/analyze       upload an image, get predictions + overlays + report
 """
 
@@ -14,7 +15,7 @@ from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from app.core.config import get_settings
 from app.schemas.responses import AnalysisResponse, HealthResponse
 from app.services.pipeline_service import pipeline_service
-from models.common.constants import CHESTXRAY14_LABELS
+from models.common.modalities import list_modalities, resolve_modality
 
 router = APIRouter(prefix="/api")
 
@@ -45,13 +46,26 @@ def health() -> HealthResponse:
 
 
 @router.get("/labels")
-def labels() -> dict:
-    return {"labels": CHESTXRAY14_LABELS, "count": len(CHESTXRAY14_LABELS)}
+def labels(modality: str = "chest X-ray") -> dict:
+    """Label set for a modality (query ``?modality=brain MRI`` to switch)."""
+    spec = resolve_modality(modality)
+    return {
+        "modality": spec.display_name,
+        "modality_key": spec.key,
+        "labels": list(spec.labels),
+        "count": spec.num_labels,
+    }
+
+
+@router.get("/modalities")
+def modalities() -> dict:
+    """Every supported modality and its label set (for the UI selector)."""
+    return {"modalities": list_modalities()}
 
 
 @router.post("/analyze", response_model=AnalysisResponse)
 async def analyze(
-    image: UploadFile = File(..., description="Radiograph (PNG/JPEG)."),
+    image: UploadFile = File(..., description="Radiograph (PNG/JPEG/DICOM)."),
     modality: str = Form("chest X-ray"),
     indication: str | None = Form(None),
 ) -> AnalysisResponse:

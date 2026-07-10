@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { MODALITY_LIST } from "../lib/modalities";
 
 type Props = {
   onAnalyze: (file: File, modality: string, indication: string) => void;
@@ -8,7 +9,9 @@ type Props = {
   onFileSelected: (url: string) => void;
 };
 
-const MODALITIES = ["chest X-ray", "brain MRI", "CT"];
+// Sourced from the shared modality registry so the selector, the hosted route,
+// and the local backend all agree on the supported modalities.
+const MODALITIES = MODALITY_LIST.map((m) => m.displayName);
 
 export default function UploadPanel({ onAnalyze, busy, onFileSelected }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);

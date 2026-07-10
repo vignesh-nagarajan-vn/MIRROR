@@ -36,9 +36,12 @@ IMAGENET_STD: tuple[float, float, float] = (0.229, 0.224, 0.225)
 # DenseNet/EfficientNet/ViT pretrained weights.
 DEFAULT_IMAGE_SIZE: int = 224
 
-# Supported modalities. The pipeline routes to the correct label set / model
-# variant based on this value.
-MODALITIES: tuple[str, ...] = ("chest_xray", "brain_mri", "ct")
+# Supported modality keys. The per-modality label sets, descriptions, anatomical
+# plane, and report phrasing live in ``models/common/modalities.py``, which the
+# pipeline uses to route each study to the right classifier head and vocabulary.
+# This tuple is kept only as a lightweight, torch-free advertisement of what is
+# available; ``modalities.MODALITY_REGISTRY`` is the source of truth.
+MODALITIES: tuple[str, ...] = ("chest_xray", "brain_mri", "head_ct")
 
 # A plain-English description for each label, used to ground the report
 # generation prompt so the LLM does not have to recall what each token means.

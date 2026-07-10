@@ -28,7 +28,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Run MIRROR on one image.")
     parser.add_argument("image", help="Path to a radiograph (PNG/JPEG/BMP/WEBP/DICOM).")
     parser.add_argument("--config", default="configs/default.yaml")
-    parser.add_argument("--modality", default="chest X-ray")
+    parser.add_argument(
+        "--modality",
+        default="auto",
+        help="chest X-ray | brain MRI | CT (or 'auto' to route DICOM by its "
+        "Modality tag, falling back to chest X-ray).",
+    )
     parser.add_argument("--indication", default=None)
     parser.add_argument("--outdir", default="demo/assets")
     args = parser.parse_args()
@@ -51,6 +56,7 @@ def main() -> None:
         indication=args.indication,
     )
 
+    print(f"\n=== MODALITY: {result.modality} ({result.meta.get('num_labels')} labels) ===")
     print("\n=== PREDICTIONS ===")
     for f in result.findings:
         flag = "*" if f.present else " "

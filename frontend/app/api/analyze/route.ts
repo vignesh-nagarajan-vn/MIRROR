@@ -4,38 +4,24 @@
 // Grad-CAM saliency + report generator) behind FastAPI. That cannot run on
 // Vercel's serverless functions (no GPU, 250 MB bundle ceiling, cold-start model
 // loads), so the hosted site uses Claude's vision model as a drop-in inference
-// engine instead: it reads the uploaded radiograph, scores the 14 ChestX-ray14
-// labels, localizes each positive finding with a bounding box, and drafts the
-// FINDINGS/IMPRESSION report, returning the exact same JSON contract the
-// frontend already consumes from the FastAPI backend.
+// engine instead: it reads the uploaded study, scores the finding taxonomy for
+// the selected modality (chest X-ray, brain MRI, or head CT), localizes each
+// positive finding with a bounding box, and drafts the FINDINGS/IMPRESSION
+// report, returning the exact same JSON contract the frontend already consumes
+// from the FastAPI backend.
 //
 // Set ANTHROPIC_API_KEY in the Vercel project to enable this. With no key the
 // route still responds with a deterministic, clearly-labelled demo result so the
 // deployed site never hard-fails.
 
 import Anthropic from "@anthropic-ai/sdk";
+import {
+  resolveModality,
+  type ModalitySpec,
+} from "../../../lib/modalities";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
-
-// NIH ChestX-ray14 taxonomy, kept in lockstep with
-// models/common/constants.py so the hosted and local paths agree on label order.
-const CHESTXRAY14_LABELS = [
-  "Atelectasis",
-  "Cardiomegaly",
-  "Effusion",
-  "Infiltration",
-  "Mass",
-  "Nodule",
-  "Pneumonia",
-  "Pneumothorax",
-  "Consolidation",
-  "Edema",
-  "Emphysema",
-  "Fibrosis",
-  "Pleural_Thickening",
-  "Hernia",
-] as const;
 
 const PRESENCE_THRESHOLD = 0.5;
 const MODEL = process.env.ANTHROPIC_MODEL || "claude-haiku-4-5";
@@ -49,90 +35,96 @@ type Finding = {
   bbox: [number, number, number, number] | null; // normalized [x, y, w, h]
 };
 
-const SYSTEM_PROMPT =
-  "You are a radiology reporting assistant analysing a single chest radiograph. " +
-  "You assess the 14 NIH ChestX-ray14 pathology categories, estimate a calibrated " +
-  "probability for each, localize every present finding with a bounding box, and " +
-  "draft a concise clinician-style report. You never invent findings you cannot " +
-  "see, and you always mark the report as an AI-generated draft requiring review " +
-  "by a licensed radiologist. Use standard headings: FINDINGS and IMPRESSION.";
+function systemPrompt(spec: ModalitySpec): string {
+  return (
+    `You are a radiology reporting assistant analysing a single ${spec.displayName}. ` +
+    `You assess the ${spec.labels.length} finding categories for this modality, ` +
+    "estimate a calibrated probability for each, localize every present finding " +
+    "with a bounding box, and draft a concise clinician-style report. You never " +
+    "invent findings you cannot see, and you always mark the report as an " +
+    "AI-generated draft requiring review by a licensed radiologist. Use standard " +
+    "headings: FINDINGS and IMPRESSION."
+  );
+}
 
-const ANALYSIS_TOOL: Anthropic.Tool = {
-  name: "record_analysis",
-  description:
-    "Record the structured radiograph analysis: a probability and (for present " +
-    "findings) a localized bounding box for each of the 14 ChestX-ray14 labels, " +
-    "plus a clinician-style draft report.",
-  input_schema: {
-    type: "object",
-    properties: {
-      findings: {
-        type: "array",
-        description: "Exactly 14 entries, one per ChestX-ray14 label.",
-        items: {
-          type: "object",
-          properties: {
-            label: {
-              type: "string",
-              enum: [...CHESTXRAY14_LABELS],
+// The tool schema is built per modality so the label enum and the count match
+// the selected taxonomy.
+function analysisTool(spec: ModalitySpec): Anthropic.Tool {
+  return {
+    name: "record_analysis",
+    description:
+      `Record the structured ${spec.displayName} analysis: a probability and ` +
+      "(for present findings) a localized bounding box for each of the " +
+      `${spec.labels.length} labels, plus a clinician-style draft report.`,
+    input_schema: {
+      type: "object",
+      properties: {
+        findings: {
+          type: "array",
+          description: `Exactly ${spec.labels.length} entries, one per label.`,
+          items: {
+            type: "object",
+            properties: {
+              label: { type: "string", enum: [...spec.labels] },
+              probability: {
+                type: "number",
+                description: "Calibrated probability in [0, 1] for this finding.",
+              },
+              location: {
+                type: "string",
+                description:
+                  "Plain-English anatomical region, or 'n/a' if the finding is " +
+                  "below threshold.",
+              },
+              bbox: {
+                type: "array",
+                description:
+                  "Normalized [x, y, width, height] in [0,1] over the image for a " +
+                  "present finding, or null. Origin is the top-left corner.",
+                items: { type: "number" },
+              },
             },
-            probability: {
-              type: "number",
-              description: "Calibrated probability in [0, 1] for this finding.",
-            },
-            location: {
-              type: "string",
-              description:
-                "Plain-English anatomical zone (e.g. 'right lower lung zone'), " +
-                "or 'n/a' if the finding is below threshold.",
-            },
-            bbox: {
-              type: "array",
-              description:
-                "Normalized [x, y, width, height] in [0,1] over the image for a " +
-                "present finding, or null. Origin is the top-left corner.",
-              items: { type: "number" },
-            },
+            required: ["label", "probability", "location"],
           },
-          required: ["label", "probability", "location"],
+        },
+        report: {
+          type: "string",
+          description:
+            "Draft report with FINDINGS and IMPRESSION sections, ending with: " +
+            "'AI-GENERATED DRAFT - requires verification by a licensed radiologist.'",
         },
       },
-      report: {
-        type: "string",
-        description:
-          "Draft report with FINDINGS and IMPRESSION sections, ending with: " +
-          "'AI-GENERATED DRAFT — requires verification by a licensed radiologist.'",
-      },
+      required: ["findings", "report"],
     },
-    required: ["findings", "report"],
-  },
-};
+  };
+}
 
-function buildUserPrompt(modality: string, indication: string): string {
+function buildUserPrompt(spec: ModalitySpec, indication: string): string {
   const indicationLine = indication ? `Clinical indication: ${indication}\n` : "";
   return (
-    `Modality: ${modality}\n` +
+    `Modality: ${spec.displayName}\n` +
     indicationLine +
-    "\nAnalyse the attached radiograph and call record_analysis. For every one of " +
-    "the 14 labels return a probability; mark a finding present when probability " +
-    "≥ 0.5 and give it an anatomical location and a normalized bounding box. " +
-    "Write FINDINGS (each present finding with its location and qualitative " +
-    "confidence, plus pertinent negatives for major absent findings) and a brief " +
-    "prioritised IMPRESSION."
+    `${spec.reportGuidance}\n\n` +
+    "Analyse the attached image and call record_analysis. For every one of the " +
+    `${spec.labels.length} labels return a probability; mark a finding present ` +
+    "when probability >= 0.5 and give it an anatomical location and a normalized " +
+    "bounding box. Write FINDINGS (each present finding with its location and " +
+    "qualitative confidence, plus pertinent negatives for major absent findings) " +
+    "and a brief prioritised IMPRESSION."
   );
 }
 
 // Stitch a partial model response into a complete, contract-shaped finding list:
-// always 14 labels in canonical order, defaults filled for anything the model
-// omitted, values clamped to valid ranges.
-function normalizeFindings(raw: unknown): Finding[] {
+// always the modality's labels in canonical order, defaults filled for anything
+// the model omitted, values clamped to valid ranges.
+function normalizeFindings(raw: unknown, spec: ModalitySpec): Finding[] {
   const byLabel = new Map<string, any>();
   if (Array.isArray(raw)) {
     for (const f of raw) {
       if (f && typeof f.label === "string") byLabel.set(f.label, f);
     }
   }
-  return CHESTXRAY14_LABELS.map((label) => {
+  return spec.labels.map((label) => {
     const f = byLabel.get(label) ?? {};
     const probability = Math.min(1, Math.max(0, Number(f.probability) || 0));
     const present = probability >= PRESENCE_THRESHOLD;
@@ -157,44 +149,58 @@ function normalizeFindings(raw: unknown): Finding[] {
   });
 }
 
+// A per-modality present/absent pattern for the deterministic demo, so each
+// modality's stand-in shows plausible findings from its own taxonomy.
+const DEMO_PRESENT: Record<string, { label: string; prob: number; loc: string; bbox: [number, number, number, number] }[]> = {
+  chest_xray: [
+    { label: "Effusion", prob: 0.81, loc: "right lower lung zone", bbox: [0.55, 0.62, 0.32, 0.3] },
+    { label: "Cardiomegaly", prob: 0.66, loc: "cardiac silhouette", bbox: [0.34, 0.5, 0.36, 0.28] },
+  ],
+  brain_mri: [
+    { label: "Glioma", prob: 0.79, loc: "left frontal region", bbox: [0.2, 0.28, 0.24, 0.22] },
+    { label: "Edema", prob: 0.61, loc: "left frontal region", bbox: [0.16, 0.24, 0.34, 0.3] },
+  ],
+  head_ct: [
+    { label: "Intracranial_Hemorrhage", prob: 0.83, loc: "right parietal region", bbox: [0.55, 0.35, 0.26, 0.24] },
+    { label: "Subdural", prob: 0.6, loc: "right convexity", bbox: [0.6, 0.2, 0.28, 0.5] },
+  ],
+};
+
 // Deterministic stand-in used when no API key is configured, so the deployed
 // site still demonstrates the full UI flow end to end.
-function demoResult(modality: string) {
-  const findings: Finding[] = CHESTXRAY14_LABELS.map((label): Finding => {
-    const present = label === "Effusion" || label === "Cardiomegaly";
-    const bbox: Finding["bbox"] = present
-      ? label === "Effusion"
-        ? [0.55, 0.62, 0.32, 0.3]
-        : [0.34, 0.5, 0.36, 0.28]
-      : null;
+function demoResult(spec: ModalitySpec) {
+  const present = DEMO_PRESENT[spec.key] ?? [];
+  const presentByLabel = new Map(present.map((p) => [p.label, p]));
+  const findings: Finding[] = spec.labels.map((label): Finding => {
+    const p = presentByLabel.get(label);
     return {
       label,
-      probability: present ? (label === "Effusion" ? 0.81 : 0.66) : 0.07,
-      present,
-      location: present
-        ? label === "Effusion"
-          ? "right lower lung zone"
-          : "cardiac silhouette"
-        : "n/a",
+      probability: p ? p.prob : 0.07,
+      present: Boolean(p),
+      location: p ? p.loc : "n/a",
       overlay_png_b64: null,
-      bbox,
+      bbox: p ? p.bbox : null,
     };
   });
+  const findingLines = present
+    .map((p) => `- ${p.label.replace(/_/g, " ")} identified in the ${p.loc} (high confidence).`)
+    .join("\n");
+  const impressionLines = present
+    .map((p, i) => `${i + 1}. ${p.label.replace(/_/g, " ")}.`)
+    .join("\n");
   return {
-    modality,
+    modality: spec.displayName,
     backbone: "demo (no ANTHROPIC_API_KEY set)",
     explain_method: "bbox",
     report:
-      "FINDINGS:\n- Pleural effusion identified in the right lower lung zone " +
-      "(high confidence).\n- Cardiomegaly identified in the cardiac silhouette " +
-      "(moderate confidence).\n- No evidence of: Pneumothorax, Mass, Nodule.\n\n" +
-      "IMPRESSION:\n1. Right pleural effusion is the dominant finding.\n2. " +
-      "Possible cardiomegaly.\n\nAI-GENERATED DRAFT — requires verification by a " +
-      "licensed radiologist.",
+      `FINDINGS:\n${findingLines}\n\nIMPRESSION:\n${impressionLines}\n\n` +
+      "AI-GENERATED DRAFT - requires verification by a licensed radiologist.",
     report_backend: "demo",
     findings,
     meta: {
+      modality_key: spec.key,
       num_present: findings.filter((f) => f.present).length,
+      num_labels: spec.labels.length,
       demo: true,
       note: "Set ANTHROPIC_API_KEY in your Vercel project to run live analysis.",
     },
@@ -210,7 +216,8 @@ export async function POST(req: Request) {
   }
 
   const image = form.get("image");
-  const modality = (form.get("modality") as string) || "chest X-ray";
+  const modalityInput = (form.get("modality") as string) || "chest X-ray";
+  const spec = resolveModality(modalityInput);
   const indication = (form.get("indication") as string) || "";
 
   if (!(image instanceof File)) {
@@ -231,7 +238,7 @@ export async function POST(req: Request) {
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return Response.json(demoResult(modality));
+    return Response.json(demoResult(spec));
   }
 
   const bytes = Buffer.from(await image.arrayBuffer());
@@ -244,8 +251,8 @@ export async function POST(req: Request) {
     const message = await client.messages.create({
       model: MODEL,
       max_tokens: 2048,
-      system: SYSTEM_PROMPT,
-      tools: [ANALYSIS_TOOL],
+      system: systemPrompt(spec),
+      tools: [analysisTool(spec)],
       tool_choice: { type: "tool", name: "record_analysis" },
       messages: [
         {
@@ -263,7 +270,7 @@ export async function POST(req: Request) {
                 data: base64,
               },
             },
-            { type: "text", text: buildUserPrompt(modality, indication) },
+            { type: "text", text: buildUserPrompt(spec, indication) },
           ],
         },
       ],
@@ -275,22 +282,24 @@ export async function POST(req: Request) {
     }
     const out = toolUse.input as { findings?: unknown; report?: string };
 
-    const findings = normalizeFindings(out.findings);
+    const findings = normalizeFindings(out.findings, spec);
     const report =
       out.report?.trim() ||
-      "FINDINGS:\n- No acute findings above the reporting threshold.\n\n" +
-        "IMPRESSION:\n1. No acute cardiopulmonary abnormality detected.\n\n" +
-        "AI-GENERATED DRAFT — requires verification by a licensed radiologist.";
+      `FINDINGS:\n- No acute findings above the reporting threshold.\n\n` +
+        `IMPRESSION:\n1. ${spec.normalImpression}\n\n` +
+        "AI-GENERATED DRAFT - requires verification by a licensed radiologist.";
 
     return Response.json({
-      modality,
+      modality: spec.displayName,
       backbone: `claude-vision (${MODEL})`,
       explain_method: "bbox",
       report,
       report_backend: "anthropic",
       findings,
       meta: {
+        modality_key: spec.key,
         num_present: findings.filter((f) => f.present).length,
+        num_labels: spec.labels.length,
         timings_ms: { total: Date.now() - t0 },
         engine: "vercel-serverless",
         model: MODEL,

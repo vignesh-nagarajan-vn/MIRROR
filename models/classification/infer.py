@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Sequence
 
 try:
     import torch
@@ -28,7 +29,13 @@ class Prediction:
 
 
 class Classifier:
-    """Stateful classifier: load once, call ``predict`` many times."""
+    """Stateful classifier: load once, call ``predict`` many times.
+
+    ``labels`` sets the finding taxonomy (and therefore the head width). It
+    defaults to the 14 ChestX-ray14 labels so existing callers are unchanged; the
+    pipeline passes a per-modality label set (see ``models/common/modalities.py``)
+    to build a brain-MRI or head-CT classifier instead.
+    """
 
     def __init__(
         self,
@@ -36,13 +43,14 @@ class Classifier:
         backbone: str = "densenet121",
         device: str | None = None,
         image_size: int = 224,
+        labels: Sequence[str] | None = None,
     ) -> None:
         if torch is None:
             raise RuntimeError("PyTorch is required for inference.")
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         self.backbone = backbone
         self.image_size = image_size
-        self.labels = list(CHESTXRAY14_LABELS)
+        self.labels = list(labels) if labels is not None else list(CHESTXRAY14_LABELS)
 
         self.model = build_model(
             backbone=backbone,
