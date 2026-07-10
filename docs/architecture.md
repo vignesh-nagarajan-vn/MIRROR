@@ -7,8 +7,8 @@ be traced back to a probability and a saliency region.
 
 ```
                     ┌─────────────────────────────┐
-   radiograph  ───▶ │  1. CLASSIFICATION          │  CNN / ViT backbone
-                    │     DenseNet121 · EffNet-B0  │  → 14 per-label
+   image       ───▶ │  1. CLASSIFICATION          │  CNN / ViT backbone
+                    │     DenseNet121 · EffNet-B0  │  → per-label
                     │     · ViT-B/16               │    probabilities
                     └──────────────┬──────────────┘
                                    │ predictions
@@ -62,14 +62,30 @@ it.
 
 See [`evaluation/README.md`](../evaluation/README.md) for all four harnesses.
 
+## Modalities (`models/common/modalities.py`)
+
+MIRROR runs three modalities — **chest X-ray** (14 NIH ChestX-ray14 findings),
+**brain MRI** (11), and **head CT** (11, RSNA intracranial-haemorrhage taxonomy).
+The pipeline is modality-agnostic; a single registry (`MODALITY_REGISTRY`) supplies
+each modality's label set, label glosses, anatomical `plane` (`frontal` → lung
+zones, `axial` → brain regions), report phrasing, and the aliases / DICOM
+`Modality` values used to resolve it. `resolve_modality()` accepts a display name,
+alias, key, DICOM value, or `"auto"`; the pipeline builds and **caches** one
+classifier+explainer engine per modality. This registry is the Python source of
+truth; `frontend/lib/modalities.ts` mirrors it for the hosted route and UI.
+
 ## Layer 1: Classification (`models/classification/`)
 
 - `model.py`: a factory over DenseNet121, EfficientNet-B0, and ViT-B/16 with a
-  14-way multi-label head (sigmoid applied at loss/inference time).
-- `dataset.py`: ChestX-ray14 multi-hot label encoding.
+  multi-label head sized to the modality's label count (sigmoid applied at
+  loss/inference time).
+- `infer.py`: a stateful `Classifier(labels=...)` — the label set sets the head
+  width; the pipeline passes the modality's labels.
+- `dataset.py`: ChestX-ray14 multi-hot label encoding (per-modality loaders are
+  added alongside it as their datasets are wired in).
 - `train.py`: `BCEWithLogitsLoss`, AdamW, cosine schedule; checkpoints on best
-  validation macro-AUROC.
-- `infer.py`: a stateful `Classifier` used by the pipeline.
+  validation macro-AUROC. `ModelConfig.checkpoints` maps a modality key to its own
+  checkpoint.
 
 ## Layer 2: Explainability (`models/explainability/`)
 
@@ -78,15 +94,20 @@ See [`evaluation/README.md`](../evaluation/README.md) for all four harnesses.
 - `scorecam.py`: gradient-free, perturbation-based maps.
 - `explainer.py`: resolves the right target layer per backbone, renders the
   overlay, and derives a centroid/bbox so the region can be *named* in words.
+  `describe_location(centroid, plane)` uses lung *zones* for a frontal chest film
+  and lobar *regions* for an axial brain MRI / head CT.
 - `overlay.py`: colormap + alpha-blend rendering to PNG.
 
 ## Layer 3: Report generation (`models/report_generation/`)
 
 - `prompts.py`: a system prompt and an evidence-grounded user prompt. The LLM
   never sees pixels; it reasons over the structured evidence, which keeps it
-  honest and the output auditable.
+  honest and the output auditable. The prompt is **modality-aware** — label
+  glosses and anatomical guidance come from the modality spec.
 - `generator.py`: Anthropic (Claude) backend with a deterministic offline
-  template fallback so the system always produces a coherent report.
+  template fallback so the system always produces a coherent report. The
+  "normal study" impression is modality-specific (e.g. "No acute intracranial
+  abnormality" for a brain study, not "no acute cardiopulmonary abnormality").
 
 ## Orchestration (`models/pipeline.py`)
 
@@ -123,7 +144,7 @@ Two interchangeable engines satisfy the same contract, so the UI never changes:
 | | Local full stack | Hosted (Vercel) |
 | --- | --- | --- |
 | Inference engine | FastAPI + real `MirrorPipeline` (PyTorch) | Next.js serverless route, Claude **vision** |
-| Classification | DenseNet121 / EffNet-B0 / ViT-B/16 | Claude scores the 14 labels from the image |
+| Classification | DenseNet121 / EffNet-B0 / ViT-B/16, head sized per modality | Claude scores the modality's labels from the image |
 | Localization | Grad-CAM / Score-CAM heatmap PNG | Claude returns a bounding box per finding |
 | Report | LLM **or** offline template | Claude (same evidence-grounded prompt shape) |
 | Inputs | PNG/JPEG/BMP/WEBP **+ DICOM** | PNG/JPEG/WEBP |

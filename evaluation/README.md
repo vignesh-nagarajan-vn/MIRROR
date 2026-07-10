@@ -1,27 +1,50 @@
 # Evaluation
 
 MIRROR's research question has two halves — does adding explanation/reasoning
-layers help *interpretability* without hurting *prediction*? — so evaluation
-comes in two harnesses that write JSON summaries to `evaluation/results/`
-(git-ignored) for the `paper/` to tabulate.
+layers help *interpretability* without hurting *prediction*? — so evaluation comes
+in complementary harnesses (predictive quality, explanation quality, ablation,
+multi-seed) that write JSON summaries to `evaluation/results/` (git-ignored) for
+the `paper/` to tabulate. All are **modality-aware**: pass `--modality` to score a
+brain-MRI or head-CT model against its own taxonomy.
 
 ## 1. Predictive quality — `evaluate.py`
 
-Per-label and macro **AUROC** plus macro **F1** on the official ChestX-ray14
-test split, each with a **bootstrap 95% confidence interval** over the test set.
+A **clinical-reader panel** on the test split, not just a single headline number:
+
+| Family | Metrics |
+| --- | --- |
+| Discrimination | per-label & macro **AUROC**, macro **AUPRC**, macro **F1** |
+| Operating point (at `--threshold`) | **sensitivity**, **specificity**, **PPV**, **NPV**, per label (with positive/negative support) and macro |
+| Calibration | **Brier score**, **Expected Calibration Error (ECE)** |
+
+The headline numbers (AUROC, F1, macro sensitivity/specificity, Brier) each carry
+a **bootstrap 95% confidence interval** over the test set.
 
 ```bash
 python -m evaluation.evaluate --config configs/default.yaml \
-    --checkpoint models/checkpoints/densenet121_best.pt
+    --checkpoint models/checkpoints/densenet121_best.pt --modality "chest X-ray"
+# other modalities (brain MRI / head CT) select their own label taxonomy:
+python -m evaluation.evaluate --config configs/default.yaml \
+    --checkpoint models/checkpoints/brain_mri_best.pt --modality "brain MRI"
 # control the bootstrap (0 disables) and CI level:
 python -m evaluation.evaluate --config configs/default.yaml \
     --checkpoint models/checkpoints/densenet121_best.pt --bootstrap 2000 --ci 0.95
 ```
 
-Writes `results/eval_<backbone>.json`, including `macro_auroc_ci`, `macro_f1_ci`,
-`per_label_auroc_ci` (each `{mean, std, lo, hi}`), and a `reproducibility` block
-(seed, git commit, library versions) so every number can be regenerated. The run
-is seeded with `--seed` (default 42).
+Writes `results/eval_<backbone>[_<modality>].json` (the default chest modality
+keeps the original `eval_<backbone>.json` name). It includes `operating_point`
+(macro + per-label), `calibration` (`brier`, `ece`), the CI blocks
+(`macro_auroc_ci`, `macro_f1_ci`, `macro_sensitivity_ci`, `macro_specificity_ci`,
+`brier_ci`, `per_label_auroc_ci` — each `{mean, std, lo, hi}`), and a
+`reproducibility` block (seed, git commit, library versions) so every number can
+be regenerated. The run is seeded with `--seed` (default 42).
+
+Why this set: AUROC can look optimistic under the heavy class imbalance of medical
+findings, so **AUPRC** is reported alongside it; **sensitivity/specificity/PPV/NPV**
+are the quantities a clinician actually reads off a model at its decision
+threshold; and **Brier/ECE** check that a probability the reader is asked to trust
+means what it says. The confusion-matrix and calibration metrics are pure NumPy,
+so they are unit-tested without scikit-learn.
 
 The bootstrap (`bootstrap_cis` in `metrics.py`) resamples the N test examples
 with replacement; one resample drives all metrics, so the intervals are mutually
@@ -129,18 +152,28 @@ and seed std (across models).
 
 ## Metric definitions
 
-All metrics live in [`metrics.py`](metrics.py): `macro_auroc`, `f1_at_threshold`,
-`bootstrap_cis`, `pointing_game`, and `localization_iou`. The localization harness
-is a thin driver over the localization metrics plus box loading; the ablation
-harness reuses the JSON the others emit; `aggregate_seeds.py` summarises across
-seeds. Provenance for every run comes from [`repro.py`](repro.py).
+All metrics live in [`metrics.py`](metrics.py):
+
+- **Discrimination:** `macro_auroc`, `macro_auprc`, `f1_at_threshold`.
+- **Operating point:** `confusion_at_threshold`, `operating_point_metrics`
+  (sensitivity/specificity/PPV/NPV per label + macro, with support).
+- **Calibration:** `brier_score`, `expected_calibration_error`.
+- **Uncertainty:** `bootstrap_cis` (extends the above with CIs).
+- **Localization:** `pointing_game`, `localization_iou`.
+
+The localization harness is a thin driver over the localization metrics plus box
+loading; the ablation harness reuses the JSON the others emit; `aggregate_seeds.py`
+summarises across seeds (including the clinical macro metrics when present).
+Provenance for every run comes from [`repro.py`](repro.py).
 
 ## Tests
 
+- `tests/test_metrics_bootstrap.py` — CI structure, determinism, ordering.
+- `tests/test_clinical_metrics.py` — sensitivity/specificity/PPV/NPV, Brier, ECE
+  against hand-computed values (pure NumPy, no scikit-learn needed).
 - `tests/test_localization_eval.py` — box scaling, per-box scoring, aggregation.
 - `tests/test_ablation.py` — conditions, capability matrix, result merging, table
   assembly.
-- `tests/test_metrics_bootstrap.py` — CI structure, determinism, ordering.
 - `tests/test_aggregate_seeds.py` — multi-seed mean/std math.
 - `tests/test_repro.py` — provenance record fields.
 

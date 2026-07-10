@@ -76,9 +76,10 @@ Most medical-imaging models stop at a prediction. MIRROR adds the two layers tha
 make a prediction *trustworthy and usable*: it shows **where** the evidence is and
 explains **what it means** in plain clinical language.
 
-It analyzes a radiograph (chest X-ray today; CT and brain MRI are scaffolded),
-identifies potential abnormalities, highlights the diagnostic evidence with
-saliency overlays, and generates a structured natural-language report.
+It analyzes a radiological study across **three modalities** — chest X-ray, brain
+MRI, and head CT — identifies potential abnormalities from that modality's finding
+taxonomy, highlights the diagnostic evidence with saliency overlays, and generates
+a structured natural-language report in the right clinical vocabulary.
 
 ```
 Image → Prediction → Evidence Localization → Clinical Reasoning → Human-Readable Report
@@ -119,9 +120,22 @@ probability and a specific image region.
 
 | Layer | Module | Does | Produces |
 | --- | --- | --- | --- |
-| **1 · Classification** | [`models/classification/`](models/classification/) | A CNN/ViT backbone (DenseNet121 · EfficientNet-B0 · ViT-B/16) with a 14-way multi-label head | Per-label probabilities |
+| **1 · Classification** | [`models/classification/`](models/classification/) | A CNN/ViT backbone (DenseNet121 · EfficientNet-B0 · ViT-B/16) with a multi-label head sized to the study's modality | Per-label probabilities |
 | **2 · Evidence localization** | [`models/explainability/`](models/explainability/) | Grad-CAM / Score-CAM hooks the target layer for each positive label | Heatmap + region (centroid, bbox) |
 | **3 · Clinical reasoning** | [`models/report_generation/`](models/report_generation/) | An LLM (or an offline template) prompts over the **structured evidence only, never the pixels** | `FINDINGS` / `IMPRESSION` report |
+
+The pipeline is modality-agnostic; a single registry
+([`models/common/modalities.py`](models/common/modalities.py)) supplies the finding
+taxonomy, the anatomical vocabulary, and the report phrasing for each modality:
+
+| Modality | Findings | Grounded in | Location vocabulary |
+| --- | --- | --- | --- |
+| **Chest X-ray** | 14 | NIH ChestX-ray14 | lung zones (frontal) |
+| **Brain MRI** | 11 | Brain Tumor MRI Dataset + routine neuro findings | lobar regions (axial) |
+| **Head CT** | 11 | RSNA Intracranial Hemorrhage + routine acute-CT findings | lobar regions (axial) |
+
+Modality is chosen in the UI (or via `--modality`), or auto-detected from a DICOM
+`Modality` tag with `--modality auto` (`MR`→brain MRI, `CT`→head CT, `CR`/`DX`→chest).
 
 [`models/pipeline.py`](models/pipeline.py) orchestrates the four stages into one
 `AnalysisResult`. The two later layers are individually toggleable, which is
@@ -229,13 +243,20 @@ synthetic sample ships with the repo, so this works with zero downloads):
 python -m demo.run_demo datasets/samples/chestxray14/images/synth_0001.png
 # Native DICOM works too; point it at the bundled .dcm:
 python -m demo.run_demo datasets/samples/chestxray14/images/synth_0000.dcm
+# Other modalities — pick the taxonomy with --modality:
+python -m demo.run_demo datasets/samples/brain_mri/images/mri_0001.png --modality "brain MRI"
+# Or let a DICOM self-route by its Modality tag:
+python -m demo.run_demo datasets/samples/head_ct/images/ct_0000.dcm --modality auto
 ```
 
 That prints predictions and a draft report, and writes Grad-CAM overlays to
 `demo/assets/`. It runs on ImageNet-pretrained weights with the offline template
 report backend, so it works anywhere. Inputs may be **PNG/JPEG/BMP/WEBP or DICOM
 (`.dcm`)**. DICOM is decoded with the modality/VOI LUT and MONOCHROME1 handling
-applied (see [`datasets/README.md`](datasets/README.md#dicom-ingest)).
+applied (see [`datasets/README.md`](datasets/README.md#dicom-ingest)). Without a
+trained per-modality checkpoint the predictions come from ImageNet weights and are
+**structurally valid but not diagnostic** — the demo exercises the full pipeline,
+not a benchmarked model.
 
 **5. Start the backend API** (leave it running in this terminal):
 
@@ -326,8 +347,11 @@ mirror/
 ├── results/                      # committed example outputs (see results/README.md)
 │   ├── output_sheets/           # per-image prediction CSV + structured findings JSON
 │   └── evaluation/              # eval / localization / ablation / aggregate snapshots
-├── datasets/                     # dataset docs + prep scripts (+ tiny synthetic sample set)
-│   └── samples/chestxray14/     # 24 synthetic studies (NIH layout, one DICOM), committed
+├── datasets/                     # dataset docs + prep scripts (+ tiny synthetic sample sets)
+│   └── samples/                 # committed synthetic studies (one DICOM each):
+│       ├── chestxray14/         #   24 chest studies (NIH layout)
+│       ├── brain_mri/           #   12 brain-MRI studies (Modality=MR)
+│       └── head_ct/             #   12 head-CT studies (Modality=CT)
 ├── notebooks/                    # data exploration + pipeline walkthrough
 ├── tests/                        # torch-free unit tests (metrics, ablation, repro, …)
 ├── docs/                         # architecture · setup · deployment · API reference
@@ -342,17 +366,24 @@ mirror/
 
 ## Datasets
 
-**Primary:** NIH **ChestX-ray14**: 112,120 chest X-rays, 14 disease categories;
-ideal for initial development and benchmarking.
+MIRROR is multi-modality; each modality maps to a public benchmark:
 
-**Secondary:** RSNA Pneumonia Detection Challenge, MIMIC-CXR (images + reports),
-Brain Tumor MRI Dataset, COVID-19 Radiography Database.
+| Modality | Primary dataset | Taxonomy |
+| --- | --- | --- |
+| **Chest X-ray** | NIH **ChestX-ray14** (112,120 images) | 14 disease categories |
+| **Brain MRI** | **Brain Tumor MRI Dataset** (+ routine neuro findings) | 11 findings |
+| **Head CT** | **RSNA Intracranial Hemorrhage** (+ routine acute-CT findings) | 11 findings |
 
-None are redistributed here. A tiny **synthetic** stand-in ships under
-`datasets/samples/chestxray14/` (NIH layout, one DICOM included) so the demo,
-loader, and a training smoke test run with zero downloads. See
+**Other secondary sources:** RSNA Pneumonia Detection Challenge, MIMIC-CXR (images
++ reports), COVID-19 Radiography Database.
+
+None are redistributed here. Tiny **synthetic** stand-ins ship under
+`datasets/samples/` — `chestxray14/`, `brain_mri/`, and `head_ct/` (each with one
+DICOM carrying the correct `Modality` tag) — so the demo, the DICOM auto-routing,
+loaders, and smoke tests run with zero downloads. See
 [`datasets/README.md`](datasets/README.md) for the expected layout, the NIH
-downloader (`download_chestxray14.py`), licensing notes, and prep scripts.
+downloader (`download_chestxray14.py`), licensing notes, and the sample generators
+(`make_synthetic_samples.py`, `make_synthetic_neuro_samples.py`).
 
 ## Configuration
 
@@ -372,9 +403,11 @@ report:  { provider: template }         # or anthropic (needs ANTHROPIC_API_KEY)
 # Train (requires ChestX-ray14 locally)
 python -m models.classification.train --config configs/default.yaml
 
-# Evaluate prediction quality (AUROC/F1 with bootstrap 95% CIs) → evaluation/results/
+# Evaluate prediction quality → evaluation/results/. Reports AUROC + AUPRC,
+# sensitivity/specificity/PPV/NPV at the operating point, and calibration
+# (Brier, ECE), all with bootstrap 95% CIs. Use --modality for brain MRI / CT.
 python -m evaluation.evaluate --config configs/default.yaml \
-    --checkpoint models/checkpoints/densenet121_best.pt
+    --checkpoint models/checkpoints/densenet121_best.pt --modality "chest X-ray"
 
 # Evaluate explanation quality (pointing game / localization IoU) against the
 # NIH ground-truth boxes (BBox_List_2017.csv) → JSON in evaluation/results/
@@ -402,11 +435,13 @@ IoU, and localization accuracy at an IoU threshold). `ablation.py` then builds t
 +localization vs. full MIRROR, in one table. Because layers 2-3 are post-hoc, the
 AUROC/F1 column is identical across rows (verified empirically), so the table
 shows added interpretability *at no predictive cost*, alongside the per-layer
-latency. Every predictive number carries a **bootstrap 95% CI** (test-set
-sampling noise) and can be summarised across training seeds with
-`aggregate_seeds.py` as **mean ± std** (training noise); each results JSON also
-stamps a `reproducibility` block (seed, git commit, library versions) so the
-numbers regenerate. See
+latency. The predictive panel is **clinical-grade**: beyond AUROC/F1 it reports
+AUPRC, operating-point **sensitivity / specificity / PPV / NPV** (with support),
+and **calibration** (Brier score, Expected Calibration Error). Headline numbers
+carry a **bootstrap 95% CI** (test-set sampling noise) and can be summarised across
+training seeds with `aggregate_seeds.py` as **mean ± std** (training noise); each
+results JSON also stamps a `reproducibility` block (seed, git commit, library
+versions) so the numbers regenerate. See
 [`datasets/README.md`](datasets/README.md#localization-ground-truth) for the box
 file and [`evaluation/README.md`](evaluation/README.md) for the metric details.
 

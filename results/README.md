@@ -51,10 +51,12 @@ example to point at:
 
 | File | Harness | What it captures |
 | --- | --- | --- |
-| `eval_densenet121.json` | `evaluate.py` | per-label & macro AUROC, macro F1, bootstrap 95% CIs |
+| `eval_densenet121.json` | `evaluate.py` | AUROC + AUPRC, macro F1, operating-point sensitivity/specificity/PPV/NPV (with support), calibration (Brier, ECE), all with bootstrap 95% CIs |
 | `loc_densenet121_gradcam.json` | `evaluate_localization.py` | pointing game, mean IoU, localization accuracy vs. NIH boxes |
 | `ablation_densenet121.json` | `ablation.py` | classification-only vs. +localization vs. full MIRROR + latency |
 | `aggregate_densenet121.json` | `aggregate_seeds.py` | mean ± std across training seeds 0/1/2 |
 
-Regenerate any of them with the commands in the
-[evaluation README](../evaluation/README.md).
+The committed snapshot is the **chest X-ray** modality (the default); running the
+harnesses with `--modality "brain MRI"` / `"CT"` produces analogous
+`eval_<backbone>_<modality>.json` files against those taxonomies. Regenerate any of
+them with the commands in the [evaluation README](../evaluation/README.md).

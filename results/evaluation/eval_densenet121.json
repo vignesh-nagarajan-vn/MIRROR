@@ -1,12 +1,41 @@
 {
   "_note": "ILLUSTRATIVE EXAMPLE in the exact format evaluation/evaluate.py writes. Numbers are literature-scale placeholders, NOT a measured benchmark. Regenerate with `python -m evaluation.evaluate` on a trained checkpoint.",
   "timestamp": "2026-06-24T15:42:11.482190Z",
+  "modality": "Chest X-ray",
+  "modality_key": "chest_xray",
   "backbone": "densenet121",
   "checkpoint": "models/checkpoints/densenet121_best.pt",
   "n_test": 25596,
   "threshold": 0.5,
   "macro_auroc": 0.8063,
+  "macro_auprc": 0.4231,
   "macro_f1": 0.4187,
+  "operating_point": {
+    "threshold": 0.5,
+    "macro": {
+      "sensitivity": 0.5541,
+      "specificity": 0.8792,
+      "ppv": 0.3487,
+      "npv": 0.9401
+    },
+    "per_label": {
+      "Atelectasis": { "sensitivity": 0.512, "specificity": 0.861, "ppv": 0.312, "npv": 0.931, "support_pos": 2894, "support_neg": 22702 },
+      "Cardiomegaly": { "sensitivity": 0.638, "specificity": 0.922, "ppv": 0.401, "npv": 0.968, "support_pos": 1069, "support_neg": 24527 },
+      "Effusion": { "sensitivity": 0.671, "specificity": 0.889, "ppv": 0.468, "npv": 0.949, "support_pos": 3272, "support_neg": 22324 },
+      "Infiltration": { "sensitivity": 0.421, "specificity": 0.798, "ppv": 0.372, "npv": 0.835, "support_pos": 4995, "support_neg": 20601 },
+      "Mass": { "sensitivity": 0.548, "specificity": 0.913, "ppv": 0.331, "npv": 0.961, "support_pos": 1414, "support_neg": 24182 },
+      "Nodule": { "sensitivity": 0.487, "specificity": 0.887, "ppv": 0.268, "npv": 0.951, "support_pos": 1623, "support_neg": 23973 },
+      "Pneumonia": { "sensitivity": 0.402, "specificity": 0.861, "ppv": 0.121, "npv": 0.972, "support_pos": 555, "support_neg": 25041 },
+      "Pneumothorax": { "sensitivity": 0.612, "specificity": 0.921, "ppv": 0.379, "npv": 0.966, "support_pos": 1332, "support_neg": 24264 },
+      "Consolidation": { "sensitivity": 0.463, "specificity": 0.874, "ppv": 0.241, "npv": 0.948, "support_pos": 1310, "support_neg": 24286 },
+      "Edema": { "sensitivity": 0.559, "specificity": 0.902, "ppv": 0.244, "npv": 0.974, "support_pos": 628, "support_neg": 24968 },
+      "Emphysema": { "sensitivity": 0.647, "specificity": 0.931, "ppv": 0.352, "npv": 0.973, "support_pos": 1093, "support_neg": 24503 },
+      "Fibrosis": { "sensitivity": 0.501, "specificity": 0.907, "ppv": 0.187, "npv": 0.978, "support_pos": 435, "support_neg": 25161 },
+      "Pleural_Thickening": { "sensitivity": 0.489, "specificity": 0.884, "ppv": 0.256, "npv": 0.951, "support_pos": 1143, "support_neg": 24453 },
+      "Hernia": { "sensitivity": 0.607, "specificity": 0.958, "ppv": 0.147, "npv": 0.994, "support_pos": 86, "support_neg": 25510 }
+    }
+  },
+  "calibration": { "brier": 0.1123, "ece": 0.0417 },
   "per_label_auroc": {
     "Atelectasis": 0.7712,
     "Cardiomegaly": 0.8841,
@@ -23,8 +52,27 @@
     "Pleural_Thickening": 0.7791,
     "Hernia": 0.9137
   },
+  "per_label_auprc": {
+    "Atelectasis": 0.362,
+    "Cardiomegaly": 0.451,
+    "Effusion": 0.573,
+    "Infiltration": 0.401,
+    "Mass": 0.388,
+    "Nodule": 0.281,
+    "Pneumonia": 0.152,
+    "Pneumothorax": 0.447,
+    "Consolidation": 0.287,
+    "Edema": 0.331,
+    "Emphysema": 0.409,
+    "Fibrosis": 0.214,
+    "Pleural_Thickening": 0.293,
+    "Hernia": 0.334
+  },
   "macro_auroc_ci": { "mean": 0.8061, "std": 0.0046, "lo": 0.7972, "hi": 0.8151 },
   "macro_f1_ci": { "mean": 0.4185, "std": 0.0079, "lo": 0.4031, "hi": 0.4339 },
+  "macro_sensitivity_ci": { "mean": 0.5539, "std": 0.0088, "lo": 0.5366, "hi": 0.5712 },
+  "macro_specificity_ci": { "mean": 0.8791, "std": 0.0031, "lo": 0.8730, "hi": 0.8852 },
+  "brier_ci": { "mean": 0.1124, "std": 0.0012, "lo": 0.1101, "hi": 0.1147 },
   "per_label_auroc_ci": {
     "Atelectasis": { "mean": 0.7710, "std": 0.0081, "lo": 0.7551, "hi": 0.7868 },
     "Cardiomegaly": { "mean": 0.8840, "std": 0.0093, "lo": 0.8657, "hi": 0.9021 },

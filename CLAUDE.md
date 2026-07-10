@@ -8,11 +8,23 @@ obvious from any single file.
 
 **MIRROR** = *Multimodal Intelligent Radiology Reasoning and Observation Reporter.*
 An explainable medical-AI research prototype (GIST 2026 Summer Internship, mentored
-by Sriram Venkatapathy) that takes a chest X-ray and runs a four-stage pipeline:
+by Sriram Venkatapathy) that takes a radiological image and runs a four-stage
+pipeline:
 
 ```
 Image → Prediction → Evidence Localization → Clinical Reasoning → Human-Readable Report
 ```
+
+**Multi-modality.** MIRROR supports three modalities — **chest X-ray** (14 NIH
+ChestX-ray14 findings), **brain MRI** (tumour + routine neuro findings, 11 labels),
+and **head CT** (RSNA intracranial-haemorrhage taxonomy, 11 labels). The pipeline
+is modality-agnostic; only the *label set*, the anatomical vocabulary used to
+describe a location (lung zones vs. brain regions), and a little report phrasing
+change between them. That per-modality config is centralised in one registry:
+[`models/common/modalities.py`](models/common/modalities.py) (`MODALITY_REGISTRY`).
+A study's modality is chosen explicitly (UI selector / `--modality`) or
+auto-detected from a DICOM `Modality` tag (`MR`→brain MRI, `CT`→head CT,
+`CR`/`DX`→chest X-ray) when `modality="auto"`.
 
 The research question it is built to *measure* (not just demonstrate): does adding
 a visual-explainability layer and an LLM report layer on top of a classifier
@@ -34,12 +46,16 @@ even there the model is constrained to a structured tool schema.)
 Related invariants:
 - Layers 2 (localization) and 3 (report) are **post-hoc**: they never change the
   predictions. `evaluation/ablation.py` verifies this empirically
-  (`predictions_invariant`, `max_prob_delta == 0`). Keep it true.
-- The 14 ChestX-ray14 labels have **one source of truth**:
-  [`models/common/constants.py`](models/common/constants.py) `CHESTXRAY14_LABELS`.
-  The TS route [`frontend/app/api/analyze/route.ts`](frontend/app/api/analyze/route.ts)
-  hard-copies this list and **must stay in the same order** (model output index i
-  maps to label i).
+  (`predictions_invariant`, `max_prob_delta == 0`), and `test_pipeline_routing.py`
+  asserts it per modality. Keep it true.
+- **Label sets have one source of truth per language.** The Python side is
+  [`models/common/modalities.py`](models/common/modalities.py) — the chest set
+  still lives in [`constants.py`](models/common/constants.py) `CHESTXRAY14_LABELS`
+  and is *reused* by the registry, never forked. The TS side
+  ([`frontend/lib/modalities.ts`](frontend/lib/modalities.ts)) is a hand-kept
+  mirror of that Python registry, consumed by both the Vercel route and the UI
+  selector. Order is load-bearing (model output index i maps to `labels[i]`), so
+  if you change a label set in Python, change it in the TS mirror too.
 
 ## Architecture: the three layers + orchestration
 
@@ -47,22 +63,28 @@ All live under [`models/`](models/):
 
 | Layer | Location | What it does |
 | --- | --- | --- |
-| 1 · Classification | [`models/classification/`](models/classification/) | Factory over DenseNet121 / EfficientNet-B0 / ViT-B/16 with a 14-way multi-label head. Sigmoid is applied at loss/inference time, **not** inside the module (logits out). |
-| 2 · Explainability | [`models/explainability/`](models/explainability/) | Grad-CAM (`gradcam.py`, forward/backward hooks; ViT via token→grid reshape) or Score-CAM (`scorecam.py`, gradient-free). `explainer.py` renders the overlay PNG and derives a centroid/bbox; `describe_location()` maps the centroid to a 3×3 grid in radiology convention (patient-right = viewer-left). |
-| 3 · Report generation | [`models/report_generation/`](models/report_generation/) | Two backends: `anthropic` (Claude) and `template` (offline deterministic). The anthropic backend **falls back to template on any error** (missing key, network, import). Both consume the identical evidence, so swapping backends changes fluency, not content. |
+| 1 · Classification | [`models/classification/`](models/classification/) | Factory over DenseNet121 / EfficientNet-B0 / ViT-B/16 with an N-way multi-label head (N = the modality's label count). `Classifier(labels=...)` sets the head width; the pipeline passes the modality's label set. Sigmoid is applied at loss/inference time, **not** inside the module (logits out). |
+| 2 · Explainability | [`models/explainability/`](models/explainability/) | Grad-CAM (`gradcam.py`, forward/backward hooks; ViT via token→grid reshape) or Score-CAM (`scorecam.py`, gradient-free). `explainer.py` renders the overlay PNG and derives a centroid/bbox; `describe_location(centroid, plane)` maps the centroid to a 3×3 grid — lung *zones* for `plane="frontal"` (chest), lobar *regions* for `plane="axial"` (brain MRI / head CT), both in radiology convention (patient-right = viewer-left). |
+| 3 · Report generation | [`models/report_generation/`](models/report_generation/) | Two backends: `anthropic` (Claude) and `template` (offline deterministic). Both are **modality-aware** (label glosses, anatomical guidance, and the "normal study" impression come from the modality spec, so a normal brain study is not "no acute cardiopulmonary abnormality"). The anthropic backend **falls back to template on any error** (missing key, network, import). |
 
-[`models/pipeline.py`](models/pipeline.py) — `MirrorPipeline.analyze()` runs all four
-stages, returns one `AnalysisResult`, and records per-stage timings in
-`meta['timings_ms']`. The `localize=` / `report=` flags toggle layers 2/3 and are
-exactly what recovers the three ablation conditions (classification-only →
-+localization → full). Only the top-k (default 3) present findings are explained,
-to bound Grad-CAM compute.
+[`models/pipeline.py`](models/pipeline.py) — `MirrorPipeline.analyze(source, modality=...)`
+resolves the modality, builds (and **caches**) one classifier+explainer *engine per
+modality* lazily (the default chest engine is built eagerly so `pipeline.classifier`
+stays available), runs all four stages, returns one `AnalysisResult`, and records
+per-stage timings in `meta['timings_ms']` (plus `modality_key`, `num_labels`). The
+`localize=` / `report=` flags toggle layers 2/3 and are exactly what recovers the
+three ablation conditions (classification-only → +localization → full). Only the
+top-k (default 3) present findings are explained, to bound Grad-CAM compute.
 
-Shared code in [`models/common/`](models/common/): `constants.py` (labels, ImageNet
-norm, label descriptions), `config.py` (YAML-backed dataclasses + `get_anthropic_api_key`),
+Shared code in [`models/common/`](models/common/): `constants.py` (chest labels,
+ImageNet norm, label descriptions), `modalities.py` (**the modality registry** —
+per-modality labels, descriptions, plane, report phrasing, and free-text/DICOM
+resolution), `config.py` (YAML-backed dataclasses + `get_anthropic_api_key`; note
+`ModelConfig.checkpoints` maps a modality key → its own checkpoint),
 `preprocessing.py` (resize/normalize/denormalize), and `dicom.py` — a real DICOM
-ingest that applies the modality LUT, VOI LUT, and MONOCHROME1 inversion, and lifts
-only **non-PHI** technical tags.
+ingest that applies the modality LUT, VOI LUT, and MONOCHROME1 inversion, lifts
+only **non-PHI** technical tags, and exposes `dicom_modality_tag()` for cheap
+auto-routing.
 
 ## Serving: two engines, one JSON contract
 
@@ -74,16 +96,19 @@ renders whichever is present.
 
 - **Local full stack** — FastAPI [`backend/`](backend/) wraps the real PyTorch
   `MirrorPipeline` (lazy singleton in `services/pipeline_service.py`). Endpoints:
-  `/api/analyze`, `/api/health`, `/api/labels` ([`backend/app/api/routes.py`](backend/app/api/routes.py)).
-  Accepts PNG/JPEG/BMP/WEBP **and native DICOM** (by extension, content-type, or
-  magic bytes).
+  `/api/analyze` (accepts a `modality` form field), `/api/health`, `/api/labels`
+  (`?modality=` query), `/api/modalities`
+  ([`backend/app/api/routes.py`](backend/app/api/routes.py)). Accepts
+  PNG/JPEG/BMP/WEBP **and native DICOM** (by extension, content-type, or magic
+  bytes).
 - **Hosted (Vercel)** — [`frontend/app/api/analyze/route.ts`](frontend/app/api/analyze/route.ts)
   replaces the entire PyTorch stack with **Claude vision** via forced tool-use
-  (`record_analysis` tool → 14 probabilities + a bbox per present finding + report),
-  because PyTorch cannot fit Vercel's serverless limits (no GPU, 250 MB bundle,
-  cold starts). Accepts PNG/JPEG/WEBP (no DICOM/BMP). With **no `ANTHROPIC_API_KEY`**
-  it returns a clearly-labelled deterministic `demoResult()` so the site never
-  hard-fails.
+  (`record_analysis` tool → per-label probabilities + a bbox per present finding +
+  report), because PyTorch cannot fit Vercel's serverless limits (no GPU, 250 MB
+  bundle, cold starts). The tool schema, system prompt, and demo result are built
+  per modality from [`frontend/lib/modalities.ts`](frontend/lib/modalities.ts).
+  Accepts PNG/JPEG/WEBP (no DICOM/BMP). With **no `ANTHROPIC_API_KEY`** it returns
+  a clearly-labelled deterministic `demoResult()` so the site never hard-fails.
 
 Frontend is Next.js + TypeScript ([`frontend/`](frontend/)):
 `UploadPanel` → `FilmViewer` (overlay/bbox toggle) → `FindingsList` → `ReportPanel`,
@@ -96,9 +121,13 @@ All in [`evaluation/`](evaluation/); metric defs in `metrics.py`, provenance in
 `repro.py`. Each writes a JSON that stamps a `reproducibility` block (seed, git
 commit, library versions).
 
-- `evaluate.py` — per-label & macro **AUROC**, macro **F1**, each with a
-  **bootstrap 95% CI** (`bootstrap_cis`: one resample drives all metrics, so CIs are
-  mutually consistent). Seeded (`--seed`, default 42).
+- `evaluate.py` — per-label & macro **AUROC** and **AUPRC**, macro **F1**,
+  operating-point **sensitivity / specificity / PPV / NPV** (with support), and
+  **calibration** (Brier, ECE) — the clinical-reader panel. Headline numbers carry
+  a **bootstrap 95% CI** (`bootstrap_cis`: one resample drives all metrics, so CIs
+  are mutually consistent). Seeded (`--seed`, default 42); `--modality` selects the
+  label taxonomy and the output filename (`eval_<backbone>[_<modality>].json`). The
+  operating-point + calibration metrics are pure NumPy (testable without sklearn).
 - `evaluate_localization.py` — **pointing game**, **mean IoU**, **localization
   accuracy** at an IoU threshold, scored against NIH `BBox_List_2017.csv` (~984 boxes
   over 8 of the 14 pathologies).
@@ -109,10 +138,14 @@ commit, library versions).
 
 ## Data and results
 
-- **Dataset:** NIH ChestX-ray14 (primary). **Not redistributed.** A tiny
-  **synthetic** stand-in ships under
-  [`datasets/samples/chestxray14/`](datasets/samples/chestxray14/) (24 images, NIH
-  layout, one DICOM) so the demo/loader/smoke tests run with zero downloads.
+- **Datasets:** NIH ChestX-ray14 (chest), Brain Tumor MRI Dataset (brain MRI
+  tumour classes), RSNA Intracranial Hemorrhage (head CT). **None redistributed.**
+  Tiny **synthetic** stand-ins ship under
+  [`datasets/samples/`](datasets/samples/): `chestxray14/` (24 images, NIH layout,
+  one DICOM), plus `brain_mri/` and `head_ct/` (12 images each, one DICOM each with
+  the correct `Modality` tag) so the demo/DICOM-routing/smoke tests run with zero
+  downloads. Regenerate with `datasets/scripts/make_synthetic_samples.py` (chest)
+  and `datasets/scripts/make_synthetic_neuro_samples.py` (brain MRI + head CT).
 - **`evaluation/results/` is git-ignored.** The committed, curated snapshot lives in
   top-level [`results/`](results/). ⚠️ Those numbers are **illustrative,
   literature-scale placeholders, NOT measured benchmarks** — every file says so in an
@@ -124,6 +157,10 @@ commit, library versions).
 - **Run the demo (no weights/key needed):**
   `python -m demo.run_demo datasets/samples/chestxray14/images/synth_0001.png`
   (a `.dcm` sample works too). Runs on ImageNet weights + offline template backend.
+  For other modalities, pass `--modality "brain MRI"` /
+  `datasets/samples/brain_mri/images/mri_0001.png`, or `--modality auto` on a
+  `.dcm` to route by its `Modality` tag
+  (e.g. `datasets/samples/head_ct/images/ct_0000.dcm`).
 - **Tests:** `pytest` — the suite in [`tests/`](tests/) is deliberately **torch-free**
   (synthetic inputs), so it runs without a model or dataset. If you add logic, prefer
   keeping the unit-testable part importable without torch.

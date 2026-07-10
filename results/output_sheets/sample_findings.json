@@ -8,7 +8,7 @@
     {
       "image": "synth_0001.png",
       "modality": "chest X-ray",
-      "report": "FINDINGS:\n- No acute findings above the reporting threshold.\n- No evidence of: Atelectasis, Cardiomegaly, Effusion, Infiltration.\n\nIMPRESSION:\n1. No acute cardiopulmonary abnormality detected.\n\nAI-GENERATED DRAFT — requires verification by a licensed radiologist.",
+      "report": "FINDINGS:\n- No acute findings above the reporting threshold.\n- No evidence of: Atelectasis, Cardiomegaly, Effusion, Infiltration.\n\nIMPRESSION:\n1. No acute cardiopulmonary abnormality detected.\n\nAI-GENERATED DRAFT - requires verification by a licensed radiologist.",
       "findings": [
         { "label": "Atelectasis", "probability": 0.12, "present": false, "location": "n/a" },
         { "label": "Cardiomegaly", "probability": 0.09, "present": false, "location": "n/a" },
@@ -30,7 +30,7 @@
     {
       "image": "synth_0019.png",
       "modality": "chest X-ray",
-      "report": "FINDINGS:\n- Effusion identified in the right costophrenic angle (moderate confidence, p=0.82).\n- No evidence of: Atelectasis, Cardiomegaly, Infiltration, Mass.\n\nIMPRESSION:\n1. Effusion is the dominant finding (moderate confidence).\n\nAI-GENERATED DRAFT — requires verification by a licensed radiologist.",
+      "report": "FINDINGS:\n- Effusion identified in the right costophrenic angle (moderate confidence, p=0.82).\n- No evidence of: Atelectasis, Cardiomegaly, Infiltration, Mass.\n\nIMPRESSION:\n1. Effusion is the dominant finding (moderate confidence).\n\nAI-GENERATED DRAFT - requires verification by a licensed radiologist.",
       "findings": [
         { "label": "Atelectasis", "probability": 0.21, "present": false, "location": "n/a" },
         { "label": "Cardiomegaly", "probability": 0.14, "present": false, "location": "n/a" },
@@ -52,7 +52,7 @@
     {
       "image": "synth_0005.png",
       "modality": "chest X-ray",
-      "report": "FINDINGS:\n- Effusion identified in the right costophrenic angle (moderate confidence, p=0.84).\n- Mass identified in the left upper lung zone (moderate confidence, p=0.71).\n- No evidence of: Cardiomegaly, Infiltration, Pneumothorax, Edema.\n\nIMPRESSION:\n1. Effusion is the dominant finding (moderate confidence).\n2. Possible Mass.\n\nAI-GENERATED DRAFT — requires verification by a licensed radiologist.",
+      "report": "FINDINGS:\n- Effusion identified in the right costophrenic angle (moderate confidence, p=0.84).\n- Mass identified in the left upper lung zone (moderate confidence, p=0.71).\n- No evidence of: Cardiomegaly, Infiltration, Pneumothorax, Edema.\n\nIMPRESSION:\n1. Effusion is the dominant finding (moderate confidence).\n2. Possible Mass.\n\nAI-GENERATED DRAFT - requires verification by a licensed radiologist.",
       "findings": [
         { "label": "Atelectasis", "probability": 0.24, "present": false, "location": "n/a" },
         { "label": "Cardiomegaly", "probability": 0.12, "present": false, "location": "n/a" },

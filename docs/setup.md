@@ -23,10 +23,15 @@ torchvision).
 
 ```bash
 python -m demo.run_demo path/to/any_chest_xray.png
+# bundled synthetic samples work with zero downloads, across all three modalities:
+python -m demo.run_demo datasets/samples/chestxray14/images/synth_0001.png
+python -m demo.run_demo datasets/samples/brain_mri/images/mri_0001.png --modality "brain MRI"
+python -m demo.run_demo datasets/samples/head_ct/images/ct_0000.dcm --modality auto
 ```
 
 You should see predictions, an offline-template report, and saliency overlays
-written to `demo/assets/`.
+written to `demo/assets/`. `--modality` selects the finding taxonomy (chest X-ray
+/ brain MRI / CT); `--modality auto` routes a DICOM by its `Modality` tag.
 
 ## 3. Backend API
 
