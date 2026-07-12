@@ -147,10 +147,14 @@ commit, library versions).
   downloads. Regenerate with `datasets/scripts/make_synthetic_samples.py` (chest)
   and `datasets/scripts/make_synthetic_neuro_samples.py` (brain MRI + head CT).
 - **`evaluation/results/` is git-ignored.** The committed, curated snapshot lives in
-  top-level [`results/`](results/). ⚠️ Those numbers are **illustrative,
-  literature-scale placeholders, NOT measured benchmarks** — every file says so in an
-  `_note` field. Do not cite them as real results or present them as MIRROR's
-  measured performance.
+  top-level [`results/`](results/). It now holds **real measured** results in
+  `results/chestmnist/` (a real train+evaluate run on ChestMNIST; macro AUROC 0.729)
+  and `results/synthetic_validation/` (a real end-to-end pipeline run on synthetic
+  data), each stamped with an honest `_note`. The older `results/evaluation/*.json`
+  files remain **illustrative, literature-scale placeholders** (also `_note`-stamped)
+  that document each harness's output *format* only. Do not cite the illustrative
+  files as measured performance; the ChestMNIST/synthetic numbers are what the paper
+  reports.
 
 ## Working in this repo
 
@@ -201,4 +205,7 @@ commit, library versions).
 [`docs/api.md`](docs/api.md) (REST payloads),
 [`evaluation/README.md`](evaluation/README.md) and
 [`results/README.md`](results/README.md) (harness + snapshot details),
-[`paper/`](paper/) (write-up; `paper/main.tex` is the compilable draft).
+[`paper/`](paper/) (the write-up; `paper/main.tex` is the compilable source, now a
+**complete, all-measured draft finalized for medRxiv submission**, with compiled
+PDFs v1–v6 in [`paper/pdf-drafts/`](paper/pdf-drafts/) — **v6 is the current
+submission version**).

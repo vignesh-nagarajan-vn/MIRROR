@@ -106,8 +106,9 @@ integrates three complementary layers into one framework:
    that reasons *only* over the structured evidence above.
 
 The result not only predicts abnormalities but communicates **why** the
-prediction was made and **how** it relates to potential clinical findings, and
-every sentence in the report traces back to a probability and a saliency region.
+prediction was made and **how** it relates to potential clinical findings; every
+finding it reports traces back to a probability and a saliency region (the
+descriptive prose around each finding is model-generated and not pixel-verified).
 
 ## System architecture
 
@@ -161,155 +162,41 @@ the deployment topology table), see [`docs/architecture.md`](docs/architecture.m
 
 The hosted build at **[mirror-ten-jet.vercel.app](https://mirror-ten-jet.vercel.app/)**
 runs the full pipeline in the browser via a Next.js serverless route backed by
-Claude vision (`claude-haiku-4-5`). Below is one real session: a chest X-ray
-uploaded with the indication *"productive cough, 3 days."*
-
-**1. Upload and per-label predictions.** All 14 ChestX-ray14 labels are scored;
-Pneumonia (78%), Infiltration (72%), and Consolidation (65%) rise above
-threshold, each with a saliency-derived location.
+Claude vision (`claude-haiku-4-5`): upload a study, score the modality's finding
+taxonomy, draw a bounding box per positive finding, and draft a grounded
+`FINDINGS` / `IMPRESSION` report.
 
 ![Study input and predictions](docs/images/deployment/mirror-sample1-input-predictions-ui.png)
 
-**2. Evidence localization.** Each positive finding gets a bounding box on the
-film, toggled by the chips. Consolidation localizes to the right lower lobe;
-Infiltration spans the bilateral lower zones.
-
-| Consolidation | Infiltration |
-| :---: | :---: |
-| ![Consolidation overlay](docs/images/deployment/mirror-sample1-diagnosis-consolidation.png) | ![Infiltration overlay](docs/images/deployment/mirror-sample1-diagnosis-infiltration.png) |
-
-**3. Draft clinical report.** A structured `FINDINGS` / `IMPRESSION` report,
-grounded in the evidence above, with pertinent negatives and the AI-generated
-disclaimer.
-
-| FINDINGS | IMPRESSION |
-| :---: | :---: |
-| ![Report findings](docs/images/deployment/mirror-sample1-output-analysis-top.png) | ![Report impression](docs/images/deployment/mirror-sample1-output-analysis-bottom.png) |
-
-A full walkthrough of these outputs and how the v1.1.0 deployment works is in
-[`docs/deployment-showcase.md`](docs/deployment-showcase.md).
+A full annotated walkthrough (evidence overlays and the draft report on a real
+session) is in [`docs/deployment-showcase.md`](docs/deployment-showcase.md).
 
 ## Quickstart
 
-Two ways to run MIRROR: **locally** (the real PyTorch pipeline, every input type)
-or as a **live website** (deploy to Vercel, powered by Claude vision).
-Both are below.
-
-### A. Run locally: every step, from a fresh Git Bash window
-
-These are the *complete* instructions starting from nothing. They assume
-**Windows + [Git Bash](https://git-scm.com/downloads)** (the commands are the
-same on macOS/Linux). Run them top to bottom.
-
-**0. One-time prerequisites** (skip any you already have):
-
-- **Git**: <https://git-scm.com/downloads> (this is what gives you Git Bash).
-- **Python 3.10+**: <https://www.python.org/downloads/> (tick *"Add Python to
-  PATH"* in the installer).
-- **Node.js 18+**: <https://nodejs.org/> (only needed for the web UI in step 6).
-
-Verify they're visible inside Git Bash:
+Run the full pipeline on a bundled sample with zero downloads (ImageNet weights,
+offline report backend, works anywhere):
 
 ```bash
-git --version && python --version && node --version
-```
-
-**1. Clone the repository and enter it:**
-
-```bash
-git clone https://github.com/vignesh-nagarajan-vn/MIRROR.git
-cd MIRROR
-```
-
-**2. Create and activate a virtual environment:**
-
-```bash
-python -m venv .venv
-source .venv/Scripts/activate     # macOS/Linux: source .venv/bin/activate
-```
-
-Your prompt should now be prefixed with `(.venv)`.
-
-**3. Install the Python dependencies:**
-
-```bash
+git clone https://github.com/vignesh-nagarajan-vn/MIRROR.git && cd MIRROR
+python -m venv .venv && source .venv/Scripts/activate   # macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
-```
-
-**4. Run the full pipeline on one image** (no checkpoint or API key needed; a
-synthetic sample ships with the repo, so this works with zero downloads):
-
-```bash
 python -m demo.run_demo datasets/samples/chestxray14/images/synth_0001.png
-# Native DICOM works too; point it at the bundled .dcm:
-python -m demo.run_demo datasets/samples/chestxray14/images/synth_0000.dcm
-# Other modalities: pick the taxonomy with --modality:
+# other modalities (or --modality auto to route a DICOM by its Modality tag):
 python -m demo.run_demo datasets/samples/brain_mri/images/mri_0001.png --modality "brain MRI"
-# Or let a DICOM self-route by its Modality tag:
 python -m demo.run_demo datasets/samples/head_ct/images/ct_0000.dcm --modality auto
 ```
 
-That prints predictions and a draft report, and writes Grad-CAM overlays to
-`demo/assets/`. It runs on ImageNet-pretrained weights with the offline template
-report backend, so it works anywhere. Inputs may be **PNG/JPEG/BMP/WEBP or DICOM
-(`.dcm`)**. DICOM is decoded with the modality/VOI LUT and MONOCHROME1 handling
-applied (see [`datasets/README.md`](datasets/README.md#dicom-ingest)). Without a
-trained per-modality checkpoint the predictions come from ImageNet weights and are
-**structurally valid but not diagnostic**. The demo exercises the full pipeline,
-not a benchmarked model.
+This prints predictions and a draft report and writes Grad-CAM overlays to
+`demo/assets/`. Inputs may be PNG/JPEG/BMP/WEBP or DICOM (`.dcm`); on ImageNet
+weights the predictions are structurally valid but not diagnostic.
 
-**5. Start the backend API** (leave it running in this terminal):
-
-```bash
-cd backend
-uvicorn app.main:app --reload --port 8000     # Swagger UI at http://localhost:8000/docs
-```
-
-**6. Start the frontend** (open a *new* Git Bash window, then):
-
-```bash
-cd MIRROR/frontend
-npm install
-cp .env.local.example .env.local              # points the UI at the local backend
-npm run dev                                    # http://localhost:3000
-```
-
-**7. Use it.** Open <http://localhost:3000>, drop in a radiograph, toggle the
-evidence overlay, and read the draft report. Stop either server with `Ctrl+C`;
-reactivate the venv later with `source .venv/Scripts/activate`. Full reference in
-[`docs/setup.md`](docs/setup.md).
-
-> **Optional: richer reports with Claude.** The offline template backend needs
-> nothing. To generate prose reports with Claude, `export ANTHROPIC_API_KEY=sk-ant-...`
-> and set `report.provider: anthropic` in [`configs/default.yaml`](configs/default.yaml).
-> It falls back to the template automatically if the key is missing.
-
-### B. Deploy a live public website (Vercel)
-
-A live deployment of this repo is already running at
-**[mirror-ten-jet.vercel.app](https://mirror-ten-jet.vercel.app/)** (see the
-[deployment showcase](#live-demo-v110) above). To stand up your own:
-
-Want a shareable URL instead of localhost? Deploy the app to Vercel in about two
-minutes. The hosted site is **fully functional on its own** (no backend to host)
-because a Next.js serverless route uses **Claude's vision model** as the
-inference engine, since the PyTorch pipeline can't run on serverless. You only
-need a free Vercel account and an Anthropic API key.
-
-Import the repo from the Vercel dashboard (**[vercel.com/new](https://vercel.com/new)
-→ Import Git Repository → pick your `MIRROR` repo**). When the configure screen
-appears:
-
-1. **Root Directory**: set to **`frontend`** (the Next.js app lives there).
-2. **Environment Variables**: set `ANTHROPIC_API_KEY` to your key from
-   <https://console.anthropic.com/>. (Optional: `ANTHROPIC_MODEL`, default
-   `claude-haiku-4-5`.)
-3. Click **Deploy** to get a public `*.vercel.app` URL.
-
-Step-by-step instructions (including the Vercel CLI path) are in
-[`docs/deployment.md`](docs/deployment.md). Deploying without a key still works:
-the analyze route returns a clearly-labelled demo result so the site never
-hard-fails.
+- **Full local stack** (FastAPI backend + Next.js reading-room UI):
+  [`docs/setup.md`](docs/setup.md).
+- **Deploy a live public site** on Vercel, powered by Claude vision with no backend
+  to host: [`docs/deployment.md`](docs/deployment.md).
+- **Richer prose reports** (optional): set `ANTHROPIC_API_KEY` and
+  `report.provider: anthropic` in [`configs/default.yaml`](configs/default.yaml); it
+  falls back to the offline template if the key is missing.
 
 ## Repository layout
 
@@ -425,85 +312,41 @@ python -m evaluation.ablation --config configs/default.yaml \
 python -m evaluation.aggregate_seeds evaluation/results/eval_seed*.json
 ```
 
-The harnesses answer the project's two questions side by side: `evaluate.py`
-measures *what* the model predicts (per-label and macro AUROC, macro F1), and
-`evaluate_localization.py` measures *whether the evidence it highlights is in the
-right place*, scoring each Grad-CAM/Score-CAM map against the ~984 hand-drawn
-boxes that NIH ships for 8 of the 14 pathologies (pointing-game accuracy, mean
-IoU, and localization accuracy at an IoU threshold). `ablation.py` then builds the
-**baseline comparison the research question names**: classification-only vs.
-+localization vs. full MIRROR, in one table. Because layers 2-3 are post-hoc, the
-AUROC/F1 column is identical across rows (verified empirically), so the table
-shows added interpretability *at no predictive cost*, alongside the per-layer
-latency. The predictive panel is **clinical-grade**: beyond AUROC/F1 it reports
-AUPRC, operating-point **sensitivity / specificity / PPV / NPV** (with support),
-and **calibration** (Brier score, Expected Calibration Error). Headline numbers
-carry a **bootstrap 95% CI** (test-set sampling noise) and can be summarised across
-training seeds with `aggregate_seeds.py` as **mean ± std** (training noise); each
-results JSON also stamps a `reproducibility` block (seed, git commit, library
-versions) so the numbers regenerate. See
-[`datasets/README.md`](datasets/README.md#localization-ground-truth) for the box
-file and [`evaluation/README.md`](evaluation/README.md) for the metric details.
-
-`evaluation/results/` is git-ignored; a committed, curated snapshot lives in
-[`results/`](results/). It holds the **real measured** results the paper reports
-(`results/chestmnist/` and `results/synthetic_validation/`), alongside older
-format-only snapshots that show each harness's output shape and are clearly marked
-illustrative rather than benchmark claims.
-
-## Potential contributions
-
-- An end-to-end multimodal radiology analysis pipeline.
-- An explainable-AI framework for medical imaging (Grad-CAM / Score-CAM).
-- Automated clinician-style report generation grounded in model evidence.
-- An evaluation of interpretability versus predictive performance.
-- An open-source benchmark for combining computer vision with LLM-based reasoning
-  in healthcare.
+The harnesses answer the project's two questions side by side. `evaluate.py` scores
+*what* the model predicts, a clinical-grade panel of per-label and macro AUROC/AUPRC,
+macro F1, operating-point sensitivity / specificity / PPV / NPV, and calibration
+(Brier, ECE), all with bootstrap 95% CIs. `evaluate_localization.py` scores *whether
+the highlighted evidence is in the right place* against the ~984 NIH lesion boxes
+(pointing game, IoU). `ablation.py` builds the baseline comparison the research
+question names (classification-only vs. +localization vs. full MIRROR); because
+layers 2-3 are post-hoc, the predictive column is identical across rows, so
+interpretability is added at no predictive cost. `evaluation/results/` is
+git-ignored; the committed snapshot in [`results/`](results/) holds the real measured
+results the paper reports (`results/chestmnist/`, `results/synthetic_validation/`)
+plus format-only illustrative examples. Details:
+[`evaluation/README.md`](evaluation/README.md).
 
 ## Paper
 
-**Status: complete.** The paper is a finished, all-measured draft. Every number in
-it is a real result produced on this repository's code; there are no placeholder,
-filler, or pending values. The two-column workshop/preprint LaTeX source lives in
-[`paper/main.tex`](paper/main.tex), and compiled PDF snapshots (v1 through v5,
-newest last) are in [`paper/pdf-drafts/`](paper/pdf-drafts/).
+**Status: finalized for submission (medRxiv, Radiology).** The paper is a complete,
+all-measured draft: every number is a real result from this repo's code, with no
+placeholder or pending values. LaTeX source: [`paper/main.tex`](paper/main.tex).
+Compiled PDF snapshots (v1 through v6, newest last) are in
+[`paper/pdf-drafts/`](paper/pdf-drafts/), with **v6 the current submission version**.
 
-It answers MIRROR's research question with evidence: *does adding evidence
-localization and grounded report generation to a disease classifier improve
-interpretability without a predictive penalty?* The headline result is the
-ablation, which frames the contribution as **interpretability at no predictive
-cost**. The measured highlights:
+Measured highlights: DenseNet-121 reaches macro AUROC **0.729** (95% CI [0.718,
+0.738]) on ChestMNIST with a clinically sensible per-label ordering; the ablation
+verifies the interpretability layers are strictly post-hoc (maximum probability
+change 0), so they add no predictive cost, only a bounded ~40 ms Grad-CAM pass; and a
+synthetic control (0.917 vs 0.557 AUROC on signal vs no-signal labels) confirms the
+metrics measure real discrimination. Framed honestly for a clinical readership:
+ChestMNIST is a downsampled, reduced-budget *systems demonstration*, not a diagnostic
+benchmark; grounding is *finding-level* (the descriptive prose is not pixel-verified);
+and quantitative localization against the NIH boxes is future work.
 
-- **Predictive quality (ChestMNIST).** DenseNet-121 reaches a macro AUROC of
-  **0.729** (bootstrap 95% CI [0.718, 0.738]) on the held-out test split, with a
-  clinically sensible per-label ordering (readily visible findings such as edema
-  and cardiomegaly rank highest, subtle ones such as nodule lowest). ChestMNIST is
-  a real, CC BY 4.0 ChestX-ray14 derivative that carries the identical 14-label
-  taxonomy; the full-resolution NIH benchmark is the next step and needs a GPU.
-- **Interpretability at no predictive cost (ablation).** Macro AUROC is identical
-  across the classification-only, +localization, and full-MIRROR conditions, and
-  the maximum per-label probability change is exactly 0, so the post-hoc layers
-  never alter the predictions. The added cost is a bounded ~40 ms Grad-CAM pass;
-  the report layer is effectively free.
-- **Harness sanity check (synthetic).** On a synthetic set that injects a visible
-  signal for some labels and none for others, the classifier learns the
-  signal-bearing labels (mean AUROC 0.917) and stays at chance for the rest
-  (0.557), which shows the metrics measure real discrimination with no leakage.
-
-The single source file holds an inline TikZ architecture figure, real `pgfplots`
-result graphs (per-label AUROC and the synthetic sanity check), the measured result
-tables, real UI screenshots (in [`paper/figures/`](paper/figures/)), and an embedded
-21-source bibliography with a one-page literature review. Build it in **Overleaf**
-(upload `main.tex` and the `figures/` folder) or with a local TeX install, in one
-pdfLaTeX pass with no `bibtex` step:
-
-```bash
-cd paper
-pdflatex main
-```
-
-See [`paper/README.md`](paper/README.md) for the section map and how the result
-tables are regenerated from the evaluation harnesses.
+See [`paper/README.md`](paper/README.md) for the section map, build steps
+(Overleaf or `pdflatex main`), and how the result tables regenerate from the
+evaluation harnesses.
 
 ## Documentation
 
