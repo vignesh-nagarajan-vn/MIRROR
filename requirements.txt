@@ -28,5 +28,8 @@ anthropic>=0.39
 # Notebooks (optional)
 jupyter>=1.0
 
+# Small real benchmark for CPU-scale train/eval (optional; datasets/scripts/prepare_chestmnist.py)
+medmnist>=3.0
+
 # Tests (dev)
 pytest>=7.0

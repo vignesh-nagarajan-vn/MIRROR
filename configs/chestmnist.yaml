@@ -1,0 +1,47 @@
+# MIRROR config for the ChestMNIST run.
+#
+# ChestMNIST (MedMNIST v2) is a real, CC BY 4.0 benchmark derived from NIH
+# ChestX-ray14: the SAME 14 pathologies in the SAME label order, multi-label,
+# with official splits, just downsampled. It is a legitimate small-scale
+# stand-in for the full 45 GB release. Prepare it with:
+#   python -m datasets.scripts.prepare_chestmnist --out datasets/raw/chestmnist \
+#       --n-train-val 8000 --n-test 12000 --size 64 --seed 42
+#
+# These numbers ARE real (real radiographs, real labels); they are a
+# reduced-resolution, reduced-budget result, not the full-resolution NIH
+# benchmark. Train on a GPU with the full release for the headline numbers.
+
+model:
+  backbone: densenet121
+  num_classes: 14
+  pretrained: true
+  dropout: 0.2
+  checkpoint_path: null
+
+explain:
+  method: gradcam
+  target_layer: null
+  overlay_alpha: 0.45
+  colormap: jet
+
+report:
+  provider: template
+  model: claude-haiku-4-5
+  max_tokens: 1024
+  temperature: 0.2
+  confidence_threshold: 0.5
+
+data:
+  dataset: chestmnist
+  data_root: datasets/raw/chestmnist
+  image_size: 224
+  batch_size: 32
+  num_workers: 0
+
+train:
+  epochs: 4
+  lr: 0.0003
+  weight_decay: 0.00001
+  device: cuda             # auto-falls back to cpu
+  output_dir: models/checkpoints
+  seed: 42
