@@ -23,12 +23,24 @@ results/
 ├── output_sheets/
 │   ├── sample_predictions.csv     # per-image predictions over the 24 synthetic samples
 │   └── sample_findings.json       # full structured pipeline output for three samples
-└── evaluation/
-    ├── eval_densenet121.json          # predictive quality  (evaluate.py format)
-    ├── loc_densenet121_gradcam.json   # explanation quality (evaluate_localization.py)
-    ├── ablation_densenet121.json      # baseline comparison (ablation.py)
-    └── aggregate_densenet121.json     # multi-seed mean±std (aggregate_seeds.py)
+├── evaluation/                    # ILLUSTRATIVE format snapshots (hand-written placeholders)
+│   ├── eval_densenet121.json          # predictive quality  (evaluate.py format)
+│   ├── loc_densenet121_gradcam.json   # explanation quality (evaluate_localization.py)
+│   ├── ablation_densenet121.json      # baseline comparison (ablation.py)
+│   └── aggregate_densenet121.json     # multi-seed mean±std (aggregate_seeds.py)
+└── synthetic_validation/          # REAL harness output from an end-to-end run on SYNTHETIC data
+    ├── README.md                      # what it is (NOT a benchmark) + reproduction recipe
+    ├── eval_synthetic_densenet121.json
+    └── ablation_synthetic_densenet121.json
 ```
+
+> [!NOTE]
+> Two different things live here. `evaluation/` holds **illustrative, hand-written**
+> placeholders documenting each harness's output *format* (literature-scale numbers).
+> `synthetic_validation/` holds the **actual output of the harnesses** from training
+> and evaluating the real model on a bundled *synthetic* dataset — genuine numbers
+> that validate the pipeline, but still **not** a ChestX-ray14 benchmark. See
+> [`synthetic_validation/README.md`](synthetic_validation/README.md).
 
 ## Output sheets (`output_sheets/`)
 

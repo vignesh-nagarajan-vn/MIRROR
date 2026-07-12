@@ -1,0 +1,120 @@
+{
+  "_note": "SYNTHETIC END-TO-END VALIDATION, NOT A BENCHMARK. Produced by actually training DenseNet121 (configs/synthetic.yaml) on 1400 procedurally generated chest-X-ray-LIKE images and evaluating on a held-out synthetic test split. These numbers characterise the MIRROR pipeline (that it trains, evaluates, and produces well-formed metrics), NOT clinical accuracy on real radiographs. The synthetic generator injects a visible blob for a subset of labels, so the model learns exactly those and stays at chance for the rest. For real ChestX-ray14 numbers, train on the NIH release (datasets/scripts/download_chestxray14.py) with a GPU. Do NOT cite these as MIRROR's measured performance.",
+  "timestamp": "2026-07-12T05:25:58.842196Z",
+  "modality": "Chest X-ray",
+  "modality_key": "chest_xray",
+  "backbone": "densenet121",
+  "explain_method": "gradcam",
+  "report_provider": "template",
+  "capabilities": {
+    "classification_only": {
+      "prediction": true,
+      "localization": false,
+      "report": false
+    },
+    "with_localization": {
+      "prediction": true,
+      "localization": true,
+      "report": false
+    },
+    "full_mirror": {
+      "prediction": true,
+      "localization": true,
+      "report": true
+    }
+  },
+  "metrics_source": {
+    "prediction_results": "evaluation/results/eval_densenet121.json",
+    "localization_results": null
+  },
+  "profile": {
+    "latency": {
+      "classification_only": {
+        "prediction": 72.08759999999994,
+        "localization": 0.010379166666703762,
+        "report": 0.0004249999999520841,
+        "total": 72.0984041666666
+      },
+      "with_localization": {
+        "prediction": 71.21392500000006,
+        "localization": 22.057854166666726,
+        "report": 0.0003875000000504632,
+        "total": 93.27216666666683
+      },
+      "full_mirror": {
+        "prediction": 71.47464166666664,
+        "localization": 18.9287208333333,
+        "report": 0.019720833333273607,
+        "total": 90.42308333333321
+      }
+    },
+    "predictions_invariant": true,
+    "max_prob_delta": 0.0,
+    "n_images": 24
+  },
+  "table": [
+    {
+      "condition": "classification_only",
+      "description": "Predictions only \u2014 where most medical-imaging models stop.",
+      "prediction": true,
+      "localization": false,
+      "report": false,
+      "macro_auroc": 0.7249753762624993,
+      "macro_auprc": 0.2330063148072547,
+      "macro_f1": 0.06830299687442545,
+      "sensitivity": 0.09863945578231292,
+      "specificity": 0.9938312899958721,
+      "pointing_game": null,
+      "mean_iou": null,
+      "loc_accuracy": null,
+      "latency_ms": {
+        "prediction": 72.08759999999994,
+        "localization": 0.010379166666703762,
+        "report": 0.0004249999999520841,
+        "total": 72.0984041666666
+      }
+    },
+    {
+      "condition": "with_localization",
+      "description": "Predictions + Grad-CAM/Score-CAM evidence localisation.",
+      "prediction": true,
+      "localization": true,
+      "report": false,
+      "macro_auroc": 0.7249753762624993,
+      "macro_auprc": 0.2330063148072547,
+      "macro_f1": 0.06830299687442545,
+      "sensitivity": 0.09863945578231292,
+      "specificity": 0.9938312899958721,
+      "pointing_game": null,
+      "mean_iou": null,
+      "loc_accuracy": null,
+      "latency_ms": {
+        "prediction": 71.21392500000006,
+        "localization": 22.057854166666726,
+        "report": 0.0003875000000504632,
+        "total": 93.27216666666683
+      }
+    },
+    {
+      "condition": "full_mirror",
+      "description": "Predictions + localisation + grounded natural-language report.",
+      "prediction": true,
+      "localization": true,
+      "report": true,
+      "macro_auroc": 0.7249753762624993,
+      "macro_auprc": 0.2330063148072547,
+      "macro_f1": 0.06830299687442545,
+      "sensitivity": 0.09863945578231292,
+      "specificity": 0.9938312899958721,
+      "pointing_game": null,
+      "mean_iou": null,
+      "loc_accuracy": null,
+      "latency_ms": {
+        "prediction": 71.47464166666664,
+        "localization": 18.9287208333333,
+        "report": 0.019720833333273607,
+        "total": 90.42308333333321
+      }
+    }
+  ]
+}
