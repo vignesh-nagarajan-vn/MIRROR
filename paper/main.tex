@@ -72,10 +72,10 @@
 \vspace{6pt}
 {\Huge\bfseries MIRROR}\\[6pt]
 {\large\bfseries Multimodal Intelligent Radiology Reasoning and Observation Reporter}\\[10pt]
-{\itshape\normalsize A grounded, explainable chest-radiograph pipeline that predicts
-fourteen thoracic pathologies, localizes the visual evidence behind each finding,
-and drafts a clinician-style report, with predictive quality and explanation
-quality measured side by side.}\\[22pt]
+{\itshape\normalsize A grounded, explainable radiology pipeline that predicts
+findings across three imaging modalities --- chest X-ray, brain MRI, and head CT ---
+localizes the visual evidence behind each finding, and drafts a clinician-style
+report, with predictive quality and explanation quality measured side by side.}\\[22pt]
 
 % ---- Two authors, side by side, each in a fixed-width box so the long
 %      affiliation lines wrap inside their column instead of overlapping. ----
@@ -104,21 +104,26 @@ quality measured side by side.}\\[22pt]
 \textbf{Abstract.}
 Most medical-imaging models stop at a prediction, offering neither the location of
 the evidence nor an account a clinician can read. We present \textbf{MIRROR}, a
-three-layer chest-radiograph pipeline that composes (i) a multi-label disease
-classifier, (ii) class-activation-based evidence localization, and (iii) an
+three-layer, multi-modality radiology pipeline that composes (i) a multi-label
+disease classifier, (ii) class-activation-based evidence localization, and (iii) an
 evidence-grounded natural-language report generator into a single traceable
-system. The defining design choice is that each layer's output is the grounded
-input to the next, and the language layer never sees pixels, so every sentence in
-the generated report traces back to a predicted probability and a saliency region,
-and the reasoning layer cannot invent findings the classifier did not produce. We
-pair the system with an evaluation framework that measures predictive quality
-(AUROC/F1) and explanation quality (pointing game, localization IoU) side by side,
-and an ablation that isolates the cost of the added interpretability layers.
-Because those layers are strictly post-hoc, predictive metrics are provably
-invariant to them, which lets us frame the contribution as \emph{interpretability
-at no predictive cost}. All predictive numbers carry bootstrap $95\%$ confidence
-intervals and can be aggregated across training seeds, and every run stamps a
-reproducibility record.
+system. The pipeline is modality-agnostic: a single registry supplies the finding
+taxonomy, anatomical vocabulary, and report phrasing for chest X-ray (14 findings),
+brain MRI (11), and head CT (11), and a study is routed to the right classifier
+head either explicitly or from its DICOM modality tag. The defining design choice
+is that each layer's output is the grounded input to the next, and the language
+layer never sees pixels, so every sentence in the generated report traces back to a
+predicted probability and a saliency region, and the reasoning layer cannot invent
+findings the classifier did not produce. We pair the system with an evaluation
+framework that measures predictive quality --- discrimination (AUROC/AUPRC/F1),
+clinical operating-point metrics (sensitivity, specificity, PPV, NPV), and
+calibration (Brier, ECE) --- and explanation quality (pointing game, localization
+IoU) side by side, and an ablation that isolates the cost of the added
+interpretability layers. Because those layers are strictly post-hoc, predictive
+metrics are provably invariant to them, which lets us frame the contribution as
+\emph{interpretability at no predictive cost}. All headline numbers carry bootstrap
+$95\%$ confidence intervals and can be aggregated across training seeds, and every
+run stamps a reproducibility record.
 \pending{fold in a one-sentence quantitative headline (macro AUROC, localization
 accuracy, and the ablation's invariance result) once the classifier is trained on
 ChestX-ray14.}
@@ -149,7 +154,15 @@ Its central design constraint is \emph{grounding}: the language layer is given
 only the structured evidence produced upstream (labels, probabilities, and named
 saliency regions), never the raw image. This makes hallucinated findings
 structurally impossible, since the report can only discuss what the classifier
-predicted and the localizer situated, and it makes the whole chain traceable.
+predicted and the localizer situated, and it makes the whole chain traceable. The
+same pipeline runs unchanged across three imaging modalities --- chest X-ray, brain
+MRI, and head CT --- because only the finding taxonomy, the anatomical vocabulary,
+and a little report phrasing differ between them; these are centralized in one
+modality registry, and a study is routed to the correct classifier head either by
+an explicit selection or from its DICOM modality tag. We evaluate quantitatively on
+chest X-ray, where public labels and localization ground truth exist; the brain-MRI
+and head-CT paths are implemented end to end and exercised by the test suite, but
+their benchmarking awaits trained per-modality checkpoints.
 
 \paragraph{Research question.} Can a multimodal system that combines image
 classification, visual explainability, and language generation improve
@@ -166,6 +179,12 @@ ablation reproduces the classification-only baseline the question names.
   \item A grounding constraint that makes the generated report auditable and
   non-hallucinatory \emph{by construction}, together with a post-hoc layer design
   whose invariance to the predictions is verified empirically.
+  \item A modality-agnostic realization of that pipeline across three imaging
+  modalities (chest X-ray, brain MRI, head CT), driven by a single registry that is
+  the one source of truth for each modality's label taxonomy, anatomical
+  vocabulary, and report phrasing, with routing either explicit or auto-detected
+  from the DICOM modality tag, so adding a modality is a data change rather than a
+  code change.
   \item An open-source implementation spanning interchangeable backbones
   (DenseNet-121, EfficientNet-B0, ViT-B/16), two explainability methods
   (Grad-CAM, Score-CAM), an LLM report backend with a deterministic offline
@@ -252,13 +271,14 @@ next (Fig.~\ref{fig:arch}).
              font=\footnotesize\itshape},
   arr/.style={-{Stealth[length=2.4mm]}, thick, mirrorgray}
 ]
-\node[io] (img) {radiograph \\ \scriptsize(PNG/JPEG/BMP/WEBP/DICOM)};
+\node[io] (img) {study + modality \\ \scriptsize(PNG/JPEG/BMP/WEBP/DICOM;
+   modality explicit or from DICOM tag)};
 \node[layer, below=of img] (clf)
-  {\textbf{1. Classification}\\ \scriptsize CNN/ViT backbone, 14-way multi-label
-   head $\rightarrow$ per-label probabilities};
+  {\textbf{1. Classification}\\ \scriptsize CNN/ViT backbone, $N$-way multi-label
+   head ($N$ sized to the modality) $\rightarrow$ per-label probabilities};
 \node[layer, below=of clf] (loc)
   {\textbf{2. Evidence localization}\\ \scriptsize Grad-CAM/Score-CAM
-   $\rightarrow$ heatmap + named region (centroid, bbox)};
+   $\rightarrow$ heatmap + named region (lung zones or lobar regions)};
 \node[layer, below=of loc] (rep)
   {\textbf{3. Clinical reasoning}\\ \scriptsize LLM or offline template over the
    \textbf{structured evidence only, never the pixels}};
@@ -278,18 +298,20 @@ toggleable, which recovers the ablation conditions of Section~\ref{sec:setup}.}
 
 \subsection{Layer 1: Classification}
 The classifier is a factory over three ImageNet-pretrained backbones: DenseNet-121
-(default), EfficientNet-B0, and ViT-B/16, with a shared 14-way multi-label head
-(sigmoid applied at loss and inference time, so the network emits raw logits).
-Inputs are resized to $224\times224$ and normalized with ImageNet statistics.
-Training uses \code{BCEWithLogitsLoss}, AdamW (learning rate $10^{-4}$, weight
-decay $10^{-5}$), a cosine schedule, and dropout $0.2$; checkpoints are selected
-on best validation macro-AUROC. The 14 labels follow the canonical NIH
-ChestX-ray14 taxonomy, kept as a single source of truth shared by the classifier
-head, the report generator, and the evaluation scripts. Because real radiology
-data arrives as DICOM rather than PNG/JPEG, a dedicated ingest applies the
-modality LUT (rescale slope/intercept), the VOI (window) LUT, and MONOCHROME1
-inversion before handing the pipeline a display-ready image, and lifts only
-non-PHI technical tags (modality, view position, laterality).
+(default), EfficientNet-B0, and ViT-B/16, with a multi-label head whose width $N$ is
+the number of findings in the active modality's taxonomy (14 for chest X-ray, 11
+each for brain MRI and head CT; sigmoid applied at loss and inference time, so the
+network emits raw logits). Inputs are resized to $224\times224$ and normalized with
+ImageNet statistics. Training uses \code{BCEWithLogitsLoss}, AdamW (learning rate
+$10^{-4}$, weight decay $10^{-5}$), a cosine schedule, and dropout $0.2$;
+checkpoints are selected on best validation macro-AUROC. For chest X-ray the 14
+labels follow the canonical NIH ChestX-ray14 taxonomy, kept as a single source of
+truth shared by the classifier head, the report generator, and the evaluation
+scripts. Because real radiology data arrives as DICOM rather than PNG/JPEG, a
+dedicated ingest applies the modality LUT (rescale slope/intercept), the VOI
+(window) LUT, and MONOCHROME1 inversion before handing the pipeline a display-ready
+image, lifts only non-PHI technical tags (modality, view position, laterality), and
+exposes the DICOM modality tag for automatic routing.
 
 \subsection{Layer 2: Evidence Localization}
 For each positive label (top-$k$, $k{=}3$ by default, to bound compute), the
@@ -299,9 +321,11 @@ perturbation-based), and reduces it to a named region so the evidence can be
 referred to in words. Target layers are resolved per backbone; ViT maps are
 recovered by reshaping the patch-token sequence back to a $14\times14$ spatial
 grid. The activated region's centroid is mapped into a $3\times3$ anatomical grid
-in radiology convention (patient-right on the viewer's left), yielding a
-plain-English location such as ``the right lower zone,'' and a colormap overlay is
-rendered for the UI (Fig.~\ref{fig:qual}, left).
+in radiology convention (patient-right on the viewer's left), using the modality's
+plane to pick the vocabulary --- lung zones for a frontal chest film (``the right
+lower zone'') or lobar regions for an axial brain-MRI/head-CT slice (``the left
+frontal region'') --- and a colormap overlay is rendered for the UI
+(Fig.~\ref{fig:qual}, left).
 
 \subsection{Layer 3: Clinical Reasoning}
 The reasoning layer converts structured evidence (labels, probabilities, and
@@ -317,6 +341,43 @@ backends consume identical evidence, swapping them changes \emph{how fluently} t
 report reads, never \emph{what} it may say; and because the layer never receives
 the image, it cannot introduce findings absent from the upstream evidence
 (Fig.~\ref{fig:qual}, right).
+
+\subsection{Multi-modality via a modality registry}
+The three layers above are modality-agnostic: swapping a chest radiograph for a
+brain MRI or a head CT changes only the finding taxonomy the head predicts, the
+anatomical vocabulary a saliency centroid is named in (lung zones vs.\ lobar
+regions), and a little report phrasing (so a normal brain study reads ``no acute
+intracranial abnormality,'' not ``no acute cardiopulmonary abnormality''). These
+per-modality details are centralized in one registry (Table~\ref{tab:modalities}),
+which is the single source of truth for each modality's labels, label glosses,
+imaging plane, and report guidance; a hand-kept TypeScript mirror lets the hosted
+engine and UI selector share the identical taxonomy and \emph{ordering} (output
+index $i$ maps to $\text{labels}[i]$). A study's modality is resolved either from an
+explicit selection or, for a DICOM input, from its (0008,0060) modality tag
+(\code{MR}$\rightarrow$brain MRI, \code{CT}$\rightarrow$head CT,
+\code{CR}/\code{DX}$\rightarrow$chest). The orchestrator builds and caches one
+classifier--explainer engine per modality on demand, so a single deployment serves
+all three. Adding a fourth modality is therefore a data change --- one registry
+entry and (once trained) a checkpoint --- rather than a change to the pipeline.
+
+\begin{table}[t]
+\centering
+\caption{The modality registry: one row per supported modality, each grounded in a
+public benchmark taxonomy. Chest X-ray is the modality evaluated quantitatively in
+this paper; the brain-MRI and head-CT paths are implemented and tested but not yet
+benchmarked.}
+\label{tab:modalities}
+\footnotesize
+\begin{tabular}{@{}p{0.20\linewidth}rp{0.30\linewidth}p{0.22\linewidth}@{}}
+\toprule
+\textbf{Modality} & \textbf{\#lbl} & \textbf{Taxonomy source} & \textbf{Location vocab.} \\
+\midrule
+Chest X-ray & 14 & NIH ChestX-ray14 & lung zones (frontal) \\
+Brain MRI   & 11 & Brain Tumor MRI + neuro findings & lobar regions (axial) \\
+Head CT     & 11 & RSNA ICH subtypes + acute findings & lobar regions (axial) \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \subsection{Orchestration and Serving}
 A single \code{analyze()} entry point runs the stages and returns one result
@@ -356,7 +417,7 @@ interface.}
  & \textbf{Local stack} & \textbf{Hosted (serverless)} \\
 \midrule
 Engine        & FastAPI + PyTorch     & Next.js route, vision LLM \\
-Classify      & DenseNet/EffNet/ViT   & LLM scores 14 labels \\
+Classify      & DenseNet/EffNet/ViT   & LLM scores $N$ labels \\
 Localize      & Grad-CAM/Score-CAM PNG & LLM returns a bbox \\
 Report        & LLM or template       & LLM (same prompt shape) \\
 Inputs        & \small +DICOM, BMP    & PNG/JPEG/WEBP \\
@@ -377,6 +438,11 @@ numbers await a trained checkpoint.}
 \paragraph{Data.} We use NIH ChestX-ray14~\cite{wang2017chestxray}: 112{,}120
 frontal radiographs from 30{,}805 patients, labeled across 14 pathologies
 (multi-label), with the official train/validation and held-out test splits.
+Quantitative evaluation is confined to this chest-X-ray modality, where public
+multi-label annotations and lesion boxes exist; the evaluation harness is
+modality-parametric (a \code{-{}-modality} flag selects the taxonomy and output
+filename), so the brain-MRI and head-CT paths regenerate the same metric panel once
+labeled test data and trained per-modality checkpoints are available.
 
 \paragraph{Localization ground truth.} We score heatmaps against the official
 \code{BBox\_List\_2017.csv}: $\sim$984 hand-drawn boxes over 8 of the 14
@@ -385,12 +451,21 @@ Pneumonia, Pneumothorax). Boxes are given in original $1024\times1024$ pixel
 coordinates and rescaled into the model's heatmap grid; the remaining six labels
 have no box ground truth and are not scored.
 
-\paragraph{Predictive metrics.} Per-label and macro AUROC, plus macro F1 at a
-$0.5$ threshold, on the official test split. Each metric carries a bootstrap
-$95\%$ confidence interval: the test set is resampled with replacement $B{=}1000$
-times, and a \emph{single} resample drives all metrics at once, so the intervals
-are mutually consistent. For a statistic $\theta$ with bootstrap replicates
-$\{\hat\theta^{*}_b\}$ we report the two-sided percentile interval
+\paragraph{Predictive metrics.} We report a clinical-reader panel on the official
+test split, in three families. \emph{Discrimination:} per-label and macro AUROC,
+per-label and macro AUPRC (more informative than AUROC under the heavy class
+imbalance of medical findings), and macro F1 at a $0.5$ threshold.
+\emph{Operating point:} at the decision threshold, the quantities a clinician reads
+off a model --- sensitivity, specificity, PPV, and NPV --- per label with positive
+support counts and macro-averaged, so a headline AUROC is accompanied by the
+false-negative/false-positive trade-off it implies. \emph{Calibration:} the Brier
+score and Expected Calibration Error (10 equal-width bins), because a probability a
+clinician is asked to trust must mean what it says. Each headline metric carries a
+bootstrap $95\%$ confidence interval: the test set is resampled with replacement
+$B{=}1000$ times, and a \emph{single} resample drives all metrics at once (AUROC,
+F1, sensitivity, specificity, Brier), so the intervals are mutually consistent. For
+a statistic $\theta$ with bootstrap replicates $\{\hat\theta^{*}_b\}$ we report the
+two-sided percentile interval
 $[\hat\theta^{*}_{(\alpha/2)},\,\hat\theta^{*}_{(1-\alpha/2)}]$ with
 $\alpha{=}0.05$, which supports statements of the form ``config A beats config B.''
 
@@ -432,10 +507,14 @@ with the measured ones and set them black.}
 The qualitative behavior is already visible end to end: Fig.~\ref{fig:qual} shows,
 for one real study, the Grad-CAM evidence overlay on the film and the grounded
 \textsc{Findings}/\textsc{Impression} draft it produces. The quantitative tables
-and graphs below report the three harnesses' outputs in their released format.
-Figure~\ref{fig:auroc} visualizes the predictive half (per-label AUROC with
-bootstrap CIs) and Figure~\ref{fig:loc} the explanation half (per-lesion
-localization), the two sides of the research question.
+and graphs below report the three harnesses' outputs in their released format. The
+predictive half spans discrimination (Table~\ref{tab:prediction},
+Fig.~\ref{fig:auroc}: per-label AUROC with bootstrap CIs) and the clinical
+operating-point and calibration panel (Table~\ref{tab:operating}); the explanation
+half is the per-lesion localization scored against the NIH boxes
+(Table~\ref{tab:localization}, Fig.~\ref{fig:loc}) --- the two sides of the research
+question --- and the ablation (Table~\ref{tab:ablation}) ties them together by
+showing the added layers change neither.
 
 \begin{figure*}[t]
 \centering
@@ -528,6 +607,36 @@ sorted ascending. {\color{pendingred}\itshape Red = illustrative placeholder dat
 pending a trained checkpoint.}}
 \label{fig:auroc}
 \end{figure}
+
+\begin{table*}[t]
+\centering
+\caption{Clinical operating-point panel at the $0.5$ threshold (DenseNet-121,
+ChestX-ray14 test split): per-label sensitivity, specificity, PPV, NPV with
+positive support, plus macro averages and calibration (Brier, ECE). These are the
+numbers a clinical reader reads off a model; they accompany the AUROC in
+Table~\ref{tab:prediction} rather than replacing it. {\color{pendingred}\itshape
+Red = illustrative placeholder, pending a trained checkpoint.}}
+\label{tab:operating}
+\footnotesize
+\begin{tabular}{@{}lKKKK>{\color{pendingred}}r@{\hspace{2.5em}}lKKKK>{\color{pendingred}}r@{}}
+\toprule
+\textbf{Pathology} & \textbf{Sens.} & \textbf{Spec.} & \textbf{PPV} & \textbf{NPV} & \textbf{\#pos}
+& \textbf{Pathology} & \textbf{Sens.} & \textbf{Spec.} & \textbf{PPV} & \textbf{NPV} & \textbf{\#pos} \\
+\midrule
+Atelectasis  & 0.512 & 0.861 & 0.312 & 0.931 & 2894 & Pneumothorax       & 0.612 & 0.921 & 0.379 & 0.966 & 1332 \\
+Cardiomegaly & 0.638 & 0.922 & 0.401 & 0.968 & 1069 & Consolidation      & 0.463 & 0.874 & 0.241 & 0.948 & 1310 \\
+Effusion     & 0.671 & 0.889 & 0.468 & 0.949 & 3272 & Edema              & 0.559 & 0.902 & 0.244 & 0.974 & \phantom{0}628 \\
+Infiltration & 0.421 & 0.798 & 0.372 & 0.835 & 4995 & Emphysema          & 0.647 & 0.931 & 0.352 & 0.973 & 1093 \\
+Mass         & 0.548 & 0.913 & 0.331 & 0.961 & 1414 & Fibrosis           & 0.501 & 0.907 & 0.187 & 0.978 & \phantom{0}435 \\
+Nodule       & 0.487 & 0.887 & 0.268 & 0.951 & 1623 & Pleural Thickening & 0.489 & 0.884 & 0.256 & 0.951 & 1143 \\
+Pneumonia    & 0.402 & 0.861 & 0.121 & 0.972 & \phantom{0}555 & Hernia       & 0.607 & 0.958 & 0.147 & 0.994 & \phantom{00}86 \\
+\midrule
+\multicolumn{12}{@{}l}{\textbf{Macro} \ \ \ph{sensitivity 0.554 (0.537--0.571)},
+\ \ph{specificity 0.879 (0.873--0.885)}, \ \ph{PPV 0.349}, \ \ph{NPV 0.940}
+\qquad \textbf{Calibration} \ \ph{Brier 0.112 (0.110--0.115)}, \ \ph{ECE 0.042}} \\
+\bottomrule
+\end{tabular}
+\end{table*}
 
 \begin{table}[t]
 \centering
@@ -622,9 +731,13 @@ localization pass).
 
 \pending{Interpret the tables and graphs once real numbers are available.
 Anticipated storyline: (1) the classifier reaches the CheXNet-range AUROC expected
-on ChestX-ray14; (2) the localization results substantiate the novelty claim that
-the heatmaps land on annotated lesions; (3) the ablation shows the added layers
-leave AUROC/F1 unchanged; (4) contrast Grad-CAM vs.\ Score-CAM localization.}
+on ChestX-ray14, and its operating point (sensitivity/specificity/PPV/NPV) and
+calibration (Brier/ECE) are read alongside it; (2) the localization results
+substantiate the novelty claim that the heatmaps land on annotated lesions; (3) the
+ablation shows the added layers leave every predictive metric unchanged; (4)
+contrast Grad-CAM vs.\ Score-CAM localization; (5) once per-modality checkpoints
+exist, report the same panel for brain MRI and head CT, testing whether the
+grounded-composition recipe transfers across modalities.}
 
 Independent of the trained numbers, MIRROR's grounding constraint is a
 qualitative contribution. Because the language layer sees only structured
@@ -659,27 +772,34 @@ non-PHI technical tags.
 
 \textbf{Limitations.} The reported numbers are format-illustrative placeholders,
 not measured results; real training and evaluation on ChestX-ray14 are required
-before any quantitative claim. Evaluation is currently confined to a single
-dataset and to chest radiographs; CT and brain-MRI paths are scaffolded but
-unvalidated. Localization ground truth exists for only 8 of 14 pathologies. Report
-quality is presently assessed qualitatively; a quantitative comparison against
-real radiologist reports (for example MIMIC-CXR~\cite{johnson2019mimiccxr}) is
-future work. Class-activation maps are coarse and can highlight context rather
-than the lesion itself~\cite{adebayo2018sanity}.
+before any quantitative claim. Multi-modality is a structural, not yet an empirical,
+result: the brain-MRI and head-CT paths are implemented end to end --- registry,
+per-modality classifier head, DICOM auto-routing, modality-aware localization
+vocabulary and report phrasing, all exercised by the torch-free test suite --- but
+they are not yet quantitatively benchmarked, because that needs trained per-modality
+checkpoints and labeled test sets we do not redistribute. Quantitative evaluation is
+therefore currently confined to chest radiographs, and localization ground truth
+exists for only 8 of 14 chest pathologies. Report quality is presently assessed
+qualitatively; a quantitative comparison against real radiologist reports (for
+example MIMIC-CXR~\cite{johnson2019mimiccxr}) is future work. Class-activation maps
+are coarse and can highlight context rather than the lesion
+itself~\cite{adebayo2018sanity}, and the $3\times3$ location grid is a deliberately
+coarse anatomical descriptor.
 
 % -----------------------------------------------------------------------------
 \section{Conclusion}
 
 MIRROR composes classification, evidence localization, and grounded report
-generation into a single traceable chest-radiograph pipeline, paired with an
-evaluation framework that measures prediction and explanation quality side by
+generation into a single traceable, multi-modality radiology pipeline --- one
+registry-driven system spanning chest X-ray, brain MRI, and head CT --- paired with
+an evaluation framework that measures prediction and explanation quality side by
 side and, via an ablation that holds predictions invariant, frames the
 contribution as interpretability added at no predictive cost. \pending{state the
 measured outcome and the ablation result once the model is trained.} The immediate
 next step is to replace the illustrative results with real numbers from a trained
-checkpoint, then extend the same evidence-grounded recipe to the CT and brain-MRI
-modalities already scaffolded in the codebase. The system and its evaluation
-harnesses are released open-source to support reproducible study of
+checkpoint, then benchmark the same evidence-grounded recipe on the head-CT and
+brain-MRI modalities already implemented end to end in the codebase. The system and
+its evaluation harnesses are released open-source to support reproducible study of
 interpretability and trust in medical imaging.
 
 % -----------------------------------------------------------------------------

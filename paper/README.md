@@ -8,12 +8,23 @@ directory is required to run the system.
 [`main.tex`](main.tex) is a two-column workshop/preprint draft (5–8 pages)
 targeting a top medical-imaging venue. Everything textual lives in the one file:
 the literature review, architecture, and experimental-setup sections, an inline
-TikZ architecture figure, two inline `pgfplots` result graphs, the three result
+TikZ architecture figure, two inline `pgfplots` result graphs, the result
 tables, and an embedded 20-source bibliography. The only external assets are the
 three UI screenshots in [`figures/`](figures/) (`ui-predictions.png`,
 `overlay-consolidation.png`, `report-findings.png`) — upload that folder alongside
 `main.tex`. Each screenshot is guarded by `\IfFileExists`, so the document still
 compiles (showing a red placeholder box) if the images are missing.
+
+The draft describes MIRROR as the **multi-modality** system the codebase now is:
+the modality registry (`tab:modalities`) is documented as an implemented, tested
+contribution (black), while quantitative results remain **chest X-ray only** because
+that is the modality with public labels and lesion boxes. The predictive results now
+include the full clinical-reader panel — discrimination (AUROC/AUPRC/F1), the
+operating-point table (`tab:operating`: sensitivity/specificity/PPV/NPV with
+support), and calibration (Brier/ECE) — matching what `evaluation/evaluate.py`
+writes. Every one of those numbers stays **red** (illustrative placeholder) until a
+trained checkpoint replaces it; the brain-MRI and head-CT paths are described as
+implemented-but-not-yet-benchmarked, not as scaffolding.
 
 ### Draft color convention (black = done, red = pending)
 
