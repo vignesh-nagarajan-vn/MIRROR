@@ -77,7 +77,8 @@
 {\itshape\normalsize A grounded, explainable radiology pipeline that predicts
 findings across three imaging modalities (chest X-ray, brain MRI, and head CT),
 localizes the visual evidence behind each finding, and drafts a clinician-style
-report, with predictive and explanation quality measured side by side.}\\[22pt]
+report. We report measured predictive quality and verify that the added
+interpretability layers leave the predictions unchanged.}\\[22pt]
 
 % ---- Two authors, side by side, each in a fixed-width box so the long
 %      affiliation lines wrap inside their column instead of overlapping. ----
@@ -114,24 +115,27 @@ taxonomy, anatomical vocabulary, and report phrasing for chest X-ray (14 finding
 brain MRI (11), and head CT (11), and a study is routed to the right classifier
 head either explicitly or from its DICOM modality tag. The defining design choice
 is that each layer's output is the grounded input to the next, and the language
-layer never sees pixels, so every sentence in the generated report traces back to a
-predicted probability and a saliency region, and the reasoning layer cannot invent
-findings the classifier did not produce. We pair the system with an evaluation
-framework that measures predictive quality (discrimination through AUROC, AUPRC and
-F1; the clinical operating-point metrics of sensitivity, specificity, PPV and NPV;
-and calibration through the Brier score and ECE) alongside explanation quality
-(pointing game, localization IoU), together with an ablation that isolates the cost
-of the added interpretability layers. Because those layers are strictly post-hoc,
-the predictive metrics do not change when they are added, which lets us frame the
-contribution as \emph{interpretability at no predictive cost}. All headline numbers
-carry bootstrap $95\%$ confidence intervals and can be aggregated across training
-seeds, and every run stamps a reproducibility record. As a concrete measured
-instance, MIRROR trained on ChestMNIST (a ChestX-ray14 derivative with the identical
-14-label taxonomy) reaches a macro AUROC of $0.729$ ($95\%$ CI $[0.718,0.738]$) with
-a clinically sensible per-label ordering, and the ablation confirms that the added
-layers leave the predictions unchanged (maximum probability change of $0$). Training
-on the complete NIH release remains the next step toward a headline clinical
-benchmark.
+layer never sees pixels, so the report can assert only findings the classifier
+predicted and the localizer situated. This prevents finding-level hallucination by
+construction, though the surrounding descriptive prose is generated text and is not
+itself verified against the image. We pair the system with an evaluation framework
+that measures predictive quality (discrimination through AUROC, AUPRC and F1; the
+clinical operating-point metrics of sensitivity, specificity, PPV and NPV; and
+calibration through the Brier score and ECE), and that defines matching
+explanation-quality metrics (pointing game, localization IoU) for evaluation against
+lesion boxes, together with an ablation that isolates the cost of the added
+interpretability layers. Because those layers are strictly post-hoc, adding them
+leaves the predictions exactly unchanged; we confirm this holds in practice
+(maximum probability change of $0$), a correctness property we summarize as
+\emph{interpretability at no predictive cost}. All predictive numbers carry
+bootstrap $95\%$ confidence intervals and can be aggregated across training seeds,
+and every run stamps a reproducibility record. As a concrete measured instance,
+MIRROR trained on ChestMNIST (a downsampled ChestX-ray14 derivative with the
+identical 14-label taxonomy) reaches a macro AUROC of $0.729$ ($95\%$ CI
+$[0.718,0.738]$) with a clinically sensible per-label ordering. This is a systems
+demonstration on low-resolution data rather than a diagnostic benchmark;
+full-resolution training on the complete NIH release is the next step toward a
+clinical claim.
 \end{minipage}
 \vspace{16pt}
 }]
@@ -157,9 +161,13 @@ consistent and auditable end to end.
 \]
 Its central design constraint is \emph{grounding}: the language layer is given
 only the structured evidence produced upstream (labels, probabilities, and named
-saliency regions), never the raw image. This makes hallucinated findings
-structurally impossible, since the report can only discuss what the classifier
-predicted and the localizer situated, and it makes the whole chain traceable. The
+saliency regions), never the raw image. This makes finding-level hallucination
+structurally impossible, since the report can assert only findings the classifier
+predicted and the localizer situated, and it keeps the chain from finding to
+probability to region traceable. Grounding constrains \emph{which} findings appear,
+not the descriptive wording around them: the language model still writes ordinary
+prose, so individual phrases can carry radiological detail that is not itself read
+off the image, a limitation we return to in Section~\ref{sec:ethics}. The
 same pipeline runs unchanged across three imaging modalities (chest X-ray, brain
 MRI, and head CT), because only the finding taxonomy, the anatomical vocabulary, and
 a little report phrasing differ between them. These are centralized in one modality
@@ -173,17 +181,19 @@ benchmarking awaits trained per-modality checkpoints.
 classification, visual explainability, and language generation improve
 interpretability without degrading predictive performance, relative to a
 classification-only baseline? We build the system so this question is
-\emph{measurable}: predictive and explanation metrics live side by side, and an
-ablation reproduces the classification-only baseline the question names.
+\emph{measurable}: predictive metrics and an explanation-quality protocol sit side
+by side, and an ablation reproduces the classification-only baseline the question
+names.
 
 \paragraph{Contributions.}
 \begin{enumerate}[leftmargin=1.4em,itemsep=2pt]
   \item A three-layer, evidence-grounded radiology pipeline in which the language
-  layer reasons only over structured upstream evidence, so every report sentence
-  is traceable to a probability and a saliency region.
-  \item A grounding constraint that makes the generated report auditable and
-  non-hallucinatory \emph{by construction}, together with a post-hoc layer design
-  whose invariance to the predictions is verified empirically.
+  layer reasons only over structured upstream evidence, so every \emph{asserted
+  finding} is traceable to a probability and a saliency region.
+  \item A grounding constraint under which the report can assert only findings the
+  classifier produced, preventing finding-level hallucination \emph{by construction}
+  (the descriptive wording itself is not pixel-verified), together with a post-hoc
+  layer design whose invariance to the predictions we verify empirically.
   \item A modality-agnostic realization of that pipeline across three imaging
   modalities (chest X-ray, brain MRI, head CT), driven by a single registry that is
   the one source of truth for each modality's label taxonomy, anatomical
@@ -195,10 +205,11 @@ ablation reproduces the classification-only baseline the question names.
   (Grad-CAM, Score-CAM), an LLM report backend with a deterministic offline
   fallback, native DICOM ingest, and a web front end served by two interchangeable
   inference engines behind one response contract (Fig.~\ref{fig:ui}).
-  \item An evaluation framework that scores prediction and explanation quality
-  jointly, with bootstrap confidence intervals, multi-seed aggregation, and an
-  ablation isolating the predictive cost of interpretability, so the research
-  question can be answered quantitatively, as we do here on ChestMNIST.
+  \item An evaluation framework that scores predictive quality (with bootstrap
+  confidence intervals and multi-seed aggregation) and defines matching
+  explanation-quality metrics (pointing game, IoU) for evaluation against lesion
+  boxes, together with an ablation isolating the predictive cost of
+  interpretability, which we report here on ChestMNIST.
 \end{enumerate}
 
 % -----------------------------------------------------------------------------
@@ -227,7 +238,7 @@ LIME~\cite{ribeiro2016lime} and SHAP~\cite{lundberg2017shap}, explain individual
 predictions without access to model internals. To move from qualitative heatmaps
 to measurable evidence, the pointing-game protocol~\cite{zhang2016pointing}
 and intersection-over-union against annotated lesions provide quantitative
-localization scores, which MIRROR reports directly.
+localization scores, which MIRROR's evaluation framework adopts.
 
 \paragraph{Rigor and critique of saliency.} Explanations are only useful if they
 are faithful. Adebayo et al.~\cite{adebayo2018sanity} showed several saliency
@@ -244,9 +255,9 @@ TieNet~\cite{wang2018tienet}, which jointly embeds image and text, to
 memory-driven transformers such as R2Gen~\cite{chen2020r2gen}, to clinically
 focused decoders optimized for factual correctness~\cite{liu2019clinically}. A
 recurring failure mode is hallucination: prose generated directly from pixels can
-assert findings the underlying model never detected. MIRROR sidesteps this by
-restricting generation to structured, verified evidence, trading open-ended
-fluency for auditability.
+assert findings the underlying model never detected. MIRROR narrows this by
+restricting which findings the prose may assert to those the classifier produced,
+trading some open-ended fluency for finding-level auditability.
 
 \paragraph{Explainable AI in medicine and positioning.} Surveys of explainable AI
 for medical imaging~\cite{tjoa2021survey} note that interpretability and report
@@ -342,8 +353,10 @@ runs at low temperature for stability, and the LLM backend falls back to the
 template on any error. Predictions below the confidence threshold ($0.5$) are
 surfaced as pertinent negatives rather than silently dropped. Because both
 backends consume identical evidence, swapping them changes \emph{how fluently} the
-report reads, never \emph{what} it may say; and because the layer never receives
-the image, it cannot introduce findings absent from the upstream evidence
+report reads, not which findings it asserts; and because the layer never receives
+the image, it cannot introduce findings absent from the upstream evidence. The
+grounding is thus at the level of findings, not of the descriptive prose that frames
+them, a distinction we take up in Section~\ref{sec:ethics}
 (Fig.~\ref{fig:qual}, right).
 
 \subsection{Multi-modality via a modality registry}
@@ -352,11 +365,10 @@ brain MRI or a head CT changes only the finding taxonomy the head predicts, the
 anatomical vocabulary a saliency centroid is named in (lung zones vs.\ lobar
 regions), and a little report phrasing (so a normal brain study reads ``no acute
 intracranial abnormality,'' not ``no acute cardiopulmonary abnormality''). These
-per-modality details are centralized in one registry (Table~\ref{tab:modalities}),
-which is the single source of truth for each modality's labels, label glosses,
-imaging plane, and report guidance; a hand-kept TypeScript mirror lets the hosted
-engine and UI selector share the identical taxonomy and \emph{ordering} (output
-index $i$ maps to $\text{labels}[i]$). A study's modality is resolved either from an
+per-modality details live in one registry (Table~\ref{tab:modalities}), the single
+source of truth for each modality's labels, glosses, imaging plane, and report
+guidance; a hand-kept TypeScript mirror gives the hosted engine and UI selector the
+identical taxonomy and \emph{ordering} (output index $i$ maps to $\text{labels}[i]$). A study's modality is resolved either from an
 explicit selection or, for a DICOM input, from its (0008,0060) modality tag
 (\code{MR}$\rightarrow$brain MRI, \code{CT}$\rightarrow$head CT,
 \code{CR}/\code{DX}$\rightarrow$chest). The orchestrator builds and caches one
@@ -385,18 +397,16 @@ Head CT     & 11 & RSNA ICH subtypes + acute findings & lobar regions (axial) \\
 
 \subsection{Orchestration and Serving}
 A single \code{analyze()} entry point runs the stages and returns one result
-object (predictions, overlays, report) consumed by both the REST API and the
-notebooks; the two later layers are individually toggleable, which recovers the
-ablation conditions of Section~\ref{sec:setup} and records per-stage wall-clock
-timings. Two interchangeable serving engines satisfy the \emph{same} JSON response
-contract (Table~\ref{tab:topology}), so the web UI (Fig.~\ref{fig:ui}) is identical
-regardless of which engine answered: a finding carries \emph{either} a rendered
-Grad-CAM overlay (local) \emph{or} a normalized bounding box (hosted), and the same
-viewer draws whichever is present. The hosted engine exists because the PyTorch
-pipeline cannot fit typical serverless limits (no GPU, a small bundle ceiling,
-cold-start model loads); it substitutes a vision LLM constrained to a structured
-tool schema that emits the identical JSON, and with no API key returns a
-clearly-labelled deterministic demo result so the deployed site never hard-fails.
+object (predictions, overlays, report) for both the REST API and the notebooks; the
+two later layers are individually toggleable, which recovers the ablation conditions
+of Section~\ref{sec:setup} and records per-stage timings. Two interchangeable engines
+satisfy the \emph{same} JSON contract (Table~\ref{tab:topology}), so the web UI
+(Fig.~\ref{fig:ui}) is identical either way: a finding carries \emph{either} a
+rendered Grad-CAM overlay (local) \emph{or} a normalized bounding box (hosted), and
+the viewer draws whichever is present. The hosted engine exists because the PyTorch
+stack does not fit typical serverless limits; it substitutes a vision LLM constrained
+to a structured tool schema that emits the same JSON, and with no API key returns a
+clearly-labelled demo result so the site never hard-fails.
 
 \begin{figure*}[tp]
 \centering
@@ -477,12 +487,14 @@ git commit, library versions).
 
 Every number reported here is measured on this machine. We present the predictive
 quality of MIRROR's classifier on ChestMNIST (Section~\ref{sec:chestmnist}), an
-ablation confirming the interpretability layers add no predictive cost
-(Section~\ref{sec:ablation}), a synthetic-data sanity check of the harness
-(Section~\ref{sec:synthetic}), and a qualitative end-to-end study
-(Fig.~\ref{fig:qual}). Quantitative localization against the NIH lesion boxes needs
-a model trained on the full-resolution release and is left to future work; the
-localization layer is exercised qualitatively here.
+ablation verifying that the interpretability layers are strictly post-hoc and so add
+no predictive cost (Section~\ref{sec:ablation}), a synthetic-data sanity check of the
+harness (Section~\ref{sec:synthetic}), and a qualitative end-to-end study
+(Fig.~\ref{fig:qual}). The explanation half of the framework defines a pointing-game
+and localization-IoU protocol against the NIH lesion boxes (8 of the 14 chest
+pathologies carry ground-truth boxes), but running it needs a model trained on the
+full-resolution release; we therefore report localization qualitatively here and
+leave the box-level scores to future work.
 
 \begin{figure*}[tp]
 \centering
@@ -539,14 +551,14 @@ reach of the published MedMNIST DenseNet-121 baseline (AUROC ${\approx}0.77$, tr
 on all $78$k images for many epochs on a GPU) at a small fraction of the compute.
 Macro AUPRC is $0.135$ and the model is well calibrated in aggregate (Brier $0.045$,
 ECE $0.018$). At the fixed $0.5$ threshold it is deliberately conservative (macro
-specificity $0.997$, sensitivity $0.019$), which is expected for a low-prevalence
-multi-label task on a light budget, where a tuned threshold would trade specificity
-for sensitivity. AUROC, the threshold-independent ChestMNIST headline metric, is the
-meaningful summary. A reassuring sign that the classifier learned real thoracic
-structure, rather than dataset artefacts, is the clinically sensible per-label
-ordering (Fig.~\ref{fig:cxr-auroc}): the readily visible findings rank highest (Edema
-$0.849$, Cardiomegaly $0.830$, Effusion $0.827$) and the subtle small ones lowest
-(Nodule $0.643$, Infiltration $0.660$), with every CI comfortably above chance.
+specificity $0.997$, sensitivity $0.019$), as expected for a low-prevalence
+multi-label task on a light budget; AUROC, the threshold-independent headline metric,
+is the meaningful summary, and a tuned threshold would trade specificity for
+sensitivity. That the classifier learned real thoracic structure rather than dataset
+artefacts shows in the clinically sensible per-label ordering
+(Fig.~\ref{fig:cxr-auroc}): readily visible findings rank highest (Edema $0.849$,
+Cardiomegaly $0.830$, Effusion $0.827$) and subtle small ones lowest (Nodule $0.643$,
+Infiltration $0.660$), with every CI comfortably above chance.
 
 \begin{figure}[tbp]
 \centering
@@ -595,16 +607,20 @@ $0.5$ chance line, which indicates the model learned real structure.}
 
 \subsection{Interpretability at no predictive cost}
 \label{sec:ablation}
-The ablation (Table~\ref{tab:ablation}) makes the headline argument concrete and
-\emph{measured}: macro AUROC is identical ($0.729$) across the classification-only,
-$+$localization, and full-MIRROR conditions, and the maximum per-label probability
-change against the baseline is exactly $0$. Because the localization and report
-layers never touch the classifier logits, they cannot change what it predicts. The
-cost is instead a small, bounded latency increase: the Grad-CAM pass adds about
-$40$~ms per study, and the offline template report is effectively free (about
-$0.03$~ms). The same invariance check run over the bundled chest-X-ray, brain-MRI,
-and head-CT samples yields a maximum change of exactly $0$ in every modality, which
-suggests the property is structural rather than specific to one dataset.
+The interpretability layers are post-hoc by construction: they read the classifier's
+outputs but never its logits, so they cannot change the predictions. The ablation is
+therefore a correctness check rather than a discovery, and it confirms the
+implementation realizes this exactly (Table~\ref{tab:ablation}): macro AUROC is
+identical ($0.729$) across the classification-only, $+$localization, and full-MIRROR
+conditions, and the maximum per-label probability change against the baseline is $0$.
+The check earns its place in two ways. First, any nonzero change would flag a bug,
+such as an accidental coupling between the layers, so the test is a real guard rather
+than a tautology restated. Second, it isolates the actual cost of interpretability,
+which is latency rather than accuracy: the Grad-CAM pass adds about $40$~ms per study
+and the offline template report about $0.03$~ms. The same check over the bundled
+chest-X-ray, brain-MRI, and head-CT samples yields a maximum change of $0$ in every
+modality, which indicates the property is structural rather than specific to one
+dataset.
 
 \subsection{Pipeline sanity check on synthetic data}
 \label{sec:synthetic}
@@ -693,41 +709,58 @@ The measured results support the central claim fairly directly. On ChestMNIST th
 classifier reaches a macro AUROC of $0.729$ with a per-label ordering that matches
 clinical visibility (Fig.~\ref{fig:cxr-auroc}), and every confidence interval clears
 chance, so the discrimination is real rather than an artefact of the data, even at a
-training budget far below the published baseline. The ablation then shows that this
-predictive quality is completely unchanged by the two interpretability layers
-(identical AUROC, maximum probability change of $0$), so the interpretability MIRROR
-adds is free of predictive cost; its price is a bounded $40$~ms Grad-CAM pass, with
-the report layer effectively free. The synthetic control (Fig.~\ref{fig:synth}) adds
-confidence in the numbers themselves, since the harness credits the model only for
-signal that is actually present. A natural next step is to lift these same
-measurements to the full-resolution NIH release on a GPU and, because the pipeline is
-already multi-modality, to repeat them for brain MRI and head CT.
+training budget far below the published baseline. The ablation confirms that this
+predictive quality is untouched by the two interpretability layers (identical AUROC,
+maximum probability change of $0$). Because the layers are post-hoc by construction
+this is the expected outcome, so the ablation's value is not a surprising result but
+a verification that the implementation behaves as designed, together with a clean
+accounting of the layers' true cost: latency (a bounded $40$~ms Grad-CAM pass, the
+report layer effectively free) rather than accuracy. The synthetic control
+(Fig.~\ref{fig:synth}) adds confidence in the numbers themselves, since the harness
+credits the model only for signal that is actually present. A natural next step is to
+lift these same measurements to the full-resolution NIH release on a GPU and, because
+the pipeline is already multi-modality, to repeat them for brain MRI and head CT.
 
 Independent of the trained numbers, MIRROR's grounding constraint is a
 qualitative contribution. Because the language layer sees only structured
-evidence, the generated report is auditable by construction and cannot assert
-findings the classifier did not produce; this trades open-ended fluency for a form
-of safety that matters in a clinical setting. The post-hoc placement of layers
-2--3 is likewise not merely convenient: because the classifier's logits are
-untouched, any change in a predictive metric across ablation conditions would
-signal a bug, and the harness checks for exactly that, making the central claim
-falsifiable. Finally, serving one JSON contract from both a heavyweight local
+evidence, the report is auditable at the level of its findings and cannot assert a
+finding the classifier did not produce; this trades open-ended fluency for a form
+of safety that matters in a clinical setting. The guarantee does not extend to the
+descriptive language around each finding, which remains model-generated and
+unverified against the image, so a clinician still reads the report as a draft. The
+post-hoc placement of layers 2--3 is likewise not merely convenient: because the
+classifier's logits are untouched, any change in a predictive metric across ablation
+conditions would signal a bug, and the harness checks for exactly that, making the
+central claim falsifiable. Finally, serving one JSON contract from both a heavyweight local
 PyTorch stack and a lightweight hosted vision-LLM engine shows that the
 \emph{interface} MIRROR tests (predict $\rightarrow$ show evidence $\rightarrow$
 explain) is independent of the particular inference backend.
 
 % -----------------------------------------------------------------------------
 \section{Ethics, Safety, and Limitations}
+\label{sec:ethics}
 
 \textbf{Not a medical device.} MIRROR is a research prototype, not reviewed or
 cleared by any regulatory body; every output is a draft that must be verified by a
 licensed radiologist and must not be used for diagnosis or treatment. Each report
 carries that disclaimer explicitly.
 
-\textbf{Grounded by design.} The language layer never sees pixels, only structured
-evidence, so it cannot invent findings; below-threshold predictions are reported
-as pertinent negatives rather than dropped, and predictions are surfaced as
-probabilities to keep uncertainty explicit.
+\textbf{Grounding is finding-level, not detail-level.} The language layer never sees
+pixels, only structured evidence, so it cannot introduce a finding the classifier
+did not produce; below-threshold predictions are reported as pertinent negatives
+rather than dropped, and predictions are surfaced as probabilities to keep
+uncertainty explicit. This guarantee governs \emph{which findings} appear, not the
+descriptive prose used to frame them: phrases such as a stated cardiothoracic ratio,
+a note that the costophrenic angles are clear, or a qualifier about a projection are
+model-generated language, not measurements read from the image. Such detail can be
+confidently worded yet ungrounded, which is precisely why every report is marked as
+an AI-generated draft requiring radiologist verification, and why the descriptive
+wording should not be read as independent observation.
+
+\textbf{Human subjects and ethics approval.} No ethics-board review was required for
+this work: it uses only existing, publicly available, de-identified benchmark
+datasets (NIH ChestX-ray14 and its MedMNIST derivative for the reported results) and
+collects no new data from human subjects.
 
 \textbf{Data governance.} The benchmark datasets are governed by their own data
 use agreements; no raw images, weights, or protected health information are
@@ -759,13 +792,13 @@ coarse anatomical descriptor.
 MIRROR composes classification, evidence localization, and grounded report
 generation into a single traceable, multi-modality radiology pipeline, one
 registry-driven system spanning chest X-ray, brain MRI, and head CT. It is paired
-with an evaluation framework that measures prediction and explanation quality side by
-side and, through an ablation that holds the predictions invariant, frames the
-contribution as interpretability added at no predictive cost. On ChestMNIST the
-classifier reaches a macro AUROC of $0.729$ with a clinically sensible per-label
-ordering, and the ablation confirms that the interpretability layers leave every
-prediction unchanged, giving interpretability at no predictive cost as a measured
-result. The immediate next step is to lift the same measurements to the
+with an evaluation framework that measures predictive quality and defines matching
+explanation-quality metrics, and with an ablation that verifies the interpretability
+layers are strictly post-hoc. On ChestMNIST the classifier reaches a macro AUROC of
+$0.729$ with a clinically sensible per-label ordering, and the ablation confirms that
+the interpretability layers leave every prediction unchanged, so the interpretability
+is added at no predictive cost. The immediate next step is to lift the same
+measurements to the
 full-resolution NIH release on a GPU and to the head-CT and brain-MRI modalities
 already implemented end to end in the codebase. The system and its evaluation harnesses are released
 open-source to support reproducible study of interpretability and trust in medical
@@ -795,6 +828,15 @@ the Indian Institute of Technology (IIT) Hyderabad, for his guidance throughout 
 project. His experience building and evaluating machine-learning systems in
 industry shaped both the architecture and our emphasis on measurable, reproducible
 evaluation.
+
+% -----------------------------------------------------------------------------
+\section*{Declarations}
+\small
+\textbf{Data availability:} all datasets used are public, namely NIH ChestX-ray14
+and its MedMNIST derivative ChestMNIST (CC~BY~4.0); code, configurations, and result
+files are in the repository linked above. \textbf{Competing interests:} the authors
+declare none. \textbf{Funding:} this work received no external research funding and
+was conducted as part of the GIST 2026 Summer Research Internship.
 
 % =============================================================================
 %  Bibliography embedded so this stays a single, self-contained file (one
