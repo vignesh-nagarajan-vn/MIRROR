@@ -76,8 +76,8 @@ Most medical-imaging models stop at a prediction. MIRROR adds the two layers tha
 make a prediction *trustworthy and usable*: it shows **where** the evidence is and
 explains **what it means** in plain clinical language.
 
-It analyzes a radiological study across **three modalities** — chest X-ray, brain
-MRI, and head CT — identifies potential abnormalities from that modality's finding
+It analyzes a radiological study across **three modalities** (chest X-ray, brain
+MRI, and head CT), identifies potential abnormalities from that modality's finding
 taxonomy, highlights the diagnostic evidence with saliency overlays, and generates
 a structured natural-language report in the right clinical vocabulary.
 
@@ -243,7 +243,7 @@ synthetic sample ships with the repo, so this works with zero downloads):
 python -m demo.run_demo datasets/samples/chestxray14/images/synth_0001.png
 # Native DICOM works too; point it at the bundled .dcm:
 python -m demo.run_demo datasets/samples/chestxray14/images/synth_0000.dcm
-# Other modalities — pick the taxonomy with --modality:
+# Other modalities: pick the taxonomy with --modality:
 python -m demo.run_demo datasets/samples/brain_mri/images/mri_0001.png --modality "brain MRI"
 # Or let a DICOM self-route by its Modality tag:
 python -m demo.run_demo datasets/samples/head_ct/images/ct_0000.dcm --modality auto
@@ -255,7 +255,7 @@ report backend, so it works anywhere. Inputs may be **PNG/JPEG/BMP/WEBP or DICOM
 (`.dcm`)**. DICOM is decoded with the modality/VOI LUT and MONOCHROME1 handling
 applied (see [`datasets/README.md`](datasets/README.md#dicom-ingest)). Without a
 trained per-modality checkpoint the predictions come from ImageNet weights and are
-**structurally valid but not diagnostic** — the demo exercises the full pipeline,
+**structurally valid but not diagnostic**. The demo exercises the full pipeline,
 not a benchmarked model.
 
 **5. Start the backend API** (leave it running in this terminal):
@@ -378,8 +378,8 @@ MIRROR is multi-modality; each modality maps to a public benchmark:
 + reports), COVID-19 Radiography Database.
 
 None are redistributed here. Tiny **synthetic** stand-ins ship under
-`datasets/samples/` — `chestxray14/`, `brain_mri/`, and `head_ct/` (each with one
-DICOM carrying the correct `Modality` tag) — so the demo, the DICOM auto-routing,
+`datasets/samples/` (`chestxray14/`, `brain_mri/`, and `head_ct/`, each with one
+DICOM carrying the correct `Modality` tag), so the demo, the DICOM auto-routing,
 loaders, and smoke tests run with zero downloads. See
 [`datasets/README.md`](datasets/README.md) for the expected layout, the NIH
 downloader (`download_chestxray14.py`), licensing notes, and the sample generators
@@ -445,10 +445,11 @@ versions) so the numbers regenerate. See
 [`datasets/README.md`](datasets/README.md#localization-ground-truth) for the box
 file and [`evaluation/README.md`](evaluation/README.md) for the metric details.
 
-`evaluation/results/` is git-ignored; a committed, curated snapshot of every
-harness's output, plus per-image **output sheets** for the synthetic sample set,
-lives in [`results/`](results/) so the numbers' *format* is visible in the repo
-(clearly marked illustrative, not benchmark claims).
+`evaluation/results/` is git-ignored; a committed, curated snapshot lives in
+[`results/`](results/). It holds the **real measured** results the paper reports
+(`results/chestmnist/` and `results/synthetic_validation/`), alongside older
+format-only snapshots that show each harness's output shape and are clearly marked
+illustrative rather than benchmark claims.
 
 ## Potential contributions
 
@@ -461,34 +462,48 @@ lives in [`results/`](results/) so the numbers' *format* is visible in the repo
 
 ## Paper
 
-**Goal:** a short (5 to 8 page) paper for a medical-imaging workshop that doubles
-as an arXiv preprint and GIST 2026 internship report. It answers MIRROR's
-research question with evidence: *does adding evidence localization and grounded
-report generation to a chest-radiograph classifier improve interpretability
-without a predictive penalty?* The headline result is the ablation, framing the
-contribution as **interpretability at no predictive cost**.
+**Status: complete.** The paper is a finished, all-measured draft. Every number in
+it is a real result produced on this repository's code; there are no placeholder,
+filler, or pending values. The two-column workshop/preprint LaTeX source lives in
+[`paper/main.tex`](paper/main.tex), and compiled PDF snapshots (v1 through v5,
+newest last) are in [`paper/pdf-drafts/`](paper/pdf-drafts/).
 
-A two-column workshop/preprint LaTeX draft lives in
-[`paper/main.tex`](paper/main.tex): one file with an inline TikZ architecture
-figure, two inline `pgfplots` result graphs, the three result tables, real UI
-screenshots (in [`paper/figures/`](paper/figures/)), and an embedded 20-source
-bibliography (including a one-page literature review). The results-independent
-sections (introduction, literature review, architecture, experimental setup,
-ethics and limitations) are written, and the result tables/graphs are populated
-with the **illustrative** snapshot numbers from [`results/`](results/). The draft
-encodes its own to-do list in color: **black = finalized, red = filler/pending a
-trained model** (every placeholder number and `\pending{}` stub is red — search
-the source for `PENDING`). Build it in **Overleaf** (upload `main.tex` and the
-`figures/` folder) or with a local TeX install — one pdfLaTeX pass, no `bibtex`
-step:
+It answers MIRROR's research question with evidence: *does adding evidence
+localization and grounded report generation to a disease classifier improve
+interpretability without a predictive penalty?* The headline result is the
+ablation, which frames the contribution as **interpretability at no predictive
+cost**. The measured highlights:
+
+- **Predictive quality (ChestMNIST).** DenseNet-121 reaches a macro AUROC of
+  **0.729** (bootstrap 95% CI [0.718, 0.738]) on the held-out test split, with a
+  clinically sensible per-label ordering (readily visible findings such as edema
+  and cardiomegaly rank highest, subtle ones such as nodule lowest). ChestMNIST is
+  a real, CC BY 4.0 ChestX-ray14 derivative that carries the identical 14-label
+  taxonomy; the full-resolution NIH benchmark is the next step and needs a GPU.
+- **Interpretability at no predictive cost (ablation).** Macro AUROC is identical
+  across the classification-only, +localization, and full-MIRROR conditions, and
+  the maximum per-label probability change is exactly 0, so the post-hoc layers
+  never alter the predictions. The added cost is a bounded ~40 ms Grad-CAM pass;
+  the report layer is effectively free.
+- **Harness sanity check (synthetic).** On a synthetic set that injects a visible
+  signal for some labels and none for others, the classifier learns the
+  signal-bearing labels (mean AUROC 0.917) and stays at chance for the rest
+  (0.557), which shows the metrics measure real discrimination with no leakage.
+
+The single source file holds an inline TikZ architecture figure, real `pgfplots`
+result graphs (per-label AUROC and the synthetic sanity check), the measured result
+tables, real UI screenshots (in [`paper/figures/`](paper/figures/)), and an embedded
+21-source bibliography with a one-page literature review. Build it in **Overleaf**
+(upload `main.tex` and the `figures/` folder) or with a local TeX install, in one
+pdfLaTeX pass with no `bibtex` step:
 
 ```bash
 cd paper
 pdflatex main
 ```
 
-See [`paper/README.md`](paper/README.md) for the section map, the color
-convention, and how the tables are generated.
+See [`paper/README.md`](paper/README.md) for the section map and how the result
+tables are regenerated from the evaluation harnesses.
 
 ## Documentation
 
