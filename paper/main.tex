@@ -38,7 +38,18 @@
 \pgfplotsset{compat=1.18}
 \usepackage[colorlinks=true,allcolors=blue!55!black]{hyperref}
 \usepackage{url}
+\usepackage{placeins}   % \FloatBarrier: keep floats from drifting into later sections
 \usetikzlibrary{arrows.meta,positioning}
+
+% Give LaTeX more room to place the many two-column-wide floats before it gives up
+% and defers them to the end (which is what pushed Table/Figure into the
+% references). These loosen the default "a float page must be 50% full" etc. limits.
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.9}
+\renewcommand{\textfraction}{0.08}
+\renewcommand{\floatpagefraction}{0.7}
+\setcounter{topnumber}{3}
+\setcounter{totalnumber}{5}
 
 % ---- Draft convention: red = filler / pending, black = complete --------------
 \colorlet{pendingred}{red!75!black}
@@ -259,7 +270,7 @@ penalty.
 MIRROR chains three layers; each layer's output is the grounded input to the
 next (Fig.~\ref{fig:arch}).
 
-\begin{figure}[t]
+\begin{figure}[tbp]
 \centering
 \begin{tikzpicture}[
   node distance=6.5mm,
@@ -360,7 +371,7 @@ classifier--explainer engine per modality on demand, so a single deployment serv
 all three. Adding a fourth modality is therefore a data change --- one registry
 entry and (once trained) a checkpoint --- rather than a change to the pipeline.
 
-\begin{table}[t]
+\begin{table}[tbp]
 \centering
 \caption{The modality registry: one row per supported modality, each grounded in a
 public benchmark taxonomy. Chest X-ray is the modality evaluated quantitatively in
@@ -394,7 +405,7 @@ cold-start model loads); it substitutes a vision LLM constrained to a structured
 tool schema that emits the identical JSON, and with no API key returns a
 clearly-labelled deterministic demo result so the deployed site never hard-fails.
 
-\begin{figure*}[t]
+\begin{figure*}[tp]
 \centering
 \figorbox{figures/ui-predictions.png}{0.74\textwidth}{MIRROR reading-room UI screenshot}
 \caption{The MIRROR ``reading-room'' web UI on a real session from the live demo:
@@ -407,7 +418,7 @@ interface.}
 \label{fig:ui}
 \end{figure*}
 
-\begin{table}[t]
+\begin{table}[tbp]
 \centering
 \caption{Two interchangeable inference engines behind one response contract.}
 \label{tab:topology}
@@ -498,11 +509,11 @@ Figures~\ref{fig:auroc}--\ref{fig:loc} is shown in red because it is an
 \emph{illustrative, literature-scale placeholder} taken from the committed
 \code{results/evaluation/*.json} snapshots (each stamped with an \code{\_note}
 field stating exactly this); the values document the OUTPUT FORMAT of each
-harness, not a measured benchmark. Once
-\code{models/checkpoints/densenet121\_best.pt} exists, run
-\code{evaluation/\{evaluate,evaluate\_localization,ablation,aggregate\_seeds\}.py};
-each table and graph regenerates from the resulting JSON. Replace the red values
-with the measured ones and set them black.}
+harness, not a measured benchmark. Once a trained checkpoint
+(\code{models/checkpoints/\allowbreak densenet121\_best.pt}) exists, run the harness
+scripts in \code{evaluation/} (\code{evaluate}, \code{evaluate\_localization},
+\code{ablation}, \code{aggregate\_seeds}); each table and graph regenerates from the
+resulting JSON. Replace the red values with the measured ones and set them black.}
 
 The qualitative behavior is already visible end to end: Fig.~\ref{fig:qual} shows,
 for one real study, the Grad-CAM evidence overlay on the film and the grounded
@@ -516,7 +527,7 @@ half is the per-lesion localization scored against the NIH boxes
 question --- and the ablation (Table~\ref{tab:ablation}) ties them together by
 showing the added layers change neither.
 
-\begin{figure*}[t]
+\begin{figure*}[tp]
 \centering
 \begin{minipage}[t]{0.34\textwidth}
 \centering
@@ -537,7 +548,7 @@ mandatory AI-generated-draft disclaimer.}
 \label{fig:qual}
 \end{figure*}
 
-\begin{table*}[t]
+\begin{table*}[tp]
 \centering
 \caption{Predictive quality (DenseNet-121, ChestX-ray14 test split;
 $N_{\text{test}}{=}25{,}596$): per-label and macro AUROC with bootstrap $95\%$
@@ -565,7 +576,7 @@ Pneumonia     & 0.731 (0.703--0.759) & Hernia             & 0.914 (0.872--0.954)
 \end{tabular}
 \end{table*}
 
-\begin{figure}[t]
+\begin{figure}[tbp]
 \centering
 \begin{tikzpicture}
 \begin{axis}[
@@ -608,7 +619,7 @@ pending a trained checkpoint.}}
 \label{fig:auroc}
 \end{figure}
 
-\begin{table*}[t]
+\begin{table*}[tp]
 \centering
 \caption{Clinical operating-point panel at the $0.5$ threshold (DenseNet-121,
 ChestX-ray14 test split): per-label sensitivity, specificity, PPV, NPV with
@@ -638,7 +649,7 @@ Pneumonia    & 0.402 & 0.861 & 0.121 & 0.972 & \phantom{0}555 & Hernia       & 0
 \end{tabular}
 \end{table*}
 
-\begin{table}[t]
+\begin{table}[tbp]
 \centering
 \caption{Explanation quality (DenseNet-121, Grad-CAM) against the NIH lesion
 boxes, over the 8 boxed pathologies. {\color{pendingred}\itshape Red = illustrative
@@ -666,7 +677,7 @@ Pneumothorax  &  98 & 0.643 & 0.236 & 0.684 \\
 (\code{--method scorecam}); \pending{run once trained}.}
 \end{table}
 
-\begin{figure}[t]
+\begin{figure}[tbp]
 \centering
 \begin{tikzpicture}
 \begin{axis}[
@@ -700,7 +711,7 @@ accuracy (IoU$\ge$0.1) over the 8 boxed pathologies, sorted ascending.
 \label{fig:loc}
 \end{figure}
 
-\begin{table*}[t]
+\begin{table*}[tp]
 \centering
 \caption{Ablation (DenseNet-121). Predictive metrics are \emph{identical} across
 rows (max probability delta $=0$; the added layers are post-hoc), so
@@ -738,6 +749,10 @@ free ($\sim\!0.04$~ms/study with the offline template backend) and the entire ad
 latency is the Grad-CAM pass. \pending{absolute latency depends on hardware
 (profiled here on CPU); regenerate the full table --- including the still-pending
 AUROC/F1/localization columns --- once a trained checkpoint exists.}
+
+% Flush every float queued by the Results section here, so the many two-column
+% tables/figures cannot drift forward into Discussion or the references.
+\FloatBarrier
 
 % -----------------------------------------------------------------------------
 \section{Discussion}
@@ -846,6 +861,9 @@ This work was completed as part of the Global Indian Scientists \& Technocrats
 %  pdfLaTeX pass, no bibtex). PENDING before camera-ready: verify page numbers /
 %  venue strings against each paper's official record.
 % =============================================================================
+% Emit any still-pending floats before the references begin, so no table or
+% figure can land on top of the bibliography.
+\clearpage
 \begin{thebibliography}{99}
 \small
 
