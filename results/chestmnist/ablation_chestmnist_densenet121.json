@@ -1,0 +1,120 @@
+{
+  "_note": "REAL result on ChestMNIST (MedMNIST v2), a CC BY 4.0 benchmark derived from NIH ChestX-ray14 with the SAME 14 labels in the SAME order. These are genuine numbers on real (downsampled, 64px) radiographs with a reduced CPU training budget (see configs/chestmnist.yaml) -- NOT the full-resolution NIH ChestX-ray14 benchmark, which needs the 45 GB release and a GPU. Reproduce with datasets/scripts/prepare_chestmnist.py + models/classification/train.py.",
+  "timestamp": "2026-07-12T16:09:48.153144Z",
+  "modality": "Chest X-ray",
+  "modality_key": "chest_xray",
+  "backbone": "densenet121",
+  "explain_method": "gradcam",
+  "report_provider": "template",
+  "capabilities": {
+    "classification_only": {
+      "prediction": true,
+      "localization": false,
+      "report": false
+    },
+    "with_localization": {
+      "prediction": true,
+      "localization": true,
+      "report": false
+    },
+    "full_mirror": {
+      "prediction": true,
+      "localization": true,
+      "report": true
+    }
+  },
+  "metrics_source": {
+    "prediction_results": "evaluation/results/eval_densenet121.json",
+    "localization_results": null
+  },
+  "profile": {
+    "latency": {
+      "classification_only": {
+        "prediction": 101.17753333333364,
+        "localization": 0.01211666666667277,
+        "report": 0.00048750000003483507,
+        "total": 101.19013750000035
+      },
+      "with_localization": {
+        "prediction": 99.48037083333342,
+        "localization": 41.3890458333334,
+        "report": 0.00044166666675800786,
+        "total": 140.86985833333358
+      },
+      "full_mirror": {
+        "prediction": 100.03282083333342,
+        "localization": 36.16260416666665,
+        "report": 0.02509166666660641,
+        "total": 136.22051666666667
+      }
+    },
+    "predictions_invariant": true,
+    "max_prob_delta": 0.0,
+    "n_images": 24
+  },
+  "table": [
+    {
+      "condition": "classification_only",
+      "description": "Predictions only \u2014 where most medical-imaging models stop.",
+      "prediction": true,
+      "localization": false,
+      "report": false,
+      "macro_auroc": 0.7291269457147794,
+      "macro_auprc": 0.1349979212760258,
+      "macro_f1": 0.03058491110488552,
+      "sensitivity": 0.018944665977534324,
+      "specificity": 0.996617560634647,
+      "pointing_game": null,
+      "mean_iou": null,
+      "loc_accuracy": null,
+      "latency_ms": {
+        "prediction": 101.17753333333364,
+        "localization": 0.01211666666667277,
+        "report": 0.00048750000003483507,
+        "total": 101.19013750000035
+      }
+    },
+    {
+      "condition": "with_localization",
+      "description": "Predictions + Grad-CAM/Score-CAM evidence localisation.",
+      "prediction": true,
+      "localization": true,
+      "report": false,
+      "macro_auroc": 0.7291269457147794,
+      "macro_auprc": 0.1349979212760258,
+      "macro_f1": 0.03058491110488552,
+      "sensitivity": 0.018944665977534324,
+      "specificity": 0.996617560634647,
+      "pointing_game": null,
+      "mean_iou": null,
+      "loc_accuracy": null,
+      "latency_ms": {
+        "prediction": 99.48037083333342,
+        "localization": 41.3890458333334,
+        "report": 0.00044166666675800786,
+        "total": 140.86985833333358
+      }
+    },
+    {
+      "condition": "full_mirror",
+      "description": "Predictions + localisation + grounded natural-language report.",
+      "prediction": true,
+      "localization": true,
+      "report": true,
+      "macro_auroc": 0.7291269457147794,
+      "macro_auprc": 0.1349979212760258,
+      "macro_f1": 0.03058491110488552,
+      "sensitivity": 0.018944665977534324,
+      "specificity": 0.996617560634647,
+      "pointing_game": null,
+      "mean_iou": null,
+      "loc_accuracy": null,
+      "latency_ms": {
+        "prediction": 100.03282083333342,
+        "localization": 36.16260416666665,
+        "report": 0.02509166666660641,
+        "total": 136.22051666666667
+      }
+    }
+  ]
+}

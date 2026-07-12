@@ -1,0 +1,301 @@
+{
+  "_note": "REAL result on ChestMNIST (MedMNIST v2), a CC BY 4.0 benchmark derived from NIH ChestX-ray14 with the SAME 14 labels in the SAME order. These are genuine numbers on real (downsampled, 64px) radiographs with a reduced CPU training budget (see configs/chestmnist.yaml) -- NOT the full-resolution NIH ChestX-ray14 benchmark, which needs the 45 GB release and a GPU. Reproduce with datasets/scripts/prepare_chestmnist.py + models/classification/train.py.",
+  "timestamp": "2026-07-12T16:08:23.630283Z",
+  "modality": "Chest X-ray",
+  "modality_key": "chest_xray",
+  "backbone": "densenet121",
+  "checkpoint": "models/checkpoints/densenet121_best.pt",
+  "n_test": 12000,
+  "threshold": 0.5,
+  "macro_auroc": 0.7291269457147794,
+  "macro_auprc": 0.1349979212760258,
+  "macro_f1": 0.03058491110488552,
+  "operating_point": {
+    "threshold": 0.5,
+    "macro": {
+      "sensitivity": 0.018944665977534324,
+      "specificity": 0.996617560634647,
+      "ppv": 0.09739825655097811,
+      "npv": 0.9496700730282247
+    },
+    "per_label": {
+      "Atelectasis": {
+        "sensitivity": 0.0,
+        "specificity": 1.0,
+        "ppv": 0.0,
+        "npv": 0.8913333333333333,
+        "support_pos": 1304,
+        "support_neg": 10696
+      },
+      "Cardiomegaly": {
+        "sensitivity": 0.0,
+        "specificity": 1.0,
+        "ppv": 0.0,
+        "npv": 0.9728333333333333,
+        "support_pos": 326,
+        "support_neg": 11674
+      },
+      "Effusion": {
+        "sensitivity": 0.14344543582704186,
+        "specificity": 0.9867210471402826,
+        "ppv": 0.5988538681948424,
+        "npv": 0.8928847309243841,
+        "support_pos": 1457,
+        "support_neg": 10543
+      },
+      "Infiltration": {
+        "sensitivity": 0.109895337773549,
+        "specificity": 0.9670640533441099,
+        "ppv": 0.414721723518851,
+        "npv": 0.8364939264178974,
+        "support_pos": 2102,
+        "support_neg": 9898
+      },
+      "Mass": {
+        "sensitivity": 0.0,
+        "specificity": 1.0,
+        "ppv": 0.0,
+        "npv": 0.95125,
+        "support_pos": 585,
+        "support_neg": 11415
+      },
+      "Nodule": {
+        "sensitivity": 0.0,
+        "specificity": 1.0,
+        "ppv": 0.0,
+        "npv": 0.9411666666666667,
+        "support_pos": 706,
+        "support_neg": 11294
+      },
+      "Pneumonia": {
+        "sensitivity": 0.0,
+        "specificity": 1.0,
+        "ppv": 0.0,
+        "npv": 0.9893333333333333,
+        "support_pos": 128,
+        "support_neg": 11872
+      },
+      "Pneumothorax": {
+        "sensitivity": 0.011884550084889643,
+        "specificity": 0.9988607484006661,
+        "ppv": 0.35,
+        "npv": 0.9514190317195326,
+        "support_pos": 589,
+        "support_neg": 11411
+      },
+      "Consolidation": {
+        "sensitivity": 0.0,
+        "specificity": 1.0,
+        "ppv": 0.0,
+        "npv": 0.9588333333333333,
+        "support_pos": 494,
+        "support_neg": 11506
+      },
+      "Edema": {
+        "sensitivity": 0.0,
+        "specificity": 1.0,
+        "ppv": 0.0,
+        "npv": 0.982,
+        "support_pos": 216,
+        "support_neg": 11784
+      },
+      "Emphysema": {
+        "sensitivity": 0.0,
+        "specificity": 1.0,
+        "ppv": 0.0,
+        "npv": 0.97725,
+        "support_pos": 273,
+        "support_neg": 11727
+      },
+      "Fibrosis": {
+        "sensitivity": 0.0,
+        "specificity": 1.0,
+        "ppv": 0.0,
+        "npv": 0.9845833333333334,
+        "support_pos": 185,
+        "support_neg": 11815
+      },
+      "Pleural_Thickening": {
+        "sensitivity": 0.0,
+        "specificity": 1.0,
+        "ppv": 0.0,
+        "npv": 0.968,
+        "support_pos": 384,
+        "support_neg": 11616
+      },
+      "Hernia": {
+        "sensitivity": 0.0,
+        "specificity": 1.0,
+        "ppv": 0.0,
+        "npv": 0.998,
+        "support_pos": 24,
+        "support_neg": 11976
+      }
+    }
+  },
+  "calibration": {
+    "brier": 0.04528645239992516,
+    "ece": 0.018477292086718645
+  },
+  "per_label_auroc": {
+    "Atelectasis": 0.7288400987583226,
+    "Cardiomegaly": 0.8298967555187923,
+    "Effusion": 0.8267575131577054,
+    "Infiltration": 0.659847355490321,
+    "Mass": 0.6962657471987301,
+    "Nodule": 0.6430956094413991,
+    "Pneumonia": 0.672446854994946,
+    "Pneumothorax": 0.7382555687859048,
+    "Consolidation": 0.7540691672220303,
+    "Edema": 0.8492744006311133,
+    "Emphysema": 0.7443971849190576,
+    "Fibrosis": 0.6741267971314524,
+    "Pleural_Thickening": 0.665703891722624,
+    "Hernia": 0.7248002950345135,
+    "macro": 0.7291269457147794
+  },
+  "per_label_auprc": {
+    "Atelectasis": 0.2206496775596386,
+    "Cardiomegaly": 0.18438632580390385,
+    "Effusion": 0.41289175130527855,
+    "Infiltration": 0.29841311220200023,
+    "Mass": 0.12496191489784497,
+    "Nodule": 0.12268309961947536,
+    "Pneumonia": 0.021779143087595973,
+    "Pneumothorax": 0.1381312758487214,
+    "Consolidation": 0.09200784882917831,
+    "Edema": 0.10435539781265554,
+    "Emphysema": 0.06863316366713544,
+    "Fibrosis": 0.024586007384762756,
+    "Pleural_Thickening": 0.06572962461551071,
+    "Hernia": 0.010762555230659767,
+    "macro": 0.1349979212760258
+  },
+  "reproducibility": {
+    "seed": 42,
+    "git_commit": "85358a34e8b7de84f167729e34306a43b5a28fca",
+    "python": "3.9.13",
+    "numpy": "2.0.2",
+    "torch": "2.8.0+cpu"
+  },
+  "macro_auroc_ci": {
+    "mean": 0.7288590800566576,
+    "std": 0.005088223695990605,
+    "lo": 0.7183021165853426,
+    "hi": 0.7383736913221238
+  },
+  "macro_f1_ci": {
+    "mean": 0.03065666975190758,
+    "std": 0.001320299596323907,
+    "lo": 0.027964691621990154,
+    "hi": 0.03317681084542487
+  },
+  "macro_sensitivity_ci": {
+    "mean": 0.019004780474780873,
+    "std": 0.0008647464707011852,
+    "lo": 0.017248382505880525,
+    "hi": 0.020676752962201027
+  },
+  "macro_specificity_ci": {
+    "mean": 0.9966216550599568,
+    "std": 0.0001547649893148972,
+    "lo": 0.9963056832867344,
+    "hi": 0.9969089629214196
+  },
+  "brier_ci": {
+    "mean": 0.04528303933356165,
+    "std": 0.0004614709717024211,
+    "lo": 0.04437489036297835,
+    "hi": 0.0461964395325638
+  },
+  "per_label_auroc_ci": {
+    "Atelectasis": {
+      "mean": 0.7287774483352303,
+      "std": 0.006503291769181152,
+      "lo": 0.716195069900627,
+      "hi": 0.7415466220306655
+    },
+    "Cardiomegaly": {
+      "mean": 0.8296972866184137,
+      "std": 0.010984674576362864,
+      "lo": 0.8064531452936093,
+      "hi": 0.8508198926576817
+    },
+    "Effusion": {
+      "mean": 0.8270372704869199,
+      "std": 0.005478555340609425,
+      "lo": 0.8166369403975006,
+      "hi": 0.8382511085158518
+    },
+    "Infiltration": {
+      "mean": 0.6601001595075812,
+      "std": 0.006635906151934051,
+      "lo": 0.6475535408805421,
+      "hi": 0.6728639934267947
+    },
+    "Mass": {
+      "mean": 0.6960107541708839,
+      "std": 0.01180893399079172,
+      "lo": 0.6728806437876845,
+      "hi": 0.7185681979651132
+    },
+    "Nodule": {
+      "mean": 0.643011131025969,
+      "std": 0.010397290512308295,
+      "lo": 0.62245748136122,
+      "hi": 0.6622837329295516
+    },
+    "Pneumonia": {
+      "mean": 0.6725856886972691,
+      "std": 0.02283383640670127,
+      "lo": 0.6269011240866713,
+      "hi": 0.7160237898344931
+    },
+    "Pneumothorax": {
+      "mean": 0.737994702336861,
+      "std": 0.009863187653822119,
+      "lo": 0.7187551842191182,
+      "hi": 0.7571276021784894
+    },
+    "Consolidation": {
+      "mean": 0.7543421488914971,
+      "std": 0.009351156416220075,
+      "lo": 0.7357185265423771,
+      "hi": 0.7733395733468728
+    },
+    "Edema": {
+      "mean": 0.8492084693111337,
+      "std": 0.011293006900666628,
+      "lo": 0.8276259971264001,
+      "hi": 0.8706110938953667
+    },
+    "Emphysema": {
+      "mean": 0.744059771735444,
+      "std": 0.015266178152823658,
+      "lo": 0.7125091693114921,
+      "hi": 0.774098590704722
+    },
+    "Fibrosis": {
+      "mean": 0.6730872220131848,
+      "std": 0.017036042406925102,
+      "lo": 0.6387504916026151,
+      "hi": 0.7051265613953042
+    },
+    "Pleural_Thickening": {
+      "mean": 0.6660336263808675,
+      "std": 0.014118158829367677,
+      "lo": 0.6383180305144104,
+      "hi": 0.6922552702717754
+    },
+    "Hernia": {
+      "mean": 0.7220814412819524,
+      "std": 0.05279411934888473,
+      "lo": 0.6150375207485984,
+      "hi": 0.820273501452049
+    }
+  },
+  "bootstrap": {
+    "n_boot": 1000,
+    "ci_level": 0.95
+  }
+}
