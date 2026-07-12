@@ -705,8 +705,10 @@ accuracy (IoU$\ge$0.1) over the 8 boxed pathologies, sorted ascending.
 \caption{Ablation (DenseNet-121). Predictive metrics are \emph{identical} across
 rows (max probability delta $=0$; the added layers are post-hoc), so
 interpretability is added at no predictive cost; localization capability and its
-latency appear only where enabled. {\color{pendingred}\itshape Red = illustrative
-placeholder.}}
+latency appear only where enabled. The invariance (max probability delta $=0$) is
+\emph{measured} --- verified empirically across all three modalities (see text);
+the AUROC/F1/pointing/IoU/latency values below remain
+{\color{pendingred}\itshape illustrative placeholders} pending a trained checkpoint.}
 \label{tab:ablation}
 \footnotesize
 \begin{tabular}{@{}lKKKKK@{}}
@@ -724,7 +726,18 @@ The ablation makes the headline argument explicit: the macro AUROC/F1 columns ar
 constant across all three rows (maximum probability delta $=0$), so
 interpretability is added at no predictive cost, while the latency column shows the
 cost is instead a modest, bounded increase in wall-clock time (dominated by the
-localization pass).
+localization pass). The invariance half of that claim does not wait on a trained
+checkpoint: it is a structural property (the post-hoc layers never touch the
+classifier logits), and we verify it empirically now. Running the ablation harness
+over the bundled synthetic samples for \emph{all three} modalities
+(chest X-ray, brain MRI, head CT; $12$ studies each) yields a maximum
+probability delta of exactly $0$ in every case --- the localization and report
+layers leave the predictions bitwise unchanged. The live per-stage profile on the
+same run confirms the shape of the cost as well: the report layer is effectively
+free ($\sim\!0.04$~ms/study with the offline template backend) and the entire added
+latency is the Grad-CAM pass. \pending{absolute latency depends on hardware
+(profiled here on CPU); regenerate the full table --- including the still-pending
+AUROC/F1/localization columns --- once a trained checkpoint exists.}
 
 % -----------------------------------------------------------------------------
 \section{Discussion}

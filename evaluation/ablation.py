@@ -48,8 +48,17 @@ except ImportError:  # pragma: no cover
     torch = None
 
 from models.common.config import Config
+from models.common.modalities import resolve_modality
 
 IMAGE_EXTENSIONS = (".png", ".jpg", ".jpeg", ".bmp", ".webp", ".dcm")
+
+# Default synthetic-sample directory for each modality, so the latency/invariance
+# profile runs out of the box for whichever modality is selected.
+_SAMPLE_DIRS: dict[str, str] = {
+    "chest_xray": "datasets/samples/chestxray14/images",
+    "brain_mri": "datasets/samples/brain_mri/images",
+    "head_ct": "datasets/samples/head_ct/images",
+}
 
 
 @dataclass(frozen=True)
@@ -169,12 +178,16 @@ def find_images(images_arg: str, limit: int | None) -> list[Path]:
     return paths[:limit] if limit else paths
 
 
-def profile_conditions(pipeline, images: list[Path], conditions=CONDITIONS) -> dict:
+def profile_conditions(
+    pipeline, images: list[Path], conditions=CONDITIONS, modality: str = "chest X-ray"
+) -> dict:
     """Run each condition over the sample and measure latency + invariance.
 
     Returns ``{"latency": {condition: {stage: mean_ms,...}}, "predictions_invariant":
     bool, "max_prob_delta": float, "n_images": int}``. The invariance check
-    confirms the later layers do not perturb the predictions.
+    confirms the later layers do not perturb the predictions. ``modality`` selects
+    which classifier head / taxonomy the invariance is checked against, so the
+    post-hoc property can be verified per modality, not only for chest X-ray.
     """
     import numpy as np
 
@@ -187,7 +200,9 @@ def profile_conditions(pipeline, images: list[Path], conditions=CONDITIONS) -> d
         raw = img.read_bytes()
         per_image_probs: dict[str, dict[str, float]] = {}
         for c in conditions:
-            result = pipeline.analyze(raw, localize=c.localize, report=c.report)
+            result = pipeline.analyze(
+                raw, modality=modality, localize=c.localize, report=c.report
+            )
             for stage, ms in result.meta["timings_ms"].items():
                 per_stage[c.name].setdefault(stage, []).append(ms)
             per_image_probs[c.name] = {
@@ -261,9 +276,16 @@ def main() -> None:
     )
     parser.add_argument("--config", default="configs/default.yaml")
     parser.add_argument(
+        "--modality",
+        default="chest X-ray",
+        help="chest X-ray | brain MRI | CT — selects the classifier head/taxonomy "
+        "the invariance is verified against and the default sample directory.",
+    )
+    parser.add_argument(
         "--images",
-        default="datasets/samples/chestxray14/images",
-        help="Directory or glob of images to profile latency on.",
+        default=None,
+        help="Directory or glob of images to profile latency on. Defaults to the "
+        "selected modality's bundled synthetic samples.",
     )
     parser.add_argument("--n", type=int, default=8, help="Max images to profile.")
     parser.add_argument("--prediction-results", default=None)
@@ -280,6 +302,9 @@ def main() -> None:
     config = Config.from_yaml(args.config)
     if args.checkpoint:
         config.model.checkpoint_path = args.checkpoint
+
+    spec = resolve_modality(args.modality)
+    images_arg = args.images or _SAMPLE_DIRS.get(spec.key)
 
     pred_json = _load_json(args.prediction_results)
     loc_json = _load_json(args.localization_results)
@@ -298,17 +323,19 @@ def main() -> None:
         np.random.seed(args.seed)
         from models.pipeline import MirrorPipeline
 
-        images = find_images(args.images, args.n)
+        images = find_images(images_arg, args.n)
         if not images:
-            raise SystemExit(f"No images found under {args.images}")
+            raise SystemExit(f"No images found under {images_arg}")
         pipeline = MirrorPipeline(config)
-        profile = profile_conditions(pipeline, images)
+        profile = profile_conditions(pipeline, images, modality=args.modality)
 
     latency = profile["latency"] if profile else None
     rows = assemble_table(metrics, latency)
 
     summary = {
         "timestamp": datetime.utcnow().isoformat() + "Z",
+        "modality": spec.display_name,
+        "modality_key": spec.key,
         "backbone": config.model.backbone,
         "explain_method": config.explain.method,
         "report_provider": config.report.provider,
@@ -323,7 +350,10 @@ def main() -> None:
 
     out_dir = Path("evaluation/results")
     out_dir.mkdir(parents=True, exist_ok=True)
-    out_path = out_dir / f"ablation_{config.model.backbone}.json"
+    # Include the modality so brain-MRI / head-CT runs don't overwrite the chest
+    # X-ray result (the default modality keeps the original filename).
+    mod_suffix = "" if spec.key == "chest_xray" else f"_{spec.key}"
+    out_path = out_dir / f"ablation_{config.model.backbone}{mod_suffix}.json"
     out_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
     print_table(rows)
