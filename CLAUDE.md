@@ -205,7 +205,8 @@ commit, library versions).
 [`docs/api.md`](docs/api.md) (REST payloads),
 [`evaluation/README.md`](evaluation/README.md) and
 [`results/README.md`](results/README.md) (harness + snapshot details),
-[`paper/`](paper/) (the write-up; `paper/main.tex` is the compilable source, now a
-**complete, all-measured draft finalized for medRxiv submission**, with compiled
-PDFs v1–v6 in [`paper/pdf-drafts/`](paper/pdf-drafts/) — **v6 is the current
-submission version**).
+[`paper/`](paper/) (the write-up; `paper/main.tex` is the compilable source, a
+**complete, all-measured draft**; after medRxiv screening asked for a resubmission
+with author details and institutional affiliation clarified, the current version
+is **v7** — single corresponding author, mentor credited in Acknowledgments only,
+8-page cap — with compiled PDFs in [`paper/pdf-drafts/`](paper/pdf-drafts/)).

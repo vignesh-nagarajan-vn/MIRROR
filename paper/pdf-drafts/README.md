@@ -14,9 +14,11 @@ Versions are listed oldest to newest; the last row is the current state of
 | `MIRROR_Paper_Draft_v3.pdf` | Multi-modality (chest X-ray / brain MRI / head CT) and the expanded clinical-metric panel, with the measured ChestMNIST results folded in; still carried red placeholders for the full-resolution NIH numbers. |
 | `MIRROR_Paper_Draft_v4.pdf` | Later snapshot of the same multi-modality / measured-ChestMNIST draft. |
 | `MIRROR_Paper_Draft_v5.pdf` | All-measured paper: every red placeholder removed, Results rebuilt from real numbers only (ChestMNIST per-label AUROC, measured ablation, synthetic sanity check), shortened toward 8 pages. |
-| `MIRROR_Paper_Draft_v6.pdf` | **Current / submission version.** Finalized for medRxiv (Radiology): grounding claim narrowed to finding-level (descriptive prose is not pixel-verified), explanation metrics framed as a defined protocol with box-level scores as future work, the ablation reframed as a post-hoc correctness check, ChestMNIST framed as a systems demonstration, plus the human-subjects/ethics-approval statement and a Declarations block. Human-toned prose, no em dashes. |
+| `MIRROR_Paper_Draft_v6.pdf` | First medRxiv (Radiology) submission version: grounding claim narrowed to finding-level (descriptive prose is not pixel-verified), explanation metrics framed as a defined protocol with box-level scores as future work, the ablation reframed as a post-hoc correctness check, ChestMNIST framed as a systems demonstration, plus the human-subjects/ethics-approval statement and a Declarations block. Human-toned prose, no em dashes. |
+| `MIRROR_Paper_Draft_v7.pdf` | **Current / resubmission version.** Revision prepared after medRxiv screening asked for a resubmission with author details and institutional affiliation clarified: single centered corresponding-author block (Vignesh Nagarajan, Texas A&M University), the mentor credited in a bolded Acknowledgments entry instead of the author list, the internship affiliation moved off the title page into Acknowledgments, and the body condensed to fit the 8-page maximum. |
 
-**v6 is the current submission version**, matching [`../main.tex`](../main.tex). To
-regenerate it, compile `../main.tex` in Overleaf (upload it with the `../figures/`
-folder) or run `pdflatex main` locally. See [`../README.md`](../README.md) for build
-details.
+**v7 is the current submission version**, matching [`../main.tex`](../main.tex).
+*The v7 PDF itself is pending: compile `../main.tex` in Overleaf (upload it with
+the `../figures/` folder) or run `pdflatex main` locally, then save the export
+here as `MIRROR_Paper_Draft_v7.pdf` and delete this note.* See
+[`../README.md`](../README.md) for build details.

@@ -5,45 +5,37 @@ directory is required to run the system.
 
 ## Current draft
 
-[`main.tex`](main.tex) is a two-column workshop/preprint draft (5–8 pages)
-targeting a top medical-imaging venue. Everything textual lives in the one file:
-the literature review, architecture, and experimental-setup sections, an inline
-TikZ architecture figure, two inline `pgfplots` result graphs, the result
-tables, and an embedded 20-source bibliography. The only external assets are the
-three UI screenshots in [`figures/`](figures/) (`ui-predictions.png`,
-`overlay-consolidation.png`, `report-findings.png`) — upload that folder alongside
-`main.tex`. Each screenshot is guarded by `\IfFileExists`, so the document still
-compiles (showing a red placeholder box) if the images are missing.
+[`main.tex`](main.tex) is a two-column preprint draft, capped at **8 pages**,
+prepared for **medRxiv (Radiology)**. The current revision (**v7** in
+[`pdf-drafts/`](pdf-drafts/)) was prepared after medRxiv screening asked for a
+resubmission with author details and institutional affiliation clarified: it
+carries a single centered corresponding-author block (Texas A&M University),
+credits the mentor in a bolded Acknowledgments entry rather than the author
+list, mentions the GIST 2026 Summer Research Internship only in the
+Acknowledgments and Declarations, and is condensed to fit the page cap.
 
-The draft describes MIRROR as the **multi-modality** system the codebase now is:
-the modality registry (`tab:modalities`) is documented as an implemented, tested
-contribution (black), while quantitative results remain **chest X-ray only** because
-that is the modality with public labels and lesion boxes. The predictive results now
-include the full clinical-reader panel — discrimination (AUROC/AUPRC/F1), the
-operating-point table (`tab:operating`: sensitivity/specificity/PPV/NPV with
-support), and calibration (Brier/ECE) — matching what `evaluation/evaluate.py`
-writes. Every one of those numbers stays **red** (illustrative placeholder) until a
-trained checkpoint replaces it; the brain-MRI and head-CT paths are described as
+Everything textual lives in the one file: the literature review, architecture,
+and experimental-setup sections, an inline TikZ architecture figure, two inline
+`pgfplots` result graphs, the result tables, and an embedded 21-source
+bibliography. The only external assets are the three UI screenshots in
+[`figures/`](figures/) (`ui-predictions.png`, `overlay-consolidation.png`,
+`report-findings.png`); upload that folder alongside `main.tex`. Each screenshot
+is guarded by `\IfFileExists`, so the document still compiles (showing a
+placeholder box) if the images are missing.
+
+The draft is **all-measured**: every number is a real result produced by this
+repo's code (the ChestMNIST benchmark, the measured ablation, and the synthetic
+harness sanity check, snapshotted under [`../results/`](../results/)), with no
+placeholder or pending values. The modality registry (`tab:modalities`) is
+documented as an implemented, tested contribution, while quantitative results
+remain **chest X-ray only** because that is the modality with public labels and
+lesion boxes; the brain-MRI and head-CT paths are described as
 implemented-but-not-yet-benchmarked, not as scaffolding.
-
-### Draft color convention (black = done, red = pending)
-
-Per the current working style, the draft encodes its own to-do list in color:
-
-- **Black** text is finalized/complete content.
-- **Red** text is filler awaiting a trained model — every placeholder number,
-  chart datum, and `\pending{...}` note. The result tables and both graphs render
-  their numbers in red because they are **illustrative, literature-scale
-  placeholders** from the committed `results/evaluation/*.json` snapshots (output
-  *format*, not a measured benchmark).
-
-**Search the source for `PENDING` to find every gap.** When a real value replaces
-a red one, set it black.
 
 ### Build
 
 Compiles in [Overleaf](https://www.overleaf.com/) (or any TeX install) in a
-**single pdfLaTeX pass** — the bibliography is embedded as a `thebibliography`
+**single pdfLaTeX pass**; the bibliography is embedded as a `thebibliography`
 environment, so there is no separate `bibtex` step. Create an Overleaf project,
 upload `main.tex` **and the `figures/` folder**, and hit *Recompile*, or locally:
 
@@ -52,10 +44,9 @@ cd paper
 pdflatex main
 ```
 
-> **Before making any performance claim**, replace the red placeholder numbers
-> with real values: train on ChestX-ray14, run the `evaluation/` harnesses, and
-> copy the figures from the resulting JSON into the tables and graphs in
-> `main.tex` (then set them black).
+After compiling, check that the output is at most 8 pages, then save the PDF
+into [`pdf-drafts/`](pdf-drafts/) as the next `MIRROR_Paper_Draft_vN.pdf` and
+add a row to the version table there.
 
 ## Extending the draft
 

@@ -328,11 +328,17 @@ plus format-only illustrative examples. Details:
 
 ## Paper
 
-**Status: finalized for submission (medRxiv, Radiology).** The paper is a complete,
-all-measured draft: every number is a real result from this repo's code, with no
-placeholder or pending values. LaTeX source: [`paper/main.tex`](paper/main.tex).
-Compiled PDF snapshots (v1 through v6, newest last) are in
-[`paper/pdf-drafts/`](paper/pdf-drafts/), with **v6 the current submission version**.
+**Status: resubmission prepared (medRxiv, Radiology).** medRxiv screening of the
+first submission asked for a resubmission with author details and institutional
+affiliation clarified. The current **v7** revision addresses that: a single
+centered corresponding-author block (Texas A&M University) on the title page, the
+mentor credited in a bolded Acknowledgments entry, the internship affiliation
+moved into Acknowledgments, and the body condensed to the 8-page maximum. The
+paper remains complete and all-measured: every number is a real result from this
+repo's code, with no placeholder or pending values. LaTeX source:
+[`paper/main.tex`](paper/main.tex). Compiled PDF snapshots (newest last) are in
+[`paper/pdf-drafts/`](paper/pdf-drafts/), with **v7 the current submission
+version** (see the version table there).
 
 Measured highlights: DenseNet-121 reaches macro AUROC **0.729** (95% CI [0.718,
 0.738]) on ChestMNIST with a clinically sensible per-label ordering; the ablation
