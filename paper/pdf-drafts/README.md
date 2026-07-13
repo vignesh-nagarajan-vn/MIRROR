@@ -17,8 +17,7 @@ Versions are listed oldest to newest; the last row is the current state of
 | `MIRROR_Paper_Draft_v6.pdf` | First medRxiv (Radiology) submission version: grounding claim narrowed to finding-level (descriptive prose is not pixel-verified), explanation metrics framed as a defined protocol with box-level scores as future work, the ablation reframed as a post-hoc correctness check, ChestMNIST framed as a systems demonstration, plus the human-subjects/ethics-approval statement and a Declarations block. Human-toned prose, no em dashes. |
 | `MIRROR_Paper_Draft_v7.pdf` | **Current / resubmission version.** Revision prepared after medRxiv screening asked for a resubmission with author details and institutional affiliation clarified: single centered corresponding-author block (Vignesh Nagarajan, Texas A&M University), the mentor credited in a bolded Acknowledgments entry instead of the author list, the internship affiliation moved off the title page into Acknowledgments, and the body condensed to fit the 8-page maximum. |
 
-**v7 is the current submission version**, matching [`../main.tex`](../main.tex).
-*The v7 PDF itself is pending: compile `../main.tex` in Overleaf (upload it with
-the `../figures/` folder) or run `pdflatex main` locally, then save the export
-here as `MIRROR_Paper_Draft_v7.pdf` and delete this note.* See
-[`../README.md`](../README.md) for build details.
+**v7 is the current submission version**, matching [`../main.tex`](../main.tex)
+(8 pages, with all three UI screenshots embedded). To regenerate it, compile
+`../main.tex` in Overleaf (upload it with the `../figures/` folder) or run
+`pdflatex main` locally. See [`../README.md`](../README.md) for build details.
