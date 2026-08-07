@@ -67,7 +67,7 @@ Mentored by **Mr. Sriram Venkatapathy** (AI Research at Capital One, PhD-CS at I
   <img src="https://img.shields.io/badge/LaTeX-008080.svg?style=for-the-badge&logo=latex&logoColor=white">
   <img src="https://img.shields.io/badge/Overleaf-47A141.svg?style=for-the-badge&logo=overleaf&logoColor=white">
   <img src="https://img.shields.io/badge/BibTeX-008080.svg?style=for-the-badge&logo=latex&logoColor=white">
-  <img src="https://img.shields.io/badge/arXiv-B31B1B.svg?style=for-the-badge&logo=arxiv&logoColor=white">
+  <a href="https://ssrn.com/abstract=7245078"><img src="https://img.shields.io/badge/SSRN-7245078-154881.svg?style=for-the-badge"></a>
 </p>
 
 ## What MIRROR does
@@ -328,10 +328,14 @@ plus format-only illustrative examples. Details:
 
 ## Paper
 
-**Status: submitted to SSRN (August 2026).** The paper first went through a
-medRxiv (Radiology) cycle, whose screening asked for author details and
-institutional affiliation clarified (addressed in v7 with a single-author title
-page). The **v8** revision, submitted to SSRN, restores the v6 two-author title
+**Status: submitted to SSRN on August 6, 2026, pending moderation.** The
+preprint is [SSRN abstract 7245078](https://ssrn.com/abstract=7245078), posted
+under a CC BY-NC-ND license. The paper first went through a medRxiv (Radiology)
+cycle: screening asked for author details and institutional affiliation
+clarified (addressed in v7 with a single-author title page), and medRxiv
+ultimately declined the work as a technical development rather than biomedical
+research, so it moved to SSRN. The **v8** revision, the version submitted,
+restores the v6 two-author title
 block: the corresponding author (Texas A&M University) and the research mentor
 alongside with his qualifiers (Applied AI Researcher at Capital One, PhD in
 Computer Science from IIT Hyderabad), with the GIST 2026 Summer Research

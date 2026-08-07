@@ -6,8 +6,10 @@ directory is required to run the system.
 ## Current draft
 
 [`main.tex`](main.tex) is a two-column preprint draft, capped at **8 pages**,
-submitted to **SSRN** in August 2026 after an earlier medRxiv (Radiology)
-submission cycle.
+submitted to **SSRN** on August 6, 2026 as
+[abstract 7245078](https://ssrn.com/abstract=7245078) (CC BY-NC-ND, moderation
+pending). It first went to medRxiv (Radiology), which ultimately declined the
+work as a technical development rather than biomedical research.
 The current revision (**v8** in [`pdf-drafts/`](pdf-drafts/)) restores the v6
 two-author title block: the corresponding author (Texas A&M University) and
 the research mentor side by side with his qualifiers (Research Mentor; Applied

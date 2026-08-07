@@ -213,10 +213,10 @@ reports.
 [`evaluation/README.md`](evaluation/README.md) and
 [`results/README.md`](results/README.md) (harness + snapshot details),
 [`paper/`](paper/) (the write-up; `paper/main.tex` is the compilable source, a
-**complete, all-measured draft**; after a medRxiv cycle whose screening produced
-the single-author v7, the current version is **v8**, submitted to SSRN in
-August 2026: the v6
-two-author title block restored (research mentor beside the corresponding author
-with his qualifiers) plus the GIST internship affiliation on one line beneath
-both author blocks, still at the 8-page cap; compiled PDFs in
-[`paper/pdf-drafts/`](paper/pdf-drafts/)).
+**complete, all-measured draft**. medRxiv (Radiology) declined the work as a
+technical development rather than biomedical research; the current version is
+**v8**, submitted to SSRN on 2026-08-06 as abstract 7245078 (CC BY-NC-ND,
+moderation pending): the v6 two-author title block restored (research mentor
+beside the corresponding author with his qualifiers) plus the GIST internship
+affiliation on one line beneath both author blocks, still at the 8-page cap;
+compiled PDFs in [`paper/pdf-drafts/`](paper/pdf-drafts/)).
