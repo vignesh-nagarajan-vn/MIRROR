@@ -1,7 +1,8 @@
 % =============================================================================
 %  MIRROR - Multimodal Intelligent Radiology Reasoning and Observation Reporter
-%  medRxiv preprint (resubmission revision: single corresponding author with
-%  institutional affiliation; mentor credited in Acknowledgments; max 8 pages).
+%  SSRN preprint (v8): research mentor listed beside the corresponding author
+%  with his qualifiers (as in v6), and the shared GIST internship affiliation
+%  on one centered line beneath both author blocks; max 8 pages.
 %
 %  HOW TO USE: compiles in Overleaf (engine: pdfLaTeX) in a SINGLE pass; the
 %  architecture figure and the two result graphs are drawn inline (TikZ/pgfplots),
@@ -82,13 +83,28 @@ localizes the visual evidence behind each finding, and drafts a clinician-style
 report. We report measured predictive quality and verify that the added
 interpretability layers leave the predictions unchanged.}\\[18pt]
 
-% ---- Single centered author block. ----
+% ---- Two authors, side by side, each in a fixed-width box so the long
+%      affiliation lines wrap inside their column; the shared GIST internship
+%      affiliation sits on one centered line beneath both author blocks. ----
 \normalsize
+\begin{minipage}[t]{0.45\textwidth}
+\centering
 {\large\textbf{Vignesh Nagarajan}}\\[3pt]
 {\small\itshape Corresponding Author}\\[4pt]
 {\small Brown Foundation Scholar, Texas A\&M University}\\[2pt]
 {\small Department of Computer Science \& Engineering}\\[2pt]
-{\small\texttt{vigneshn26@tamu.edu}}\\[16pt]
+{\small\texttt{vigneshn26@tamu.edu}}
+\end{minipage}%
+\hspace{0.06\textwidth}%
+\begin{minipage}[t]{0.45\textwidth}
+\centering
+{\large\textbf{Sriram Venkatapathy}}\\[3pt]
+{\small\itshape Research Mentor}\\[4pt]
+{\small Applied AI Researcher, Capital One}\\[2pt]
+{\small PhD in Computer Science, IIT Hyderabad}\\[2pt]
+{\small\texttt{sriram.venkatapathy@gmail.com}}
+\end{minipage}\\[14pt]
+{\small Global Indian Scientists \& Technocrats (GIST) 2026 Summer Research Internship}\\[20pt]
 
 \begin{minipage}{0.88\textwidth}
 \small

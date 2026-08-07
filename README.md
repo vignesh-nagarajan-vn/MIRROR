@@ -328,16 +328,18 @@ plus format-only illustrative examples. Details:
 
 ## Paper
 
-**Status: resubmission prepared (medRxiv, Radiology).** medRxiv screening of the
-first submission asked for a resubmission with author details and institutional
-affiliation clarified. The current **v7** revision addresses that: a single
-centered corresponding-author block (Texas A&M University) on the title page, the
-mentor credited in a bolded Acknowledgments entry, the internship affiliation
-moved into Acknowledgments, and the body condensed to the 8-page maximum. The
-paper remains complete and all-measured: every number is a real result from this
-repo's code, with no placeholder or pending values. LaTeX source:
+**Status: submitted to SSRN (August 2026).** The paper first went through a
+medRxiv (Radiology) cycle, whose screening asked for author details and
+institutional affiliation clarified (addressed in v7 with a single-author title
+page). The **v8** revision, submitted to SSRN, restores the v6 two-author title
+block: the corresponding author (Texas A&M University) and the research mentor
+alongside with his qualifiers (Applied AI Researcher at Capital One, PhD in
+Computer Science from IIT Hyderabad), with the GIST 2026 Summer Research
+Internship affiliation on one line beneath both blocks. The paper remains complete
+and all-measured: every number is a real result from this repo's code, with no
+placeholder or pending values. LaTeX source:
 [`paper/main.tex`](paper/main.tex). Compiled PDF snapshots (newest last) are in
-[`paper/pdf-drafts/`](paper/pdf-drafts/), with **v7 the current submission
+[`paper/pdf-drafts/`](paper/pdf-drafts/), with **v8 the current submission
 version** (see the version table there).
 
 Measured highlights: DenseNet-121 reaches macro AUROC **0.729** (95% CI [0.718,

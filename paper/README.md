@@ -6,13 +6,16 @@ directory is required to run the system.
 ## Current draft
 
 [`main.tex`](main.tex) is a two-column preprint draft, capped at **8 pages**,
-prepared for **medRxiv (Radiology)**. The current revision (**v7** in
-[`pdf-drafts/`](pdf-drafts/)) was prepared after medRxiv screening asked for a
-resubmission with author details and institutional affiliation clarified: it
-carries a single centered corresponding-author block (Texas A&M University),
-credits the mentor in a bolded Acknowledgments entry rather than the author
-list, mentions the GIST 2026 Summer Research Internship only in the
-Acknowledgments and Declarations, and is condensed to fit the page cap.
+submitted to **SSRN** in August 2026 after an earlier medRxiv (Radiology)
+submission cycle.
+The current revision (**v8** in [`pdf-drafts/`](pdf-drafts/)) restores the v6
+two-author title block: the corresponding author (Texas A&M University) and
+the research mentor side by side with his qualifiers (Research Mentor; Applied
+AI Researcher, Capital One; PhD in Computer Science, IIT Hyderabad), with the
+Global Indian Scientists & Technocrats (GIST) 2026 Summer Research Internship
+affiliation on one centered line beneath both blocks. The mentor keeps the
+bolded Acknowledgments entry, and the body is unchanged from v7 at the page
+cap.
 
 Everything textual lives in the one file: the literature review, architecture,
 and experimental-setup sections, an inline TikZ architecture figure, two inline
