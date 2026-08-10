@@ -55,12 +55,18 @@ chance for the second — which is exactly what happens:
 | Group | Mean AUROC | Per-label |
 | --- | --- | --- |
 | **Has injected visual signal** | **0.917** | Mass 0.979, Nodule 0.974, Cardiomegaly 0.908, Consolidation 0.903, Effusion 0.895, Infiltration 0.894, Edema 0.866 |
-| **No visual signal (expect ≈0.5)** | **0.557** | Hernia 0.620, Fibrosis 0.595, Emphysema 0.550, Pneumonia 0.540, Atelectasis 0.524, Pneumothorax 0.467, Pleural_Thickening 0.434 |
+| **No visual signal (expect ≈0.5)** | **0.533** | Hernia 0.620, Fibrosis 0.595, Emphysema 0.550, Pneumonia 0.540, Atelectasis 0.524, Pneumothorax 0.467, Pleural_Thickening 0.434 |
 
-The clean split (0.917 vs 0.557) is the point: it shows the classifier, the loss,
+The clean split (0.917 vs 0.533) is the point: it shows the classifier, the loss,
 the metrics, and the bootstrap CIs all behave correctly and that nothing is leaking
 or fabricated. On real ChestX-ray14 the same harness would produce the same shape of
 output over real anatomy.
+
+> [!NOTE]
+> The no-signal mean was previously written here as 0.557, which was an arithmetic
+> slip; the seven per-label values listed above average to **0.5331**. Cross-check
+> against the JSON: (0.91689 + 0.53306) / 2 = 0.72497, which is exactly the
+> `macro` AUROC in `eval_synthetic_densenet121.json`. The paper (v9) uses 0.533.
 
 ## Files
 

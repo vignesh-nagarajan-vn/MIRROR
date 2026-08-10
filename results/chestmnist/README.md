@@ -1,13 +1,15 @@
-# ChestMNIST results — a real small-scale benchmark
+# ChestMNIST results: a real small-scale benchmark
 
 These are **real** MIRROR results on **ChestMNIST** (MedMNIST v2): a CC BY 4.0
 dataset derived from NIH ChestX-ray14, with the **same 14 pathologies in the same
-label order**, multi-label, official splits — just downsampled. MIRROR's taxonomy
+label order**, multi-label, official splits, just downsampled. MIRROR's taxonomy
 applies unchanged, so this is a legitimate small stand-in for the full 45 GB NIH
 release. The numbers are genuine (real radiographs, real labels); they are a
-**reduced-resolution (64 px), reduced-budget (CPU, 2 epochs, 7.2k of 78k images)**
-result — not the full-resolution NIH ChestX-ray14 benchmark, which needs the full
-release and a GPU.
+**reduced-resolution (64 px source, upsampled to 224 px for the backbone),
+reduced-budget** result: 8,000 studies sampled from the pooled official train and
+validation splits, 10% held out, giving 7,200 training and 800 validation images,
+best of a four-epoch CPU run. This is not the full-resolution NIH ChestX-ray14
+benchmark, which needs the full release and a GPU.
 
 ## Setup
 
@@ -28,15 +30,24 @@ release and a GPU.
 | Calibration (Brier / ECE) | 0.045 / 0.018 |
 | Ablation invariance (max prob delta) | **0.0** (exact) |
 
-AUROC is the standard, threshold-independent ChestMNIST headline metric; **0.729**
-sits within reach of the published MedMNIST v2 DenseNet-121 baseline (AUROC ≈0.77,
-trained on all 78k images for many epochs on GPU) despite using a small fraction of
-that compute. At the fixed 0.5 threshold the model is conservative (high
-specificity, low sensitivity) — expected for a low-prevalence multi-label task with
-a light training budget; a tuned operating point would trade some specificity for
-sensitivity.
+AUROC is the standard, threshold-independent ChestMNIST headline metric. **0.729**
+is **0.04 below** the published MedMNIST v2 DenseNet-121 baseline (AUROC ≈0.77,
+trained on all 78k images for many epochs on GPU); that baseline used far more
+compute, and we have not tested whether more compute would close the gap.
 
-## Per-label AUROC — clinically sensible ordering
+At the fixed 0.5 threshold the model is not a working detector: **11 of the 14
+labels emit no positive prediction at all** (sensitivity exactly 0.0, specificity
+exactly 1.0). Only Effusion (sens 0.143), Infiltration (0.110), and Pneumothorax
+(0.012) ever fire, and macro F1 is 0.031. That is a consequence of the reduced
+training budget and 64px resolution, not a deliberately conservative operating
+point.
+
+The calibration figures should be read against a baseline, not on their own: a
+constant predictor that always returns each label's base rate scores macro Brier
+**0.0472** on this test split, against the model's **0.0453**. Recompute with
+`python paper/calibration_baseline.py`.
+
+## Per-label AUROC: clinically sensible ordering
 
 The ranking tracks how visible each finding is, which is the reassuring outcome:
 the classically easier findings score highest and the subtle small ones lowest.
@@ -55,8 +66,8 @@ the classically easier findings score highest and the subtle small ones lowest.
 
 | File | Harness |
 | --- | --- |
-| `eval_chestmnist_densenet121.json` | `evaluation/evaluate.py` — full predictive panel + bootstrap CIs |
-| `ablation_chestmnist_densenet121.json` | `evaluation/ablation.py` — invariance (max prob delta = 0) + latency |
+| `eval_chestmnist_densenet121.json` | `evaluation/evaluate.py`: full predictive panel + bootstrap CIs |
+| `ablation_chestmnist_densenet121.json` | `evaluation/ablation.py`: invariance (max prob delta = 0) + latency |
 
 Each carries a top-level `_note` restating what this is (and is not).
 
