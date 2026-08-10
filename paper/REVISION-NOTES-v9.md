@@ -73,6 +73,43 @@ Section 3.5 and Table 2 prose tightened.
   reach", "deliberately conservative", "1e-4" as the learning rate, and any claim
   of prediction across three modalities.
 
+## Numeric traceability (every number in the PDF)
+
+`E` = `results/chestmnist/eval_chestmnist_densenet121.json`,
+`A` = `results/chestmnist/ablation_chestmnist_densenet121.json`,
+`S` = `results/synthetic_validation/eval_synthetic_densenet121.json`,
+`C` = `calibration_baseline.py`.
+
+| Number | Where it appears | Source |
+| --- | --- | --- |
+| 0.729, CI [0.718, 0.738] | abstract, 5.1, Table 4, conclusion | `E.macro_auroc`, `E.macro_auroc_ci.lo/.hi` |
+| 0.135 | 5.1 | `E.macro_auprc` |
+| 0.031 | abstract, 5.1, 5.2, discussion, conclusion | `E.macro_f1` |
+| 12,000 | abstract-adjacent, 4, 5.1, 5.2, Table 4 | `E.n_test` |
+| 0.849 / 0.830 / 0.827 / 0.660 / 0.643 and all 14 bars + whiskers in Fig. 3 | 5.1, Fig. 3 | `E.per_label_auroc`, `E.per_label_auroc_ci` |
+| 11 of 14 labels silent | abstract, 5.2, Table 3, 5.3, discussion, conclusion, limitations | `E.operating_point.per_label`, count of `sensitivity == 0.0`; recomputed by `C` |
+| 0.143 / 0.110 / 0.012 (sens), 0.987 / 0.967 / 0.999 (spec), 0.599 / 0.415 / 0.350 (PPV) | Table 3 | `E.operating_point.per_label` for Effusion, Infiltration, Pneumothorax |
+| 1.2% | 5.2 | Pneumothorax `sensitivity` 0.01188 |
+| 0.019 / 0.997 / 0.097 | 5.2, Table 3 | `E.operating_point.macro` |
+| prevalences 0.121 / 0.175 / 0.049, range 0.002 to 0.109, 17.5%, 0.2%, "below 5%" | 5.2, 5.3, Table 3 | `support_pos / (support_pos + support_neg)` per label, computed by `C` |
+| 0.045, 0.018 | abstract, 5.3, discussion | `E.calibration.brier`, `E.calibration.ece` |
+| **0.0472**, **0.0453**, 0.0019, 4%, "within 0.002" | abstract, 5.3, conclusion | `C` output: macro of `p(1-p)` over the 14 prevalences vs `E.calibration.brier` |
+| B = 1000, 95%, alpha 0.05 | 4 | `E.bootstrap` |
+| 0.000 delta, n = 24 | 5.5, Table 4 | `A.profile.max_prob_delta`, `A.profile.n_images` |
+| 101, 41, 41.4, 36.2, 36, 0.03, 141, 136, "about 40 ms" | 5.5, Table 4, limitations | `A.profile.latency` per condition and stage |
+| 0.917, 0.979, 0.866, 0.533, 0.620, 0.434, 350 | 5.4 | `S.per_label_auroc` (means of the two groups of seven), `S.n_test` |
+| 7,200 / 800 / 8,000, 10% | 4, 5.1, limitations | `configs/chestmnist.yaml` reproduce command (`--n-train-val 8000`) + `models/classification/train.py:66` (10% holdout) |
+| 3e-4, 1e-5, batch 32, four epochs, dropout 0.2, seed 42 | 4, 3.1 | `configs/chestmnist.yaml` |
+| 64x64, 224x224 | 4, 3.1, Fig. 3 caption | `prepare_chestmnist.py --size 64`; `configs/chestmnist.yaml data.image_size: 224` |
+| 0.5 threshold | 3.3, 4, 5.2, 5.3 | `configs/chestmnist.yaml report.confidence_threshold` |
+| 14 / 11 / 11 labels, k = 3, 3x3 grid, 14x14 ViT grid | abstract, 3.x, Table 1 | `models/common/modalities.py`, `models/explainability/` |
+| 112,120, 45 GB, 14 pathologies | 2, 4 | cited to the NIH ChestX-ray14 release |
+| ~0.77 | 5.1 | **literature value** cited to MedMNIST v2 (see below) |
+
+Not traced to a repository file: the MedMNIST baseline only. Everything else above
+either reads from a committed JSON key, a committed config, or arithmetic over
+those, reproducible with `python paper/calibration_baseline.py`.
+
 ## One number that is not repo-traceable
 
 The MedMNIST v2 DenseNet-121 baseline of approximately 0.77 AUROC is a literature
