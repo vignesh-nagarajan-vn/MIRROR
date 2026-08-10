@@ -215,8 +215,10 @@ reports.
 [`paper/`](paper/) (the write-up; `paper/main.tex` is the compilable source, a
 **complete, all-measured draft**. medRxiv (Radiology) declined the work as a
 technical development rather than biomedical research; the current version is
-**v8**, submitted to SSRN on 2026-08-06 as abstract 7245078 (CC BY-NC-ND,
-moderation pending): the v6 two-author title block restored (research mentor
+**v8**, submitted to SSRN on 2026-08-06 and now live as preprint abstract
+7245078 (CC BY-NC-ND,
+https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7245078): the v6
+two-author title block restored (research mentor
 beside the corresponding author with his qualifiers) plus the GIST internship
 affiliation on one line beneath both author blocks, still at the 8-page cap;
 compiled PDFs in [`paper/pdf-drafts/`](paper/pdf-drafts/)).

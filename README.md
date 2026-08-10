@@ -10,6 +10,8 @@ own evidence, and writes a clinician-style draft report. Completed as part of th
 
 Mentored by **Mr. Sriram Venkatapathy** (AI Research at Capital One, PhD-CS at IIT Hyderabad)
 
+**SSRN Preprint:** https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7245078
+
 **Live Demo:** https://mirror-ten-jet.vercel.app/
 
 </div>
@@ -328,9 +330,13 @@ plus format-only illustrative examples. Details:
 
 ## Paper
 
-**Status: submitted to SSRN on August 6, 2026, pending moderation.** The
-preprint is [SSRN abstract 7245078](https://ssrn.com/abstract=7245078), posted
-under a CC BY-NC-ND license. The paper first went through a medRxiv (Radiology)
+The paper lives in [`paper/`](paper/) (source [`paper/main.tex`](paper/main.tex), compiled
+PDFs in [`paper/pdf-drafts/`](paper/pdf-drafts/)) and is preprinted on SSRN:
+https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7245078
+
+**Status: live on SSRN as a preprint** ([abstract 7245078](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7245078)),
+submitted August 6, 2026 and posted under a CC BY-NC-ND license. The paper first
+went through a medRxiv (Radiology)
 cycle: screening asked for author details and institutional affiliation
 clarified (addressed in v7 with a single-author title page), and medRxiv
 ultimately declined the work as a technical development rather than biomedical
