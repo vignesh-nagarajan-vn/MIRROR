@@ -335,7 +335,8 @@ backbone's $224\times224$ input and normalized with ImageNet statistics; trainin
 \code{BCEWithLogitsLoss}, AdamW, a cosine schedule, and dropout $0.2$, selecting
 the checkpoint on best validation macro AUROC.
 
-\paragraph{DICOM ingest.} Real radiology data arrives as DICOM, and the gap
+\subsection{DICOM ingest}
+Real radiology data arrives as DICOM, and the gap
 between that and a PNG is not a file-format detail. Stored pixel values are not
 display values: they must pass through the modality LUT (the rescale slope and
 intercept, which is what turns raw CT counts into Hounsfield units) and then the
