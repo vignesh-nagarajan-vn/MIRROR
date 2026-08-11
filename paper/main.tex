@@ -56,15 +56,21 @@
 \emergencystretch=1.6em
 \hyphenpenalty=150
 
-% Slightly tighter, more journal-like headings. The \paragraph entry matters as
-% much as the other two: article's default leaves 3.25ex above every run-in
-% heading, which reads as a stray blank line once the section skips are tightened.
+% Slightly tighter, more journal-like headings.
 \titlespacing*{\section}{0pt}{1.5ex plus .3ex minus .2ex}{0.9ex plus .2ex}
 \titlespacing*{\subsection}{0pt}{1.2ex plus .3ex minus .2ex}{0.6ex plus .2ex}
-\titlespacing*{\paragraph}{0pt}{1.1ex plus .2ex minus .1ex}{0.5em}
 \titleformat{\section}{\normalfont\large\bfseries}{\thesection}{0.6em}{}
 \titleformat{\subsection}{\normalfont\normalsize\bfseries}{\thesubsection}{0.6em}{}
+
+% A run-in \paragraph heading gets NO extra space above it and the same
+% \parindent as any other paragraph, so it is typographically identical to an
+% ordinary paragraph that happens to open in bold. \parskip is zero everywhere
+% else, so article's default 3.25ex, or any nonzero value, would make these
+% headings the only place in the document with a gap between paragraphs, which
+% reads as an irregularity. Every bold lead-in in the paper goes through this one
+% command, including the ones in Section 7, so they cannot drift apart.
 \titleformat{\paragraph}[runin]{\normalfont\bfseries}{}{0pt}{}
+\titlespacing{\paragraph}{\parindent}{0pt}{0.5em}
 
 % \twocolumn turns on \flushbottom, which pads columns to equal depth by
 % stretching whatever glue it can find. With \parskip at zero the only glue
@@ -898,12 +904,12 @@ architecture diagram vouch for the other's behaviour.
 \section{Ethics, Safety, and Limitations}
 \label{sec:ethics}
 
-\textbf{Not a medical device.} MIRROR is a research prototype, not reviewed or
+\paragraph{Not a medical device.} MIRROR is a research prototype, not reviewed or
 cleared by any regulatory body; every output is a draft that must be verified by a
 licensed radiologist and must not be used for diagnosis or treatment. Each report
 carries that disclaimer explicitly.
 
-\textbf{A worked example of ungrounded detail.} Fig.~\ref{fig:qual} shows a
+\paragraph{A worked example of ungrounded detail.} Fig.~\ref{fig:qual} shows a
 generated report beside its evidence overlay. Two phrases in it are worth quoting:
 the cardiac silhouette is described as normal \emph{with a cardiothoracic ratio
 below $0.5$}, and the \emph{costophrenic angles are noted to be clear}. The system
@@ -920,14 +926,14 @@ of the verified finding next to it. This is why finding-level grounding cannot b
 described as making a report safe, and why the AI-generated-draft disclaimer is
 load-bearing rather than boilerplate.
 
-\textbf{Human subjects and data governance.} No ethics-board review was required:
+\paragraph{Human subjects and data governance.} No ethics-board review was required:
 this work uses only existing, public, de-identified benchmark datasets, namely NIH
 ChestX-ray14 and its MedMNIST derivative, and collects no new data from human
 subjects. Those datasets are governed by their own data use agreements; no raw
 images, weights, or protected health information are committed to version control,
 and the DICOM ingest extracts only non-PHI technical tags.
 
-\textbf{Limitations.} Our one quantitative benchmark is ChestMNIST, at $64$-pixel
+\paragraph{Limitations.} Our one quantitative benchmark is ChestMNIST, at $64$-pixel
 source resolution on a $7{,}200$-image budget, and at its default threshold the
 classifier is not a working detector (Section~\ref{sec:operating}). No clinical
 claim of any kind follows from it. Multi-modality is architectural: the brain-MRI
