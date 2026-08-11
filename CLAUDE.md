@@ -216,8 +216,13 @@ reports.
 medRxiv (Radiology) declined the work as a technical development rather than
 biomedical research; it is now an SSRN preprint, abstract 7245078 (CC BY-NC-ND,
 https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7245078). The current version
-is **v9**, an accuracy revision of the v8 submission at the same 8-page cap: the
-post-hoc invariance check is a regression test rather than a headline claim, the
+is **v10**, a correctness pass over v9 at the same 8-page cap (MedMNIST baseline
+named ResNet-18/50 not DenseNet-121; Guo citation moved to the ECE definition it
+supports; Table 3 states how macro PPV and Lift aggregate and that lifts use
+unrounded values; Table 4 shows per-stage latency that sums per row; the 12,000
+test images identified as a seeded subsample of the official 22,433; no measured
+number changed). It builds on **v9**, the accuracy revision of the v8 submission:
+the post-hoc invariance check is a regression test rather than a headline claim, the
 ablation table no longer prints one AUROC measurement as three, both screenshot
 figures name the hosted vision-LLM engine that produced them, and the paper states
 that the grounding guarantee holds for the local PyTorch stack only. Newly
@@ -228,6 +233,7 @@ prevalence (every label ranks 1.6x to 6.8x above a random ranker, so the failure
 is at the threshold, not in the representation). `paper/calibration_baseline.py`
 recomputes all of those plus the exact 14-row panel typeset in the paper, so the
 table cannot drift from the JSON.
-[`paper/REVISION-NOTES-v9.md`](paper/REVISION-NOTES-v9.md) maps every changed
+[`paper/REVISION-NOTES-v10.md`](paper/REVISION-NOTES-v10.md) and
+[`paper/REVISION-NOTES-v9.md`](paper/REVISION-NOTES-v9.md) map every changed
 claim to its justifying file; compiled PDFs in
 [`paper/pdf-drafts/`](paper/pdf-drafts/)).

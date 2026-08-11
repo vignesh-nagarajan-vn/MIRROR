@@ -1,9 +1,12 @@
 % =============================================================================
 %  MIRROR - Multimodal Intelligent Radiology Reasoning and Observation Reporter
-%  SSRN preprint (v9). Accuracy revision of v8 (see paper/REVISION-NOTES-v9.md),
-%  expanded: the full per-label clinical panel, the AUPRC-over-prevalence result,
-%  the evidence-payload listing, and the synthetic harness control are restored
-%  or added. Max 8 pages.
+%  SSRN preprint (v10). Correctness pass over v9 (see paper/REVISION-NOTES-v10.md):
+%  the MedMNIST baseline is named ResNet-18/50 not DenseNet-121, the Guo citation
+%  is moved to the ECE definition it supports, Table 3 states how macro PPV and
+%  macro Lift are aggregated and that lifts use unrounded values, Table 4 shows
+%  per-stage latency that sums per row, and the 12,000 test images are identified
+%  as a seeded subsample of the official 22,433. No measured number changed.
+%  Max 8 pages.
 %
 %  HOW TO USE: compiles in Overleaf or any TeX install (engine: pdfLaTeX) with no
 %  bibtex step; the architecture figure and the two result graphs are drawn inline
@@ -493,7 +496,7 @@ Needs         & Python, $\sim$6\,GB    & one API-key variable \\
 
 \begin{figure*}[tp]
 \centering
-\figorbox{figures/ui-predictions.png}{0.70\textwidth}{MIRROR reading-room UI screenshot}
+\figorbox{figures/ui-predictions.png}{0.56\textwidth}{MIRROR reading-room UI screenshot}
 \caption{The MIRROR ``reading-room'' interface, showing a session on the
 \textbf{hosted serverless engine}, where a vision LLM reads the image directly and
 returns probabilities, boxes, and report text. This is \emph{not} the benchmarked
@@ -539,7 +542,9 @@ its downsampled derivative in MedMNIST~v2 (CC~BY~4.0), which carries the
 \emph{identical} 14-label taxonomy in the identical order, so MIRROR runs on it
 unchanged. We sample $8{,}000$ studies from the pooled official train and
 validation splits and hold out $10\%$, giving $7{,}200$ training and $800$
-validation images, and evaluate on $12{,}000$ held-out test images. Training is
+validation images, and evaluate on $12{,}000$ test images, a fixed random
+subsample (seed $42$) of the official $22{,}433$-image test split, which is
+otherwise held out untouched. Training is
 DenseNet-121 on CPU, AdamW at learning rate $3\times10^{-4}$, weight decay
 $10^{-5}$, batch $32$, best of a four-epoch run on validation macro AUROC. Source
 images are $64\times64$ and are \emph{upsampled} to the backbone's $224\times224$
@@ -551,8 +556,8 @@ destroyed before training begins.
 \emph{Discrimination:} per-label and macro AUROC, and macro AUPRC.
 \emph{Operating point:} sensitivity, specificity, PPV, and NPV at the $0.5$
 threshold, the quantities a clinician actually reads off a model.
-\emph{Calibration:} Brier score and Expected Calibration Error over $10$
-equal-width bins. Two of these are uninterpretable in isolation on an imbalanced
+\emph{Calibration:} Brier score and Expected Calibration
+Error~\cite{guo2017calibration} over $10$ equal-width bins. Two of these are uninterpretable in isolation on an imbalanced
 multi-label task, so we compute their no-skill floors from the label prevalences
 and report both against them: a random ranker's expected average precision equals
 the prevalence $p$, and a constant predictor that always returns $p$ scores a
@@ -589,7 +594,12 @@ precision a uniformly random ranker would obtain, so it is the factor by which t
 model beats chance at ranking that label. Every label ranks above chance; eleven of
 them emit no positive prediction at the $0.5$ threshold, which is why their
 sensitivity is $0.000$, their specificity $1.000$, and their PPV undefined. Hernia
-rests on $24$ positive cases and is the least reliable row.}
+rests on $24$ positive cases and is the least reliable row. Lifts use unrounded
+AUPRC and prevalence, so a row's Lift can differ from the ratio of its displayed
+values (Fibrosis $1.6$, Hernia $5.4$). The \textbf{Macro} Lift is the mean of the
+per-label lifts, not macro AUPRC over macro prevalence ($2.6\times$); the Macro PPV
+averages the eleven undefined labels as zero, and is $0.455$ over the three that
+fire.}
 \label{tab:panel}
 \footnotesize
 \begin{tabular}{@{}lcccccccc@{}}
@@ -621,9 +631,10 @@ Nodule             & 0.059 & 0.643 & (0.622--0.662) & 0.123 & 2.1$\times$ & 0.00
 \label{sec:chestmnist}
 The DenseNet-121 reaches macro AUROC $0.729$ (bootstrap $95\%$ CI
 $[0.718,0.738]$) on the $12{,}000$-image test split, with macro AUPRC $0.135$ and
-macro F1 $0.031$. The published MedMNIST~v2 DenseNet-121 baseline for this dataset
-is approximately $0.77$~\cite{yang2023medmnist}; ours is $0.04$ AUROC below it.
-That baseline was trained on the full training split for many epochs on a GPU,
+macro F1 $0.031$. The published MedMNIST~v2 baseline for this dataset, a
+ResNet-18/50 at $224$\,px (v2 reports no DenseNet-121), is approximately
+$0.77$~\cite{yang2023medmnist}; ours is $0.04$ AUROC below it. That ResNet
+baseline was trained on the full training split for many epochs on a GPU,
 while ours used $7{,}200$ images for four epochs on a CPU. Both statements are
 facts and we draw no inference from putting them side by side: a smaller budget
 explains nothing about whether the gap would close, and we did not test that.
@@ -687,8 +698,8 @@ classifier scores $\mathbf{0.0453}$. The entire measured calibration advantage o
 a DenseNet-121 over a constant is $0.0019$ Brier, about $4\%$.
 
 That aggregate calibration metrics flatter a model under class imbalance is a
-documented pitfall~\cite{guo2017calibration}, not our finding; the experiment
-makes it concrete. Under the class
+documented pitfall, not our finding; the arithmetic above makes it concrete.
+Under the class
 imbalance typical of multi-label radiology, where
 most labels sit below $5\%$ prevalence, $p(1-p)$ is small for almost every label,
 so the no-skill floor of the aggregate metric is already low and there is little
@@ -823,31 +834,33 @@ The cost that does vary is latency (Table~\ref{tab:ablation}). Prediction takes
 about $100$\,ms per study on CPU, the Grad-CAM pass adds $36$ to $41$\,ms, and the
 offline template report adds $0.03$\,ms. The two conditions that run Grad-CAM
 measured $41.4$ and $36.2$\,ms for the same work, which is the run-to-run spread of
-a 24-study CPU profile and is why the full-pipeline total of $136$\,ms came in below
-the localization-only total of $141$\,ms. Interpretability here costs roughly a
-$40\%$ increase in wall-clock time over a bare classifier: all of that increase
-sits in the saliency pass, and none of it in the report.
+a 24-study CPU profile and is why the full-pipeline total of $136.2$\,ms came in
+below the localization-only total of $140.9$\,ms. Interpretability here costs
+roughly a $40\%$ increase in wall-clock time over a bare classifier: all of that
+increase sits in the saliency pass, and none of it in the report.
 
 \begin{table}[tbp]
 \centering
-\caption{Ablation conditions with measured per-stage latency (profiled over $24$
-studies on CPU). \textbf{There is one AUROC measurement here, not three.} Macro
-AUROC $=0.729$ is the single value from Table~\ref{tab:panel}; it applies
-unchanged to every row because the post-hoc layers cannot alter a prediction, and
-the harness copies it into each row for that reason. What differs between rows is
-latency; what verifies the rows are comparable is the probability delta.}
+\caption{Ablation conditions with measured per-stage wall-clock latency
+(ms/study, mean over $24$ studies on CPU). Each row is a separate profiling run,
+so its \emph{Predict} time carries the run-to-run spread of a 24-study CPU
+profile; within each row \emph{Predict $+$ Localize $+$ Report} equals
+\emph{Total}. That spread, not any change in work, is why full MIRROR totals less
+than localization alone. \textbf{There is one AUROC measurement here, not three:}
+macro AUROC $=0.729$ from Table~\ref{tab:panel} applies unchanged to every row
+because the post-hoc layers cannot alter a prediction.}
 \label{tab:ablation}
 \footnotesize
-\begin{tabular}{@{}lccr@{}}
+\begin{tabular}{@{}lrrrr@{}}
 \toprule
-\textbf{Condition} & \textbf{Local.} & \textbf{Report} & \textbf{ms/study} \\
+\textbf{Condition} & \textbf{Predict} & \textbf{Localize} & \textbf{Report} & \textbf{Total} \\
 \midrule
-Classification only       &            &            & 101 \\
-$+$ Evidence localization & \checkmark &            & 141\,($+$41) \\
-Full MIRROR               & \checkmark & \checkmark & 136\,($+$0.03) \\
+Classification only       & 101.2 & ---  & ---  & 101.2 \\
+$+$ Evidence localization & \phantom{0}99.5 & 41.4 & ---  & 140.9 \\
+Full MIRROR               & 100.0 & 36.2 & 0.03 & 136.2 \\
 \midrule
-\multicolumn{4}{@{}l}{\footnotesize Macro AUROC $=0.729$ in every row: one measurement.} \\
-\multicolumn{4}{@{}l}{\footnotesize Max probability change vs.\ baseline $=0.000$, $n{=}24$.} \\
+\multicolumn{5}{@{}l}{\footnotesize Macro AUROC $=0.729$ in every row: one measurement.} \\
+\multicolumn{5}{@{}l}{\footnotesize Max probability change vs.\ baseline $=0.000$, $n{=}24$.} \\
 \bottomrule
 \end{tabular}
 \end{table}

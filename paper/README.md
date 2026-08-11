@@ -11,8 +11,15 @@ submitted to **SSRN** on August 6, 2026 and live as
 (CC BY-NC-ND). It first went to medRxiv (Radiology), which declined the work as a
 technical development rather than biomedical research.
 
-The current revision is **v9** in [`pdf-drafts/`](pdf-drafts/), an accuracy pass
-over v8 with no new experiments. What changed, in short: the post-hoc invariance
+The current revision is **v10** in [`pdf-drafts/`](pdf-drafts/), a correctness pass
+over v9 (see [`REVISION-NOTES-v10.md`](REVISION-NOTES-v10.md)): the MedMNIST
+baseline is named ResNet-18/50 rather than DenseNet-121, the Guo citation moves to
+the ECE definition it actually supports, Table 3 states how macro PPV and macro
+Lift are aggregated and that lifts come from unrounded values, Table 4 shows
+per-stage latency that sums per row, and the 12,000 test images are identified as a
+seeded subsample of the official 22,433. No measured number changed and the paper
+stays at 8 pages. v9 was itself an accuracy pass over v8 with no new experiments;
+what changed there, in short: the post-hoc invariance
 check is now a regression test rather than a headline claim, because a maximum
 probability delta of zero is true by construction and not a finding; the ablation
 table no longer prints one AUROC measurement in three rows as though it were three
@@ -31,12 +38,13 @@ failure at the threshold rather than in the representation.
 file that justifies it. The title block, author blocks, GIST affiliation,
 acknowledgments, and declarations are unchanged from v8.
 
-The current [`pdf-drafts/MIRROR_Paper_Draft_v9.pdf`](pdf-drafts/) is intended to
+The current [`pdf-drafts/MIRROR_Paper_Draft_v10.pdf`](pdf-drafts/) is intended to
 replace the version now posted on SSRN. Since submission, Section 5.4 was reframed
-to cite the calibration and precision-recall no-skill floors as established
-results rather than a novel finding, three references were added for them, and the
-reading-room UI screenshot was enlarged, all under the same 8-page cap and with no
-number changed. See [`REVISION-NOTES-v9.md`](REVISION-NOTES-v9.md).
+to cite the calibration and precision-recall no-skill floors as established results
+rather than a novel finding (v9), and a round of correctness fixes followed (v10,
+above). All of it holds the 8-page cap and changes no measured number. See
+[`REVISION-NOTES-v9.md`](REVISION-NOTES-v9.md) and
+[`REVISION-NOTES-v10.md`](REVISION-NOTES-v10.md).
 
 Everything textual lives in the one file: literature review, architecture, and
 experimental setup, an inline TikZ architecture figure, two inline `pgfplots`
