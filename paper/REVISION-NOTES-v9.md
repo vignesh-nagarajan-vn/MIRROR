@@ -10,6 +10,22 @@ or to [`calibration_baseline.py`](calibration_baseline.py). The v8 draft is kept
 at [`pdf-drafts/MIRROR_Paper_Draft_v8.pdf`](pdf-drafts/MIRROR_Paper_Draft_v8.pdf)
 for comparison.
 
+## Update to replace the posted SSRN version
+
+The current [`pdf-drafts/MIRROR_Paper_Draft_v9.pdf`](pdf-drafts/MIRROR_Paper_Draft_v9.pdf)
+is intended to replace the version now posted on SSRN (abstract 7245078). Two
+changes since submission, both framing or layout, with no new experiments and no
+number touched:
+
+- **Section 5.4 no longer reads as a novelty claim.** The constant-prevalence
+  Brier floor and the AUPRC-over-prevalence floor are textbook, so the section
+  now cites them (Guo et al. 2017 for calibration; Davis and Goadrich 2006 and
+  Saito and Rehmsmeier 2015 for the precision-recall floor, added in Section 5.3)
+  and frames the point as a documented pitfall made concrete rather than as our
+  finding: a model silent on 11 of 14 labels still posts a Brier of 0.045.
+- **The reading-room UI screenshot (Figure 3) is enlarged** from 0.56 to 0.70 of
+  the text width, held under the same 8-page cap.
+
 ## Claims changed
 
 | # | v8 said | v9 says | Justification |

@@ -493,7 +493,7 @@ Needs         & Python, $\sim$6\,GB    & one API-key variable \\
 
 \begin{figure*}[tp]
 \centering
-\figorbox{figures/ui-predictions.png}{0.56\textwidth}{MIRROR reading-room UI screenshot}
+\figorbox{figures/ui-predictions.png}{0.70\textwidth}{MIRROR reading-room UI screenshot}
 \caption{The MIRROR ``reading-room'' interface, showing a session on the
 \textbf{hosted serverless engine}, where a vision LLM reads the image directly and
 returns probabilities, boxes, and report text. This is \emph{not} the benchmarked
@@ -534,7 +534,7 @@ of the system measured.}
 
 \paragraph{Data.} MIRROR targets NIH ChestX-ray14~\cite{wang2017chestxray}
 ($112{,}120$ radiographs, 14 multi-label pathologies). Because the full release is
-$45$~GB and needs a GPU, we evaluate on \textbf{ChestMNIST}~\cite{yang2023medmnist},
+$45$\,GB and needs a GPU, we evaluate on \textbf{ChestMNIST}~\cite{yang2023medmnist},
 its downsampled derivative in MedMNIST~v2 (CC~BY~4.0), which carries the
 \emph{identical} 14-label taxonomy in the identical order, so MIRROR runs on it
 unchanged. We sample $8{,}000$ studies from the pooled official train and
@@ -612,7 +612,7 @@ Infiltration       & 0.175 & 0.660 & (0.648--0.673) & 0.298 & 1.7$\times$ & 0.11
 Nodule             & 0.059 & 0.643 & (0.622--0.662) & 0.123 & 2.1$\times$ & 0.000 & 1.000 & --- \\
 \midrule
 \textbf{Macro} & & \textbf{0.729} & \textbf{(0.718--0.738)} & \textbf{0.135} & \textbf{3.1$\times$} & \textbf{0.019} & \textbf{0.997} & \textbf{0.097} \\
-\multicolumn{9}{@{}l}{Macro F1 $0.031$ \qquad Brier $0.045$ against a constant-prevalence floor of $0.047$ \qquad ECE $0.018$ \qquad bootstrap $B=1000$} \\
+\multicolumn{9}{@{}l}{Macro F1 $0.031$ \qquad Brier $0.045$ against a constant-prevalence floor of $0.047$ \qquad ECE $0.018$ \qquad bootstrap $B{=}1000$} \\
 \bottomrule
 \end{tabular}
 \end{table*}
@@ -659,7 +659,8 @@ and the destroyed resolution, not a design decision.
 The natural next question is whether the eleven silent labels are silent because
 the model learned nothing about them. They are not, and separating those two
 explanations is the most useful thing the panel does. A uniformly random ranker's
-expected average precision equals the label's prevalence, so AUPRC only means
+expected average precision equals the label's
+prevalence~\cite{davis2006pr,saito2015prc}, so AUPRC only means
 something as a ratio to that floor. Expressed as lift over prevalence, every one
 of the 14 labels ranks better than chance: from $1.6\times$ for Fibrosis to
 $6.8\times$ for Cardiomegaly, with a mean of $3.1\times$
@@ -685,8 +686,10 @@ $\mathbf{0.0472}$ for a model that has learned nothing at all. Our trained
 classifier scores $\mathbf{0.0453}$. The entire measured calibration advantage of
 a DenseNet-121 over a constant is $0.0019$ Brier, about $4\%$.
 
-We report this as a finding rather than an embarrassment, because it generalizes
-past our model. Under the class imbalance typical of multi-label radiology, where
+That aggregate calibration metrics flatter a model under class imbalance is a
+documented pitfall~\cite{guo2017calibration}, not our finding; the experiment
+makes it concrete. Under the class
+imbalance typical of multi-label radiology, where
 most labels sit below $5\%$ prevalence, $p(1-p)$ is small for almost every label,
 so the no-skill floor of the aggregate metric is already low and there is little
 room between it and a perfect score. A model silent on 11 of 14 labels still posts
@@ -780,7 +783,7 @@ frequency or ordering.
   ytick={Pleural Thickening,Pneumothorax,Atelectasis,Pneumonia,
     Emphysema,Fibrosis,Hernia,Edema,Infiltration,Effusion,Consolidation,
     Cardiomegaly,Nodule,Mass},
-  xlabel={AUROC (synthetic test set, $N=350$)},
+  xlabel={AUROC (synthetic test set, $N{=}350$)},
   xmajorgrids, grid style={gray!25},
   tick label style={font=\scriptsize},
   label style={font=\footnotesize},
@@ -817,11 +820,11 @@ asserts the same property per modality against stubbed backbones so it holds
 structurally rather than only for the chest checkpoint.
 
 The cost that does vary is latency (Table~\ref{tab:ablation}). Prediction takes
-about $100$~ms per study on CPU, the Grad-CAM pass adds $36$ to $41$~ms, and the
-offline template report adds $0.03$~ms. The two conditions that run Grad-CAM
-measured $41.4$ and $36.2$~ms for the same work, which is the run-to-run spread of
-a 24-study CPU profile and is why the full-pipeline total of $136$~ms came in below
-the localization-only total of $141$~ms. Interpretability here costs roughly a
+about $100$\,ms per study on CPU, the Grad-CAM pass adds $36$ to $41$\,ms, and the
+offline template report adds $0.03$\,ms. The two conditions that run Grad-CAM
+measured $41.4$ and $36.2$\,ms for the same work, which is the run-to-run spread of
+a 24-study CPU profile and is why the full-pipeline total of $136$\,ms came in below
+the localization-only total of $141$\,ms. Interpretability here costs roughly a
 $40\%$ increase in wall-clock time over a bare classifier: all of that increase
 sits in the saliency pass, and none of it in the report.
 
@@ -840,11 +843,11 @@ latency; what verifies the rows are comparable is the probability delta.}
 \textbf{Condition} & \textbf{Local.} & \textbf{Report} & \textbf{ms/study} \\
 \midrule
 Classification only       &            &            & 101 \\
-$+$ Evidence localization & \checkmark &            & 141 \ ($+$41) \\
-Full MIRROR               & \checkmark & \checkmark & 136 \ ($+$0.03) \\
+$+$ Evidence localization & \checkmark &            & 141\,($+$41) \\
+Full MIRROR               & \checkmark & \checkmark & 136\,($+$0.03) \\
 \midrule
 \multicolumn{4}{@{}l}{\footnotesize Macro AUROC $=0.729$ in every row: one measurement.} \\
-\multicolumn{4}{@{}l}{\footnotesize Max probability change vs.\ baseline $=0.000$, $n=24$.} \\
+\multicolumn{4}{@{}l}{\footnotesize Max probability change vs.\ baseline $=0.000$, $n{=}24$.} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -943,7 +946,7 @@ trained checkpoints, so MIRROR makes no predictive claim on those modalities.
 Explanation quality is unmeasured. The pointing-game and IoU protocol is
 implemented but not run, and no reader study has been conducted, so we have no
 evidence that the localization or report layers help a human, only that they cost
-about $40$~ms. Class-activation maps are coarse and can highlight context rather
+about $40$\,ms. Class-activation maps are coarse and can highlight context rather
 than lesion~\cite{adebayo2018sanity}, and we have not run the sanity checks that
 would detect it. The $3\times3$ location grid is a deliberately coarse anatomical
 descriptor, and Hernia aside, the panel's narrowest intervals still rest on a
@@ -1017,7 +1020,7 @@ was conducted as part of the GIST 2026 Summer Research Internship.
 \balance
 \begin{thebibliography}{99}
 \scriptsize
-\setlength{\itemsep}{1pt}
+\setlength{\itemsep}{0pt}
 \setlength{\parsep}{0pt}
 
 \bibitem{wang2017chestxray}
@@ -1120,6 +1123,20 @@ Clinically accurate chest X-ray report generation. \emph{MLHC}, 2019.
 E.~Tjoa and C.~Guan.
 A survey on explainable artificial intelligence (XAI): Toward medical XAI.
 \emph{IEEE TNNLS}, 32(11):4793--4813, 2021.
+
+\bibitem{davis2006pr}
+J.~Davis and M.~Goadrich.
+The relationship between precision-recall and ROC curves. \emph{ICML},
+233--240, 2006.
+
+\bibitem{saito2015prc}
+T.~Saito and M.~Rehmsmeier.
+The precision-recall plot is more informative than the ROC plot when evaluating
+binary classifiers on imbalanced datasets. \emph{PLOS ONE}, 10(3):e0118432, 2015.
+
+\bibitem{guo2017calibration}
+C.~Guo, G.~Pleiss, Y.~Sun, and K.~Q. Weinberger.
+On calibration of modern neural networks. \emph{ICML}, 1321--1330, 2017.
 
 \end{thebibliography}
 

@@ -31,10 +31,17 @@ failure at the threshold rather than in the representation.
 file that justifies it. The title block, author blocks, GIST affiliation,
 acknowledgments, and declarations are unchanged from v8.
 
+The current [`pdf-drafts/MIRROR_Paper_Draft_v9.pdf`](pdf-drafts/) is intended to
+replace the version now posted on SSRN. Since submission, Section 5.4 was reframed
+to cite the calibration and precision-recall no-skill floors as established
+results rather than a novel finding, three references were added for them, and the
+reading-room UI screenshot was enlarged, all under the same 8-page cap and with no
+number changed. See [`REVISION-NOTES-v9.md`](REVISION-NOTES-v9.md).
+
 Everything textual lives in the one file: literature review, architecture, and
 experimental setup, an inline TikZ architecture figure, two inline `pgfplots`
 result graphs, the full 14-row clinical panel and the other result tables, and an
-embedded 21-source bibliography. The only external assets are the three UI
+embedded 24-source bibliography. The only external assets are the three UI
 screenshots in [`figures/`](figures/) (`ui-predictions.png`,
 `overlay-consolidation.png`, `report-findings.png`); upload that folder alongside
 `main.tex`. Each screenshot is guarded by `\IfFileExists`, so the document still
