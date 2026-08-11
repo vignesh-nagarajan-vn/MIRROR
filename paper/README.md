@@ -15,31 +15,43 @@ The current revision is **v9** in [`pdf-drafts/`](pdf-drafts/), an accuracy pass
 over v8 with no new experiments. What changed, in short: the post-hoc invariance
 check is now a regression test rather than a headline claim, because a maximum
 probability delta of zero is true by construction and not a finding; the ablation
-table no longer prints one AUROC measurement in three rows as though it were
-three results; both screenshot figures state that the **hosted vision-LLM
-engine** produced them, and the paper says plainly that the grounding guarantee
-holds for the local PyTorch stack only, since the hosted engine reads pixels at
-every stage. Two things are newly reported: the operating point, where 11 of 14
-labels emit no positive prediction at all at threshold 0.5, and a calibration
-baseline showing that a constant-prevalence predictor scores macro Brier 0.047
-against the model's 0.045. [`REVISION-NOTES-v9.md`](REVISION-NOTES-v9.md) maps
-every changed claim to the file that justifies it. The title block, author blocks,
-GIST affiliation, acknowledgments, and declarations are unchanged from v8.
+table no longer prints one AUROC measurement in three rows as though it were three
+results; both screenshot figures state that the **hosted vision-LLM engine**
+produced them, and the paper says plainly that the grounding guarantee holds for
+the local PyTorch stack only, since the hosted engine reads pixels at every stage.
+
+Three things are newly reported, all derived from data already committed. The
+**operating point**: 11 of 14 labels emit no positive prediction at all at
+threshold 0.5. A **calibration baseline**: a constant-prevalence predictor scores
+macro Brier 0.047 against the model's 0.045. And **AUPRC as lift over
+prevalence**: every label ranks 1.6x to 6.8x better than a random ranker, so the
+discrimination is real on labels where the decisions are absent, which locates the
+failure at the threshold rather than in the representation.
+[`REVISION-NOTES-v9.md`](REVISION-NOTES-v9.md) maps every changed claim to the
+file that justifies it. The title block, author blocks, GIST affiliation,
+acknowledgments, and declarations are unchanged from v8.
 
 Everything textual lives in the one file: literature review, architecture, and
-experimental setup, an inline TikZ architecture figure, an inline `pgfplots`
-per-label AUROC graph, the result tables, and an embedded 16-source bibliography.
-The only external assets are the three UI screenshots in [`figures/`](figures/)
-(`ui-predictions.png`, `overlay-consolidation.png`, `report-findings.png`);
-upload that folder alongside `main.tex`. Each screenshot is guarded by
-`\IfFileExists`, so the document still compiles (showing a placeholder box) if the
-images are missing.
+experimental setup, an inline TikZ architecture figure, two inline `pgfplots`
+result graphs, the full 14-row clinical panel and the other result tables, and an
+embedded 21-source bibliography. The only external assets are the three UI
+screenshots in [`figures/`](figures/) (`ui-predictions.png`,
+`overlay-consolidation.png`, `report-findings.png`); upload that folder alongside
+`main.tex`. Each screenshot is guarded by `\IfFileExists`, so the document still
+compiles (showing a placeholder box) if the images are missing.
+
+The draft is typeset with `newtxtext`/`newtxmath` under T1, with widow and orphan
+penalties maxed and the `dbl*` float fractions raised so the two wide screenshot
+figures stay together as one plate instead of claiming a near-empty page. It
+compiles with no overfull boxes.
 
 Every number in the draft traces to a JSON committed under
 [`../results/`](../results/) or to [`calibration_baseline.py`](calibration_baseline.py),
-which recomputes the no-skill calibration baseline from the committed ChestMNIST
-evaluation. Nothing from `results/evaluation/` (the hand-written format
-placeholders) is cited. Quantitative results are **chest X-ray only**; the
+which recomputes the prevalences, the AUPRC lifts, the no-skill Brier floor, and
+the exact contents of the per-label panel from the committed ChestMNIST
+evaluation, so the typeset table cannot drift from the data. Nothing from
+`results/evaluation/` (the hand-written format placeholders) is cited.
+Quantitative results are **chest X-ray only**; the
 brain-MRI and head-CT paths are registered, routed, and exercised by the test
 suite but have no trained checkpoints, so the paper makes no predictive claim on
 them.

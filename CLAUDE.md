@@ -221,9 +221,13 @@ post-hoc invariance check is a regression test rather than a headline claim, the
 ablation table no longer prints one AUROC measurement as three, both screenshot
 figures name the hosted vision-LLM engine that produced them, and the paper states
 that the grounding guarantee holds for the local PyTorch stack only. Newly
-reported: the operating point (11 of 14 labels emit no positive prediction at
-threshold 0.5) and a no-skill calibration baseline (constant-prevalence Brier
-0.047 vs the model's 0.045, computed by `paper/calibration_baseline.py`).
+reported, all from already-committed data: the operating point (11 of 14 labels
+emit no positive prediction at threshold 0.5), a no-skill calibration baseline
+(constant-prevalence Brier 0.047 vs the model's 0.045), and AUPRC as lift over
+prevalence (every label ranks 1.6x to 6.8x above a random ranker, so the failure
+is at the threshold, not in the representation). `paper/calibration_baseline.py`
+recomputes all of those plus the exact 14-row panel typeset in the paper, so the
+table cannot drift from the JSON.
 [`paper/REVISION-NOTES-v9.md`](paper/REVISION-NOTES-v9.md) maps every changed
 claim to its justifying file; compiled PDFs in
 [`paper/pdf-drafts/`](paper/pdf-drafts/)).

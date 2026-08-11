@@ -38,6 +38,39 @@ and in the repo docs that carried them.
 | Labels with sensitivity 0.0 | (not reported) | **11 of 14** | Eleven labels in `operating_point.per_label` have sensitivity exactly 0.0. |
 | Synthetic no-signal mean AUROC | 0.557 | **0.533** | Mean of the seven no-signal per-label AUROCs in `eval_synthetic_densenet121.json` is 0.53306. Cross-check: (0.91689 + 0.53306) / 2 = 0.72497, which is the JSON's macro exactly. The 0.557 originated in `results/synthetic_validation/README.md` and was copied into the paper; both are now fixed. |
 
+## Added in the expanded pass
+
+The first cut of v9 came in under the page cap with room to spare. This pass fills
+it, all from data already committed and with no new experiments.
+
+| Addition | What it is | Source |
+| --- | --- | --- |
+| **Section 5.3, AUPRC against prevalence** | A uniformly random ranker's expected average precision equals the label prevalence, so AUPRC only means something as a ratio to that floor. Every one of the 14 labels ranks above chance, from 1.6x (Fibrosis) to 6.8x (Cardiomegaly), mean 3.1x. Eleven of those same labels emit no positive prediction. This separates the two failures: the model has learned a usable ordering on every label and converts it into a decision on almost none, so the fault is at the threshold rather than in the representation. | `per_label_auprc` divided by prevalence, computed by `calibration_baseline.py` |
+| **Table 3, the full clinical-reader panel** | The 14-row per-label table restored and widened: prevalence, AUROC with bootstrap CI, AUPRC, lift, sensitivity, specificity, PPV, plus the macro row. `calibration_baseline.py` prints this exact panel so the typeset table cannot drift from the JSON. | `eval_chestmnist_densenet121.json` |
+| **Figure 2, the evidence payload** | The literal text Layer 3 receives, one line per label with gloss, probability, status, and region. Makes the grounding claim concrete: it is a property of the payload's shape, not of prompt wording, which is why a test can assert it. | `models/report_generation/prompts.py` |
+| **Figure 6, the synthetic control** | The bar chart restored, and the seven signal-bearing labels are now named as fixed in the generator in advance (Mass, Nodule, Effusion, Infiltration, Consolidation, Edema, Cardiomegaly) rather than described as the top seven after the fact. Also notes the groups do not overlap: the worst signal label beats the best no-signal label by 0.25 AUROC. | `make_synthetic_samples.py` lines 74--81; `eval_synthetic_densenet121.json` |
+| **DICOM ingest rationale** | Expanded to say why the modality LUT, VOI/window LUT, and MONOCHROME1 inversion matter, and what silently goes wrong when they are skipped. | `models/common/dicom.py` |
+| **Bibliography restored to 21** | CheXpert, CAM, LIME, SHAP, and Doshi-Velez returned, with the literature review back to four paragraphs. | |
+
+## Typesetting
+
+Changed deliberately, since v8's settings produced stranded words and half-empty
+float pages:
+
+- `newtxtext` + `newtxmath` with T1 encoding, replacing the deprecated `times`
+  package (better math, correct hyphenation, real small caps).
+- `\widowpenalty`, `\clubpenalty`, `\displaywidowpenalty`, `\brokenpenalty` all at
+  10000, plus `\emergencystretch`, which is what removed the one-word last lines
+  ("modality tag", "no-skill floors.", "the report.").
+- `\dbltopfraction` and `\dblfloatpagefraction` raised. Starred floats obey the
+  `dbl*` parameters, not `\topfraction`; leaving them at their defaults is what
+  sent a pair of `figure*`s to a near-empty page of their own in the first cut.
+- Figures 3 and 4, the two hosted-engine screenshots, are declared back to back so
+  they stay together as one plate.
+- `titlesec` for tighter headings, `balance` for even columns on the final page,
+  `microtype` with protrusion and expansion.
+- Zero overfull boxes, down from three.
+
 ## Kept and given more room
 
 - The finding-level vs detail-level grounding distinction, promoted from a
@@ -54,24 +87,35 @@ and in the repo docs that carried them.
 
 ## Cut for the page budget
 
-Literature review compressed by about a third with the dataset and explanation
-paragraphs merged; the CheXpert, CAM, and Doshi-Velez citations dropped as
-decorative (21 references down to 16); contributions trimmed from 5 to 4; the old
-5.2 subsection collapsed; Discussion de-duplicated against Results and Conclusion;
-the per-label AUROC table cut as fully redundant with the per-label AUROC figure;
-Section 3.5 and Table 2 prose tightened.
+Contributions trimmed from 5 to 4; the old 5.2 subsection collapsed into
+Section 5.6; Discussion de-duplicated against Results and Conclusion; the ablation
+table narrowed from a full-width to a single-column float, since three rows never
+needed the width; Section 3.5, the Reproducibility block, and the Conclusion
+tightened. The 984-box count and the pointing-game/IoU numbers stay out entirely,
+because their only source is the hand-written placeholder JSON.
 
 ## Verification
 
-- Compiles with `pdflatex` in a single pass, no bibtex. Zero undefined references
-  or citations.
-- 8 pages exactly (`pdfinfo`).
+Run `python paper/calibration_baseline.py` to reproduce every derived number.
+
+- Compiles with `pdflatex`, no bibtex. Zero undefined references or citations, and
+  zero overfull boxes.
+- 8 pages exactly (`pdfinfo`), with every page substantially full and the final
+  page column-balanced.
+- 71 automated checks of PDF text against the committed JSONs pass, covering all
+  14 panel rows (prevalence, AUROC, CI, AUPRC, lift, sensitivity, specificity),
+  every headline metric, the ablation latencies, and the synthetic group means.
+  Six further checks report as failures only because `pdftotext` interleaves the
+  two-column layout and drops spacing inside math; each was confirmed correct by
+  rendering the page and reading it.
 - No string from `results/evaluation/*.json` (the hand-written placeholders)
   appears in the PDF; the placeholder localization numbers 0.6311, 0.2218, 0.6748
   and the 984-box count were all checked absent.
 - The banned v8 phrases were checked absent: "at no predictive cost", "within
   reach", "deliberately conservative", "1e-4" as the learning rate, and any claim
   of prediction across three modalities.
+- Abstract is 260 words, rewritten problem-first and kept identical to
+  [`abstract-ssrn.txt`](abstract-ssrn.txt).
 
 ## Numeric traceability (every number in the PDF)
 
@@ -92,8 +136,12 @@ Section 3.5 and Table 2 prose tightened.
 | 1.2% | 5.2 | Pneumothorax `sensitivity` 0.01188 |
 | 0.019 / 0.997 / 0.097 | 5.2, Table 3 | `E.operating_point.macro` |
 | prevalences 0.121 / 0.175 / 0.049, range 0.002 to 0.109, 17.5%, 0.2%, "below 5%" | 5.2, 5.3, Table 3 | `support_pos / (support_pos + support_neg)` per label, computed by `C` |
-| 0.045, 0.018 | abstract, 5.3, discussion | `E.calibration.brier`, `E.calibration.ece` |
-| **0.0472**, **0.0453**, 0.0019, 4%, "within 0.002" | abstract, 5.3, conclusion | `C` output: macro of `p(1-p)` over the 14 prevalences vs `E.calibration.brier` |
+| 0.045, 0.018 | abstract, 5.4, Table 3, discussion | `E.calibration.brier`, `E.calibration.ece` |
+| **0.0472**, **0.0453**, 0.0019, 4%, "within 0.002" | abstract, 5.4, conclusion | `C` output: macro of `p(1-p)` over the 14 prevalences vs `E.calibration.brier` |
+| Per-label AUPRC (0.011 to 0.413) and lift (1.6x to 6.8x, mean 3.1x) | abstract, 5.3, Table 3, discussion, conclusion | `E.per_label_auprc[label] / prevalence`, computed by `C` |
+| 0.25 AUROC gap between the synthetic groups | 5.5 | `S.per_label_auroc`: Edema 0.8658 minus Hernia 0.6201 |
+| 1,400 synthetic images | 5.5 | `configs/synthetic.yaml` header, `make_synthetic_samples.py -n 1400` |
+| The seven signal-bearing label names | 5.5, Fig. 6 | `make_synthetic_samples.py:74-81` |
 | B = 1000, 95%, alpha 0.05 | 4 | `E.bootstrap` |
 | 0.000 delta, n = 24 | 5.5, Table 4 | `A.profile.max_prob_delta`, `A.profile.n_images` |
 | 101, 41, 41.4, 36.2, 36, 0.03, 141, 136, "about 40 ms" | 5.5, Table 4, limitations | `A.profile.latency` per condition and stage |
