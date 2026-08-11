@@ -56,11 +56,21 @@
 \emergencystretch=1.6em
 \hyphenpenalty=150
 
-% Slightly tighter, more journal-like headings.
+% Slightly tighter, more journal-like headings. The \paragraph entry matters as
+% much as the other two: article's default leaves 3.25ex above every run-in
+% heading, which reads as a stray blank line once the section skips are tightened.
 \titlespacing*{\section}{0pt}{1.5ex plus .3ex minus .2ex}{0.9ex plus .2ex}
 \titlespacing*{\subsection}{0pt}{1.2ex plus .3ex minus .2ex}{0.6ex plus .2ex}
+\titlespacing*{\paragraph}{0pt}{1.1ex plus .2ex minus .1ex}{0.5em}
 \titleformat{\section}{\normalfont\large\bfseries}{\thesection}{0.6em}{}
 \titleformat{\subsection}{\normalfont\normalsize\bfseries}{\thesubsection}{0.6em}{}
+\titleformat{\paragraph}[runin]{\normalfont\bfseries}{}{0pt}{}
+
+% \twocolumn turns on \flushbottom, which pads columns to equal depth by
+% stretching whatever glue it can find. With \parskip at zero the only glue
+% available is the space above headings, so identical headings end up with
+% visibly different gaps. \raggedbottom keeps every skip at its natural size.
+\raggedbottom
 
 % Give LaTeX room to place the two-column-wide floats before deferring them.
 \renewcommand{\topfraction}{0.92}
@@ -344,14 +354,14 @@ overlay is rendered for the interface, and the region name, not the heatmap, is
 what travels downstream.
 
 \subsection{Layer 3: Clinical Reasoning}
-This layer converts structured evidence into a
-\textsc{Findings}/\textsc{Impression} report via a system prompt plus an
-evidence-grounded user prompt. Fig.~\ref{fig:evidence} shows the entire payload it
-receives: one line per label, carrying the label, a plain-English gloss drawn from
-the registry (Consolidation is glossed as ``region of lung filled with liquid
-instead of air''), the probability, a present or below-threshold status, and the
-region name from Layer 2. There is no image in the payload and no channel by which
-one could arrive.
+This layer converts structured evidence into a report with \textsc{Findings} and
+\textsc{Impression} sections, using a system prompt plus an evidence-grounded user
+prompt. Fig.~\ref{fig:evidence} shows the entire payload it receives: one line per
+label, carrying the label itself, a plain-English gloss drawn from the registry
+(Consolidation is glossed as ``region of lung filled with liquid instead of
+air''), the probability, a present or below-threshold status, and the region name
+from Layer 2. There is no image in the payload and no channel by which one could
+arrive.
 
 The backend is an LLM (Claude) at low temperature, with a deterministic offline
 template fallback on any error, so the system yields a coherent report with no
@@ -414,7 +424,9 @@ anatomical vocabulary are implemented and tested. Only chest X-ray is trained an
 benchmarked here.}
 \label{tab:modalities}
 \footnotesize
-\begin{tabular}{@{}p{0.20\linewidth}rp{0.29\linewidth}p{0.22\linewidth}@{}}
+\begin{tabular}{@{}p{0.20\linewidth}r%
+>{\raggedright\arraybackslash}p{0.29\linewidth}%
+>{\raggedright\arraybackslash}p{0.22\linewidth}@{}}
 \toprule
 \textbf{Modality} & \textbf{\#lbl} & \textbf{Taxonomy source} & \textbf{Location vocab.} \\
 \midrule
@@ -455,7 +467,9 @@ implements the grounded architecture of Fig.~\ref{fig:arch}, and only it is
 benchmarked here.}
 \label{tab:topology}
 \footnotesize
-\begin{tabular}{@{}p{0.23\linewidth}p{0.32\linewidth}p{0.30\linewidth}@{}}
+\begin{tabular}{@{}p{0.23\linewidth}%
+>{\raggedright\arraybackslash}p{0.32\linewidth}%
+>{\raggedright\arraybackslash}p{0.30\linewidth}@{}}
 \toprule
  & \textbf{Local stack} & \textbf{Hosted (serverless)} \\
 \midrule
@@ -540,15 +554,14 @@ confidence interval: the test set is resampled with replacement $B{=}1000$ times
 with a \emph{single} resample driving all metrics so the intervals are mutually
 consistent, reported as two-sided percentile intervals ($\alpha{=}0.05$).
 
-\paragraph{Post-hoc regression test.} \sloppy Three conditions,
-\code{classification\_only}, \code{with\_localization}, and \code{full\_mirror},
-run the same studies with Layers 2 and 3 switched on and off. Those layers modify
-no weights and no logits, so the predictions must be identical across conditions;
-the harness verifies this and profiles the per-stage wall-clock cost of each added
-layer. This is a test that the implementation matches the design, not an
-experiment with an uncertain outcome, and Section~\ref{sec:ablation} reports it as
-such. Every results file stamps a reproducibility record: seed, git commit, and
-library versions.\par\fussy
+\paragraph{Post-hoc regression test.} Three conditions run the same studies with
+Layers 2 and 3 switched on and off: classification only, classification with
+localization, and the full pipeline. Those layers modify no weights and no logits,
+so the predictions must be identical across conditions; the harness verifies this
+and profiles the per-stage wall-clock cost of each added layer. This is a test
+that the implementation matches the design, not an experiment with an uncertain
+outcome, and Section~\ref{sec:ablation} reports it as such. Every results file
+stamps a reproducibility record: seed, git commit, and library versions.
 
 % -----------------------------------------------------------------------------
 \section{Results}
@@ -952,7 +965,9 @@ whether any of this helps a radiologist.
 % -----------------------------------------------------------------------------
 \section*{Reproducibility}
 \footnotesize
-\begin{sloppypar}
+% Ragged right in this block only: it is dense with unbreakable URLs and file
+% paths, and justifying it opens visible gaps between the words around them.
+\begin{sloppypar}\raggedright
 Code: \url{https://github.com/vignesh-nagarajan-vn/MIRROR}. Live demo, on the
 hosted engine: \url{https://mirror-ten-jet.vercel.app/}. A zero-setup CLI demo
 (\code{python -m demo.run\_demo <image>}) runs the local pipeline on ImageNet
