@@ -1,27 +1,42 @@
 # IEEE workshop variants
 
-Three IEEEtran conference-format versions of the MIRROR paper, one per target IEEE
-workshop. Each is a **reframing** of the SSRN/arXiv preprint
+The active submission is
+**[`mirror_trustworthy_ai_pipelines.tex`](mirror_trustworthy_ai_pipelines.tex)**,
+targeted at the IEEE BigData 2026 workshop on *Building Trustworthy AI Pipelines for
+Big Data: Verification, Provenance, and Reproducibility*. Two earlier variants, each
+tailored to a different IEEE BigData workshop, are kept in [`archive/`](archive/) and
+are not being submitted.
+
+Every variant is a **reframing** of the SSRN/arXiv preprint
 ([`../main.tex`](../main.tex), v10), not a new study: every figure, table, and
 measured number is copied from the source paper, which traces to committed JSON
 under [`../../results/`](../../results/) and to
 [`../calibration_baseline.py`](../calibration_baseline.py). No result changed. Only
-the framing (title, abstract, introduction, one workshop-specific section, the
-discussion emphasis, and the conclusion) differs between them.
+the framing differs. The source `main.tex` is a single-column-title `article`-class
+draft capped at 8 pages for SSRN/arXiv; these are two-column IEEEtran, so they read
+differently even where the words are identical.
 
-The source `main.tex` is a single-column-title `article`-class draft capped at 8
-pages for SSRN/arXiv. These three are two-column IEEEtran, so they read differently
-even where the words are identical.
+## The active paper
 
-## The three variants
+[`mirror_trustworthy_ai_pipelines.tex`](mirror_trustworthy_ai_pipelines.tex),
+**10 pages**, for the Trustworthy AI Pipelines workshop. It decomposes trust into the
+workshop's three named pillars, in a dedicated section and a purpose-drawn figure
+(the provenance-and-verification chain, Fig. 7): the grounding unit test and the
+post-hoc invariance regression test map to *verification*, the number-to-JSON
+traceability plus `calibration_baseline.py` to *provenance*, and the seeded,
+torch-free, versioned runs to *reproducibility*. The title spells out the MIRROR
+acronym (Multimodal Intelligent Radiology Reasoning and Observation Reporter). It is
+tailored heavily to this workshop, while every measured number stays identical to
+`main.tex`.
 
-| File | Target workshop | Pages | Customized emphasis |
-| --- | --- | --- | --- |
-| [`mirror_trustworthy_ai_pipelines.tex`](mirror_trustworthy_ai_pipelines.tex) | Building Trustworthy AI Pipelines for Big Data: Verification, Provenance, and Reproducibility | 9 | Trust decomposed into the workshop's three named pillars. Dedicated section maps the grounding unit test and the post-hoc invariance regression test to *verification*, the number-to-JSON traceability and `calibration_baseline.py` to *provenance*, and the seeded, torch-free, versioned runs to *reproducibility*. |
-| [`mirror_multimodal_medical_data.tex`](mirror_multimodal_medical_data.tex) | The 6th International Workshop on Multi-Modal Medical Data Analysis | 9 | Multi-modality two ways. Across imaging modalities (chest X-ray, brain MRI, head CT) via the registry and DICOM-tag routing, and across representations (image to structured evidence to text) as a grounded cross-modal translation. Dedicated "Multi-Modal Analysis by Construction" section. |
-| [`mirror_bigdata_analytics_medical_imaging.tex`](mirror_bigdata_analytics_medical_imaging.tex) | 3rd Workshop on Big Data Analytics for Medical Imaging | 9 | Analytics over large, heterogeneous corpora: DICOM ingestion as data engineering, the registry as a way to scale across modalities, post-hoc stages as a throughput cost, and the methodological warning that aggregate metrics flatter models on large imbalanced data unless read against no-skill floors. |
+## Archived variants
 
-Every variant lands within the requested 8 to 10 page range.
+Kept in [`archive/`](archive/) for reference; not being submitted.
+
+| File | Workshop it was tailored to | Pages |
+| --- | --- | --- |
+| `archive/mirror_multimodal_medical_data.tex` | 6th Intl. Workshop on Multi-Modal Medical Data Analysis | 9 |
+| `archive/mirror_bigdata_analytics_medical_imaging.tex` | 3rd Workshop on Big Data Analytics for Medical Imaging | 9 |
 
 ## Target venues and registration cost
 
@@ -49,11 +64,21 @@ Expect the 2026 numbers near these, likely a little higher. The cost is the auth
 registration, not the choice of workshop; travel to Phoenix is separate and not
 counted here.
 
-**Submission recommendation, on acceptance odds alone:** the Trustworthy AI
-Pipelines workshop. The paper's contributions map directly onto its named themes of
-verification, provenance, and reproducibility, and its deliberately modest empirical
-result reads there as honest reporting rather than as a weak result, which is how it
-would read at a results-focused or scale-focused venue.
+**Submission recommendation, on acceptance odds alone (chosen):** the Trustworthy AI
+Pipelines workshop, which is the active paper above. Its contributions map directly
+onto the workshop's named themes of verification, provenance, and reproducibility,
+and its deliberately modest empirical result reads there as honest reporting rather
+than as a weak result, which is how it would read at a results-focused or
+scale-focused venue.
+
+## Submission links
+
+- Workshop submission (subarea S60):
+  <https://wi-lab.com/cyberchair/2026/bigdata26/scripts/submit.php?subarea=S60&undisplay_detail=1&wh=/cyberchair/2026/bigdata26/scripts/ws_submit.php>
+- IEEE Big Data 2026 Call for Papers:
+  <https://bigdataieee.org/BigData2026/calls/papers/>
+- Workshop categories (submission portal):
+  <https://wi-lab.com/cyberchair/2026/bigdata26/scripts/ws_submit.php>
 
 ## What every variant keeps identical (the facts)
 
@@ -99,14 +124,17 @@ pdflatex mirror_trustworthy_ai_pipelines
 pdflatex mirror_trustworthy_ai_pipelines
 ```
 
-Repeat for the other two file stems. Each produces a 9-page PDF. Build
-intermediates (`.aux`, `.log`, `.out`) are git-ignored; the `.tex` sources and the
-compiled `.pdf` are committed.
+The active paper produces a 10-page PDF. The two 9-page PDFs in
+[`archive/`](archive/) were compiled while those `.tex` files lived in this folder;
+their sources still hardcode `../figures/`, so recompiling them from `archive/` falls
+back to placeholder boxes for the three screenshots unless that path is adjusted to
+`../../figures/`. Build intermediates (`.aux`, `.log`, `.out`) are git-ignored; the
+`.tex` sources and the compiled `.pdf` are committed.
 
 ## Relationship to the preprint
 
 The canonical version of this work is the SSRN preprint (abstract 7245078,
-CC BY-NC-ND) and the matching arXiv cs.CV submission. These three files are
+CC BY-NC-ND) and the matching arXiv cs.CV submission. These files are
 venue-specific presentations of that same work and introduce no new claims. If a
 number in the preprint is corrected, correct it here too; the single source of
 truth for every result remains the committed JSON and `calibration_baseline.py`.
