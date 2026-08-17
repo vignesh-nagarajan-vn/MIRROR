@@ -215,7 +215,8 @@ reports.
 [`paper/`](paper/) (the write-up; `paper/main.tex` is the compilable source.
 medRxiv (Radiology) declined the work as a technical development rather than
 biomedical research; it is now an SSRN preprint, abstract 7245078 (CC BY-NC-ND,
-https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7245078). The current version
+https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7245078), and the same version
+is preprinted on arXiv (cs.CV). The current version
 is **v10**, a correctness pass over v9 at the same 8-page cap (MedMNIST baseline
 named ResNet-18/50 not DenseNet-121; Guo citation moved to the ECE definition it
 supports; Table 3 states how macro PPV and Lift aggregate and that lifts use
@@ -237,3 +238,11 @@ table cannot drift from the JSON.
 [`paper/REVISION-NOTES-v9.md`](paper/REVISION-NOTES-v9.md) map every changed
 claim to its justifying file; compiled PDFs in
 [`paper/pdf-drafts/`](paper/pdf-drafts/)).
+[`paper/ieee-workshops/`](paper/ieee-workshops/) holds three IEEEtran
+conference-format reframings of `main.tex` for three IEEE BigData workshops
+(Trustworthy AI Pipelines; Multi-Modal Medical Data Analysis; Big Data Analytics
+for Medical Imaging), each 9 pages, customized in framing only, with every measured
+number copied from `main.tex` unchanged; they use `\documentclass[conference]{IEEEtran}`
+with no font override and an embedded bibliography, compile with two pdfLaTeX passes
+from that folder (figures resolve via `../figures/`), and are documented in
+[`paper/ieee-workshops/README.md`](paper/ieee-workshops/README.md).
