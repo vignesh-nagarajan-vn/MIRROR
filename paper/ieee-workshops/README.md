@@ -23,6 +23,38 @@ even where the words are identical.
 
 Every variant lands within the requested 8 to 10 page range.
 
+## Target venues and registration cost
+
+All three target workshops are half-day workshops of the **IEEE International
+Conference on Big Data (IEEE BigData)**, whose 2026 edition is in Phoenix, Arizona,
+December 14 to 17, 2026. They are the next editions of workshops that ran at BigData
+2025: Big Data Analytics for Medical Imaging was the 2nd there, Multi-Modal Medical
+Data Analysis was the 5th, and the Trustworthy AI Pipelines workshop is not in the
+2025 list, so it appears to be a new (first) edition.
+
+Because all three sit under the same conference, **registration cost is the same for
+all three**. IEEE BigData requires at least one author of each accepted paper,
+workshops included, to pay the full author registration, and there is no cheaper
+workshop-only author rate. The 2026 fees are not published yet; the most recent
+published rates, from BigData 2024, were:
+
+| Category | Early-bird | Regular |
+| --- | --- | --- |
+| IEEE member | $850 | $950 |
+| Non-member | $1,020 | $1,140 |
+| IEEE student member | $595 | $695 |
+| Student non-member | $715 | $835 |
+
+Expect the 2026 numbers near these, likely a little higher. The cost is the author
+registration, not the choice of workshop; travel to Phoenix is separate and not
+counted here.
+
+**Submission recommendation, on acceptance odds alone:** the Trustworthy AI
+Pipelines workshop. The paper's contributions map directly onto its named themes of
+verification, provenance, and reproducibility, and its deliberately modest empirical
+result reads there as honest reporting rather than as a weak result, which is how it
+would read at a results-focused or scale-focused venue.
+
 ## What every variant keeps identical (the facts)
 
 - The three-layer pipeline: classification, Grad-CAM evidence localization, and a
