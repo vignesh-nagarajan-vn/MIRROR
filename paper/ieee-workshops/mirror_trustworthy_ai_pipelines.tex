@@ -56,13 +56,14 @@
   \IfFileExists{#1}{\includegraphics[width=#2]{#1}}%
   {\fbox{\parbox[c][2.8cm][c]{#2}{\centering\color{gray}\itshape #3\\(add image to paper/figures/)}}}}
 
-\hypersetup{pdftitle={MIRROR: A Trustworthy Radiology AI Pipeline via Verification, Provenance, and Reproducibility},
+\hypersetup{pdftitle={MIRROR: Multimodal Intelligent Radiology Reasoning and Observation Reporter -- A Trustworthy Pipeline via Verification, Provenance, and Reproducibility},
             pdfauthor={Vignesh Nagarajan}}
 
 \begin{document}
 
-\title{MIRROR: A Trustworthy Radiology AI Pipeline\\
-via Verification, Provenance, and Reproducibility}
+\title{MIRROR: Multimodal Intelligent Radiology\\
+Reasoning and Observation Reporter\\[4pt]
+{\large A Trustworthy Pipeline via Verification, Provenance, and Reproducibility}}
 
 \author{%
 \IEEEauthorblockN{Vignesh Nagarajan}
@@ -76,8 +77,9 @@ vigneshn26@tamu.edu}}
 \begin{abstract}
 Two failures block trust in a radiology AI pipeline. A classifier returns a
 number and no reason, and any layer that turns that number into readable prose can
-quietly add claims the model never made. MIRROR is a research prototype built to
-separate those failures and to make each remaining guarantee checkable rather than
+quietly add claims the model never made. MIRROR, the Multimodal Intelligent Radiology Reasoning
+and Observation Reporter, is a research prototype built to separate those failures
+and to make each remaining guarantee checkable rather than
 asserted. It chains a multi-label classifier, a Grad-CAM localizer that names the
 anatomical region behind each positive finding, and a report writer that receives
 the labels, probabilities, and regions but never the image; because the language
@@ -764,54 +766,120 @@ Full MIRROR               & 100.0 & 36.2 & 0.03 & 136.2 \\
 \end{table}
 
 % -----------------------------------------------------------------------------
-\section{Verification, Provenance, and Reproducibility}
-\label{sec:trust}
-
 The classifier above is a modest one, and it is not the transferable part of this
 work. What transfers is a way of building the pipeline so that a reader can check
-its claims instead of trusting them. We restate the results of
-Sections~\ref{sec:method} and~\ref{sec:results} under the three headings this
-workshop names.
+its claims instead of trusting them. This section restates the system of
+Sections~\ref{sec:method} and~\ref{sec:results} under the three properties this
+workshop names, and Fig.~\ref{fig:trustchain} shows the machinery that makes each
+one concrete: a provenance chain from seed to typeset table on top, and the two
+verification gates that hold regardless of what the classifier scores below.
+
+\begin{figure*}[t]
+\centering
+\begin{tikzpicture}[
+  font=\footnotesize,
+  box/.style={rectangle, rounded corners=2.5pt, draw=mirrorblue!70, fill=boxbg,
+              align=center, inner sep=3.5pt, text width=26mm, minimum height=15mm},
+  art/.style={rectangle, rounded corners=2pt, draw=mirrorgray, fill=white,
+              align=center, inner sep=3pt, text width=23mm, minimum height=15mm,
+              font=\footnotesize\itshape},
+  gate/.style={rectangle, rounded corners=2.5pt, draw=mirrorblue!70, fill=white,
+               align=center, inner sep=4pt, text width=61mm, minimum height=12mm},
+  arr/.style={-{Stealth[length=2.4mm]}, thick, mirrorgray},
+]
+% ---- provenance chain (top) ----
+\node[art] (seed) {\code{chestmnist.yaml}\\ seed $=42$};
+\node[box, right=6mm of seed] (run) {train $+$ evaluate\\[1pt] \scriptsize DenseNet-121, CPU};
+\node[box, right=6mm of run] (json) {committed eval JSON\\[1pt] \scriptsize repro stamp: git commit, seed, \texttt{py/numpy/torch}};
+\node[box, right=6mm of json] (calib) {{\ttfamily\scriptsize calibration\_}\\{\ttfamily\scriptsize baseline.py}\\[2pt] \scriptsize prevalence, Brier floor $p(1{-}p)$, AUPRC lift};
+\node[art, right=6mm of calib] (out) {Table~\ref{tab:panel} \&\\ Fig.~\ref{fig:cxr-auroc}};
+\draw[arr] (seed)--(run);
+\draw[arr] (run)--(json);
+\draw[arr] (json)--(calib);
+\draw[arr] (calib)--(out);
+\node[font=\scriptsize\bfseries, text=mirrorgray, above=1mm of run.north west, anchor=south west]
+  {Provenance $+$ reproducibility: every reported number regenerates from seed and committed JSON};
+% ---- verification gates (bottom) ----
+\node[gate, below=10mm of run.south west, anchor=north west] (g1)
+  {\textbf{Grounding.} report findings $\subseteq$ classifier findings, a test over the payload of Fig.~\ref{fig:evidence}, which carries no pixels};
+\node[gate, right=7mm of g1] (g2)
+  {\textbf{Post-hoc invariance.} max probability change $=0.000$ across conditions, asserted per modality (\code{test\_pipeline\_routing.py})};
+\node[font=\scriptsize\bfseries, text=mirrorgray, above=1mm of g1.north west, anchor=south west]
+  {Verification: properties checked by the \code{pytest} suite, not estimated by a benchmark};
+\draw[arr, dashed] (run.south) -- (g1.north);
+\draw[arr, dashed] (json.south) .. controls +(0,-6mm) and +(0,6mm) .. (g2.north);
+\end{tikzpicture}
+\caption{The trust machinery behind the numbers. \emph{Top:} the provenance chain.
+A seeded run writes \code{results/chestmnist/eval\_chestmnist\_densenet121.json},
+which carries a \code{reproducibility} stamp (git commit, seed $42$, and the
+\texttt{python}/\texttt{numpy}/\texttt{torch} versions);
+\code{paper/calibration\_baseline.py} reads that file and recomputes the
+prevalences, the no-skill Brier floor, the AUPRC lifts, and the exact 14-row panel,
+so Table~\ref{tab:panel} and Fig.~\ref{fig:cxr-auroc} cannot drift from the data.
+\emph{Bottom:} the two verification gates, which are unit tests rather than
+measurements, so they cannot be eroded by a distribution shift and fail the moment a
+refactor breaks them.}
+\label{fig:trustchain}
+\end{figure*}
 
 \rih{Verification.} MIRROR's central guarantee is that the report can assert only
 findings the classifier produced. That guarantee is not estimated by a benchmark;
 it is a structural fact about the payload of Fig.~\ref{fig:evidence}, which contains
 labels, probabilities, and region names and no image, so it is asserted by a unit
 test that a reader can inspect. This is a stronger form of evidence than a score,
-because it cannot be eroded by a distribution shift at test time. The second
+because it cannot be eroded by a distribution shift at test time: a benchmark result
+holds for the test distribution it was measured on, whereas a property of the
+payload's shape holds for every input the pipeline will ever see. The second
 verified property is post-hoc invariance: Layers 2 and 3 change no logits, so the
-predictions must be bit-for-bit identical whether they run or not, and the harness
-confirms a maximum probability change of $0.000$ over $24$ studies
-(Table~\ref{tab:ablation}). The same invariance is asserted per modality against
-stubbed backbones, so it holds by construction rather than only for the one trained
-checkpoint. A pipeline whose safety-relevant properties are regression tests fails
-loudly and in CI when a refactor breaks them, which is precisely what an accuracy
-number cannot do.
+predictions must be bit-for-bit identical whether those layers run or not, and the
+harness confirms a maximum per-label probability change of $0.000$ over $24$ studies
+(Table~\ref{tab:ablation}). That invariance is asserted per modality against stubbed
+backbones by \code{test\_pipeline\_routing.py}, so it holds structurally rather than
+only for the one trained chest checkpoint. A pipeline whose safety-relevant
+properties are regression tests fails as a red test the moment a refactor breaks
+one, which is precisely what an accuracy number cannot do: an accuracy number can
+stay high while an accidental coupling between the layers silently violates the
+guarantee the architecture was built to provide.
 
-\rih{Provenance.} Every quantity in this paper is traceable to a committed
-artifact. Each results file is written with a \code{reproducibility} block stamping
-the seed, the git commit, and the resolved library versions, so a number can be
-tied to the exact code and data that produced it. The prevalences, the AUPRC lifts
-of Section~\ref{sec:auprc}, the no-skill Brier floor of Section~\ref{sec:calib}, and
-the exact 14-row contents of Table~\ref{tab:panel} are not transcribed by hand; a
-single script, \code{paper/calibration\_baseline.py}, recomputes them from the
-committed JSON and prints the table as typeset, so the paper cannot drift from the
-data it reports. Provenance here is not a metadata afterthought but the mechanism
-that lets a reviewer regenerate any headline figure from source.
+\rih{Provenance.} Every quantity in this paper is traceable to a committed artifact,
+and the trace is mechanical, not documentary. Each results file is written with a
+\code{reproducibility} block stamping the seed ($42$), the git commit, and the
+resolved \texttt{python}, \texttt{numpy}, and \texttt{torch} versions, so any number
+can be tied to the exact code and data state that produced it. The chain is worth
+following once concretely. Macro AUROC $0.729$ is the \code{macro\_auroc} field of
+\code{results/chestmnist/eval\_chestmnist\_densenet121.json}; the per-label
+prevalences that Section~\ref{sec:auprc} and Section~\ref{sec:calib} turn into
+no-skill floors are computed from the \code{support\_pos} and \code{support\_neg}
+counts in the same file; and \code{paper/calibration\_baseline.py} reads that one
+file, derives $p=\text{support}_+/N$, the Brier floor $p(1-p)$, and the AUPRC lift
+$\text{AUPRC}/p$, and prints the exact 14-row panel of Table~\ref{tab:panel}
+(Fig.~\ref{fig:trustchain}). Nothing in the table is transcribed by hand, so the
+paper cannot drift from the data it reports. Provenance here is not a metadata
+afterthought but the mechanism that lets a reviewer regenerate any headline figure
+from source.
 
 \rih{Reproducibility.} The two runs behind this paper, the ChestMNIST result
 (\code{configs/chestmnist.yaml}) and the synthetic control
 (\code{configs/synthetic.yaml}), regenerate from seed $42$, and their outputs are
-committed under \code{results/}. The unit tests are deliberately torch-free and run
-on synthetic inputs, so the logic that computes metrics, routes modalities, and
-enforces the grounding payload is testable without a GPU, a model, or a dataset
-download. A zero-setup CLI demo runs the local pipeline on ImageNet weights with the
-offline template backend, needing no checkpoint and no API key, which lets a
-reviewer exercise the full architecture in one command.
+committed under \code{results/}. The test suite is deliberately torch-free and runs
+on synthetic inputs, so the logic that computes metrics, bootstraps confidence
+intervals, routes modalities, and enforces the grounding payload is testable without
+a GPU, a model, or a dataset download; that is what keeps the verification gates
+cheap enough to run on every change. A zero-setup CLI demo runs the local pipeline
+on ImageNet weights with the offline template backend, needing no checkpoint and no
+API key, which lets a reviewer exercise the full architecture in one command.
 
-Taken together, these three properties are what we mean by a trustworthy pipeline:
-the guarantee is verified, the numbers are provenanced, and the runs are
-reproducible. None of them depends on the classifier being good, which is the point.
+\rih{Why this generalizes.} None of these three mechanisms is specific to a chest
+classifier, and that is the point for a big-data audience. A guarantee expressed as
+a property of a data payload, rather than as a score, is a unit test in any pipeline
+that passes structured records between stages; an artifact stamped with its seed,
+code commit, and dependency versions is regenerable in any pipeline that writes its
+outputs to disk; and a single script that recomputes every reported figure from
+those artifacts removes hand-transcription from any results table. Taken together
+they are what we mean by a trustworthy pipeline: the guarantee is verified, the
+numbers are provenanced, and the runs are reproducible, and none of the three
+depends on the model underneath being good, which is exactly why they survive a
+model that, as Section~\ref{sec:operating} shows, is not yet a usable detector.
 
 % -----------------------------------------------------------------------------
 \section{Discussion}
