@@ -90,6 +90,18 @@ After compiling, check that the output is at most 8 pages, then save the PDF
 into [`pdf-drafts/`](pdf-drafts/) as the next `MIRROR_Paper_Draft_vN.pdf` and
 add a row to the version table there.
 
+## IEEE workshop variants
+
+[`ieee-workshops/`](ieee-workshops/) holds three IEEEtran conference-format
+reframings of this paper, one per target IEEE BigData workshop (Trustworthy AI
+Pipelines; Multi-Modal Medical Data Analysis; Big Data Analytics for Medical
+Imaging). Each is 9 pages, customized in framing only, and copies every measured
+number from `main.tex` unchanged. See
+[`ieee-workshops/README.md`](ieee-workshops/README.md) for the file-to-workshop
+map, the IEEE compliance notes, and the two-pass build. The canonical version of
+the work remains this `main.tex` and its SSRN/arXiv preprint; the workshop files
+introduce no new claims.
+
 ## Extending the draft
 
 To externalize the bibliography or figures as the paper grows:
