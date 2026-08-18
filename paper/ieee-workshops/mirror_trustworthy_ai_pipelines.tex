@@ -82,13 +82,16 @@ and Observation Reporter, is a research prototype built to separate those failur
 and to make each remaining guarantee checkable rather than
 asserted. It chains a multi-label classifier, a Grad-CAM localizer that names the
 anatomical region behind each positive finding, and a report writer that receives
-the labels, probabilities, and regions but never the image; because the language
-layer cannot see pixels, it cannot state a finding the classifier did not make.
-We treat that as an engineering property to be verified, not advertised: the
-finding-level grounding is asserted by a unit test, the post-hoc invariance of the
-explanation and report layers is a regression test whose measured maximum
-prediction change is $0.000$, every reported number traces to a committed JSON, and
-one script recomputes the exact result table so it cannot drift from the data. On
+the labels, probabilities, and regions but never the image. Because the language
+layer cannot condition on pixels, no finding it states is drawn from image evidence,
+and a reader can mechanically check the report's findings against the classifier's
+probability vector; that auditability, not a promise the prose is fault-free, is what
+the design buys. We treat it as an engineering property to verify rather than
+advertise: the no-pixel information flow is asserted by a unit test, the post-hoc
+invariance of the explanation and report layers is a regression test whose measured
+maximum prediction change is $0.000$, every reported number traces to a committed
+JSON, and one script recomputes the exact result table so it cannot drift from the
+data. On
 the ChestMNIST derivative of NIH ChestX-ray14 the classifier reaches macro AUROC
 $0.729$ and ranks every one of 14 labels $1.6$ to $6.8$ times better than a random
 ranker, yet at the default $0.5$ threshold it emits no positive prediction for 11
@@ -123,14 +126,17 @@ findings no classifier ever produced, and such prose is difficult to audit
 precisely because it reads well. MIRROR is built around a constraint aimed at that
 risk: image $\rightarrow$ prediction $\rightarrow$ localization $\rightarrow$
 reasoning $\rightarrow$ report, with the language layer receiving only the
-structured evidence produced upstream, never the raw image. The report can
-therefore assert only findings the classifier predicted and the localizer situated.
+structured evidence produced upstream, never the raw image. The language layer
+therefore cannot condition on pixels, so no finding the report states is drawn from
+the image, and a reader can check its findings against the classifier's output
+directly.
 
 This paper reads MIRROR as a case study in building a \emph{trustworthy} pipeline,
 where trust is decomposed into three properties a big-data workshop names directly.
-\emph{Verification:} the pipeline's central guarantee is a structural fact about a
-data payload, so it is asserted by a test rather than estimated by a benchmark, and
-the post-hoc layers are proven not to disturb the predictions. \emph{Provenance:}
+\emph{Verification:} the pipeline's central property, that the language layer cannot
+condition on pixels, is a structural fact about a data payload, so it is asserted by
+a test rather than estimated by a benchmark, and the post-hoc layers are proven not
+to disturb the predictions. \emph{Provenance:}
 every number in this paper traces to a committed artifact, and a single script
 regenerates the exact result table from those artifacts. \emph{Reproducibility:}
 one seed, torch-free tests, and versioned configurations regenerate the runs, and
@@ -138,9 +144,9 @@ each result file stamps its own seed, commit, and library versions. We argue tha
 these properties, not the classifier's accuracy, are the transferable contribution.
 
 \rih{Research question.} Can a radiology pipeline be built so that its language
-layer is structurally incapable of asserting a finding the classifier did not
-detect; can that guarantee be \emph{verified} rather than asserted; and what does
-the constraint cost? We answer the first two architecturally and by test, and the
+layer cannot condition on the image, making every finding the report states
+auditable against the classifier's output; can that property be \emph{verified}
+rather than asserted; and what does the constraint cost? We answer the first two architecturally and by test, and the
 third empirically, on chest radiographs. Two things this paper does \emph{not}
 answer should be stated at the outset. It does not measure explanation
 \emph{quality}: our harness implements a pointing-game and IoU protocol against the
@@ -151,14 +157,16 @@ this helps a human, which would require a reader study.
 \rih{Contributions.}
 \begin{enumerate}[leftmargin=1.3em,itemsep=1pt,topsep=2pt]
   \item A trust decomposition for a composed medical-AI pipeline into
-  \emph{verification} (a grounding guarantee expressed as a unit test and a
-  post-hoc invariance regression test), \emph{provenance} (every reported number
-  traced to a committed artifact and regenerable by one script), and
+  \emph{verification} (a no-pixel information-flow property expressed as a unit test,
+  plus a post-hoc invariance regression test), \emph{provenance} (every reported
+  number traced to a committed artifact and regenerable by one script), and
   \emph{reproducibility} (seeded, versioned, torch-free-tested runs).
-  \item The distinction between \emph{finding-level} grounding, which constraining
-  the language layer to structured evidence buys and which is checkable, and
-  \emph{detail-level} grounding, which it does not buy and which we show failing in
-  a real generated report.
+  \item A precise account of what the no-pixel constraint does and does not buy: it
+  makes the report's findings \emph{auditable} against the classifier (an
+  information-flow property, verifiable by a unit test), but it does not by itself
+  bound what an LLM backend asserts, which we show failing in a real generated
+  report; only the deterministic template backend is output-constrained by
+  construction.
   \item A measured chest-radiograph result in which discrimination is real on every
   label while decisions are absent on almost all of them, and in which two
   aggregate metrics, Brier and AUPRC, only become interpretable once written
@@ -301,10 +309,14 @@ The backend is an LLM (Claude) at low temperature, with a deterministic offline
 template fallback on any error, so the system yields a coherent report with no
 network or API key. Predictions below the confidence threshold ($0.5$) surface as
 pertinent negatives rather than being dropped, which keeps uncertainty visible.
-Because both backends consume identical evidence, swapping them changes \emph{how
-fluently} the report reads, not which findings it asserts. The grounding is
-therefore at the level of findings, not of the prose framing them, a distinction
-that carries most of this paper's argument (Section~\ref{sec:discussion}).
+Both backends consume identical evidence and neither can see the image. The
+deterministic template backend emits exactly the findings it is handed, so its output
+is bounded to the classifier's finding set by construction. The LLM backend is not:
+it cannot condition on pixels, but it can still phrase a below-threshold label as
+present or name a sign outside the taxonomy from its own priors, so what the no-pixel
+constraint gives it is \emph{auditability}, that a reader can check its asserted
+findings against the classifier, not that the two sets coincide. That distinction
+carries most of this paper's argument (Section~\ref{sec:discussion}).
 
 \begin{figure}[tbp]
 \centering
@@ -323,9 +335,11 @@ a Grad-CAM saliency map):\\
 \hspace*{2ex}... one line per label in the taxonomy
 \end{minipage}}
 \caption{The complete input to Layer 3. The reasoning layer sees this text and
-nothing else: no pixels, no file handle, no image embedding. The grounding
-property is a consequence of this payload's shape rather than of prompt wording,
-which is why it can be asserted by a test instead of measured by a benchmark.}
+nothing else: no pixels, no file handle, no image embedding. This no-pixel
+information flow is a consequence of the payload's shape rather than of prompt
+wording, which is why it can be asserted by a test instead of measured by a
+benchmark; it makes the report auditable against the classifier, but does not on its
+own constrain what an LLM backend writes.}
 \label{fig:evidence}
 \end{figure}
 
@@ -381,7 +395,7 @@ that never receives pixels. The hosted engine exists because that stack does not
 fit serverless limits, and it replaces the whole pipeline with a single vision LLM
 under a forced tool call returning the per-label probabilities, one box per present
 finding, and the report in one response. That engine reads pixels directly, so
-MIRROR's grounding constraint \textbf{does not hold on the hosted path}. Everything
+MIRROR's no-pixel constraint \textbf{does not hold on the hosted path}. Everything
 benchmarked in Section~\ref{sec:results} is the local stack, and the two
 hosted-engine figures are labelled as such.
 
@@ -766,6 +780,9 @@ Full MIRROR               & 100.0 & 36.2 & 0.03 & 136.2 \\
 \end{table}
 
 % -----------------------------------------------------------------------------
+\section{Verification, Provenance, and Reproducibility}
+\label{sec:trust}
+
 The classifier above is a modest one, and it is not the transferable part of this
 work. What transfers is a way of building the pipeline so that a reader can check
 its claims instead of trusting them. This section restates the system of
@@ -801,7 +818,7 @@ verification gates that hold regardless of what the classifier scores below.
   {Provenance $+$ reproducibility: every reported number regenerates from seed and committed JSON};
 % ---- verification gates (bottom) ----
 \node[gate, below=10mm of run.south west, anchor=north west] (g1)
-  {\textbf{Grounding.} report findings $\subseteq$ classifier findings, a test over the payload of Fig.~\ref{fig:evidence}, which carries no pixels};
+  {\textbf{Information flow.} language-layer input (Fig.~\ref{fig:evidence}) carries no pixels; a test over the payload, so the report's findings stay auditable against the classifier};
 \node[gate, right=7mm of g1] (g2)
   {\textbf{Post-hoc invariance.} max probability change $=0.000$ across conditions, asserted per modality (\code{test\_pipeline\_routing.py})};
 \node[font=\scriptsize\bfseries, text=mirrorgray, above=1mm of g1.north west, anchor=south west]
@@ -822,14 +839,21 @@ refactor breaks them.}
 \label{fig:trustchain}
 \end{figure*}
 
-\rih{Verification.} MIRROR's central guarantee is that the report can assert only
-findings the classifier produced. That guarantee is not estimated by a benchmark;
-it is a structural fact about the payload of Fig.~\ref{fig:evidence}, which contains
-labels, probabilities, and region names and no image, so it is asserted by a unit
-test that a reader can inspect. This is a stronger form of evidence than a score,
-because it cannot be eroded by a distribution shift at test time: a benchmark result
-holds for the test distribution it was measured on, whereas a property of the
-payload's shape holds for every input the pipeline will ever see. The second
+\rih{Verification.} MIRROR's verifiable property is an information-flow one: the
+language layer cannot condition on pixels, because the payload of
+Fig.~\ref{fig:evidence} carries labels, probabilities, and region names and no image.
+That is not estimated by a benchmark; it is a structural fact about the payload,
+asserted by a unit test a reader can inspect. What it buys is \emph{auditability}:
+since no finding in the report is drawn from the image, a reader can check the
+report's asserted findings against the classifier's probability vector directly. The
+limit is worth stating plainly. The deterministic template backend emits only the
+findings it is handed, so its output set is bounded to the classifier's by
+construction; the LLM backend is not, and can promote a below-threshold label or name
+a sign outside the taxonomy from its pretraining priors (Section~\ref{sec:ethics}).
+The no-pixel property makes such additions checkable, not impossible, which is the
+claim we can defend. It is still stronger than a score, because it cannot be eroded
+by a distribution shift: a benchmark holds only for the distribution it was measured
+on, whereas a property of the payload's shape holds for every input. The second
 verified property is post-hoc invariance: Layers 2 and 3 change no logits, so the
 predictions must be bit-for-bit identical whether those layers run or not, and the
 harness confirms a maximum per-label probability change of $0.000$ over $24$ studies
@@ -885,17 +909,18 @@ model that, as Section~\ref{sec:operating} shows, is not yet a usable detector.
 \section{Discussion}
 \label{sec:discussion}
 
-\rih{Finding-level grounding is a real guarantee and a narrow one.} Because the
-language layer receives a label, a probability, and a region name rather than an
-image (Fig.~\ref{fig:evidence}), the set of findings the report may assert is
-exactly the set the classifier produced. That is checkable without trusting anything
-about the model: a reader holding the report and the probability vector can verify
-the correspondence, and a unit test can assert it. It is also strictly a claim about
-\emph{which findings appear}, and says nothing about the sentences around them. A
-report that correctly asserts consolidation may frame it with clauses the system
-never computed, and those clauses inherit the credibility of the finding they sit
-beside (Section~\ref{sec:ethics}). Architectures that constrain only the former
-should say so rather than claiming groundedness in general.
+\rih{What the no-pixel constraint does and does not buy.} Because the language layer
+receives a label, a probability, and a region name rather than an image
+(Fig.~\ref{fig:evidence}), no finding in the report is derived from pixel evidence,
+and a reader holding the report and the probability vector can check the
+correspondence; a unit test asserts that information flow. That is
+\emph{auditability}, and it is the guarantee we defend. It is not the stronger claim
+that the report's finding set equals the classifier's: the deterministic template
+backend meets that bar by construction, but the LLM backend can promote a
+below-threshold pertinent negative to a positive, or name a sign the 14-label
+taxonomy never contained from its priors, and Section~\ref{sec:ethics} shows one such
+finding-level leak in a real report. An architecture that constrains only its input
+should say so rather than claim its output cannot stray.
 
 \rih{Where this stands against Rudin.} MIRROR is precisely the architecture
 Rudin~\cite{rudin2019stop} argues against for high-stakes decisions: an opaque CNN
@@ -924,7 +949,7 @@ prevalence-derived floors.
 \rih{One contract, two very different engines.} Serving the same JSON response from
 a PyTorch stack and from a hosted vision LLM shows the \emph{interface} MIRROR
 proposes, namely predict, show evidence, explain, is independent of the inference
-backend, at the price of the asymmetry in Section~\ref{sec:serving}: the grounding
+backend, at the price of the asymmetry in Section~\ref{sec:serving}: the no-pixel
 guarantee holds only on the local stack, and we flag that rather than let one
 system's architecture diagram vouch for the other's behaviour.
 
@@ -937,21 +962,25 @@ by any regulatory body; every output is a draft that must be verified by a licen
 radiologist and must not be used for diagnosis or treatment. Each report carries
 that disclaimer explicitly.
 
-\rih{A worked example of ungrounded detail.} Fig.~\ref{fig:qual} shows a generated
-report beside its evidence overlay. Two phrases in it are worth quoting: the cardiac
-silhouette is described as normal \emph{with a cardiothoracic ratio below $0.5$},
-and the \emph{costophrenic angles are noted to be clear}. The system measured
-neither. No cardiothoracic ratio was computed, no cardiac or thoracic boundary was
-segmented, and no costophrenic angle was localized; the pipeline produced a
-probability per label and up to three saliency centroids, and nothing in that
-evidence supports either clause. Both are fluent radiology register generated to
-fill out a report. They also sit in the same paragraph as assertions that \emph{are}
-grounded, and that adjacency is the danger: a reader who checks the consolidation
-finding against the overlay and finds it correct has been given a reason to extend
-trust to the sentence beside it. Fluency makes ungrounded detail more dangerous, not
-less, because it arrives wearing the credibility of the verified finding next to it.
-This is why finding-level grounding cannot be described as making a report safe, and
-why the AI-generated-draft disclaimer is load-bearing rather than boilerplate.
+\rih{A worked example of ungrounded output.} Fig.~\ref{fig:qual} shows a generated
+report beside its evidence overlay, and it leaks at two levels. \emph{Detail level:}
+the cardiac silhouette is described as normal \emph{with a cardiothoracic ratio below
+$0.5$}, and the \emph{costophrenic angles are noted to be clear}; the system measured
+neither, having computed no cardiothoracic ratio, segmented no boundary, and
+localized no costophrenic angle. \emph{Finding level:} the same report states that
+\emph{air bronchograms cannot be excluded}, a radiographic sign that is not one of
+the 14 labels and that no component produced, so this is not mere framing but a
+finding the language layer introduced on its own. This figure is the hosted engine,
+which does read pixels, but the local LLM backend is no more constrained against
+introducing such a sign, which is the whole point: the no-pixel property makes the
+addition auditable, not impossible. All of it sits in the same paragraph as
+assertions that \emph{are} auditable against the classifier, and that adjacency is
+the danger: a reader who checks the consolidation finding against the overlay and
+finds it correct has been given a reason to extend trust to the sentence beside it.
+Fluency makes ungrounded output more dangerous, not less, because it arrives wearing
+the credibility of the verified finding next to it. This is why the no-pixel
+constraint cannot be described as making a report safe, and why the
+AI-generated-draft disclaimer is load-bearing rather than boilerplate.
 
 \rih{Human subjects and data governance.} No ethics-board review was required: this
 work uses only existing, public, de-identified benchmark datasets, namely NIH
@@ -976,9 +1005,10 @@ against real radiologist reports is future work.
 
 MIRROR composes classification, evidence localization, and report generation into
 one traceable, registry-driven pipeline, and the property worth carrying forward is
-not a score but a way of earning trust: the grounding guarantee is \emph{verified}
-by a test, every number is \emph{provenanced} to a committed artifact and
-regenerable by one script, and the runs are \emph{reproducible} from a single seed.
+not a score but a way of earning trust: the no-pixel information flow that makes the
+report auditable is \emph{verified} by a test, every number is \emph{provenanced} to
+a committed artifact and regenerable by one script, and the runs are
+\emph{reproducible} from a single seed.
 On ChestMNIST the classifier reaches macro AUROC $0.729$, ranks every label between
 $1.6$ and $6.8$ times better than a random ranker, and still emits no positive
 prediction for 11 of its 14 labels while posting a Brier score within $0.002$ of a
