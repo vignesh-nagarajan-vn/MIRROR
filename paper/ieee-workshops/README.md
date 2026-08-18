@@ -21,8 +21,9 @@ differently even where the words are identical.
 [`mirror_trustworthy_ai_pipelines.tex`](mirror_trustworthy_ai_pipelines.tex),
 **10 pages**, for the Trustworthy AI Pipelines workshop. It decomposes trust into the
 workshop's three named pillars, in a dedicated section and a purpose-drawn figure
-(the provenance-and-verification chain, Fig. 7): the grounding unit test and the
-post-hoc invariance regression test map to *verification*, the number-to-JSON
+(the provenance-and-verification chain, Fig. 7): the no-pixel information-flow unit
+test (which buys auditability of the report's findings, not an output guarantee) and
+the post-hoc invariance regression test map to *verification*, the number-to-JSON
 traceability plus `calibration_baseline.py` to *provenance*, and the seeded,
 torch-free, versioned runs to *reproducibility*. The title spells out the MIRROR
 acronym (Multimodal Intelligent Radiology Reasoning and Observation Reporter). It is
