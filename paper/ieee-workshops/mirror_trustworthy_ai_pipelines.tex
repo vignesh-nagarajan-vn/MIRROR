@@ -218,7 +218,8 @@ prose generated directly from pixels can assert findings the model never detecte
 Surveys of explainable AI in medical imaging~\cite{tjoa2021survey} note that
 interpretability and report generation are usually studied separately. MIRROR's
 contribution is neither a new classifier nor a new saliency method but their
-composition under a constraint that bounds what the report may assert.
+composition under a constraint that removes the image from the language layer, so
+the report stays auditable against the classifier.
 
 % -----------------------------------------------------------------------------
 \section{System Architecture}
@@ -801,10 +802,11 @@ verification gates that hold regardless of what the classifier scores below.
               align=center, inner sep=3pt, text width=23mm, minimum height=15mm,
               font=\footnotesize\itshape},
   gate/.style={rectangle, rounded corners=2.5pt, draw=mirrorblue!70, fill=white,
-               align=center, inner sep=4pt, text width=61mm, minimum height=12mm},
+               align=center, inner sep=4pt, text width=61mm, minimum height=15mm},
   arr/.style={-{Stealth[length=2.4mm]}, thick, mirrorgray},
+  bandlabel/.style={font=\scriptsize\bfseries, text=mirrorgray},
 ]
-% ---- provenance chain (top) ----
+% ---- provenance + reproducibility chain (top band) ----
 \node[art] (seed) {\code{chestmnist.yaml}\\ seed $=42$};
 \node[box, right=6mm of seed] (run) {train $+$ evaluate\\[1pt] \scriptsize DenseNet-121, CPU};
 \node[box, right=6mm of run] (json) {committed eval JSON\\[1pt] \scriptsize repro stamp: git commit, seed, \texttt{py/numpy/torch}};
@@ -814,17 +816,15 @@ verification gates that hold regardless of what the classifier scores below.
 \draw[arr] (run)--(json);
 \draw[arr] (json)--(calib);
 \draw[arr] (calib)--(out);
-\node[font=\scriptsize\bfseries, text=mirrorgray, above=1mm of run.north west, anchor=south west]
+\node[bandlabel, anchor=south west] at ([yshift=2.4mm]seed.north west)
   {Provenance $+$ reproducibility: every reported number regenerates from seed and committed JSON};
-% ---- verification gates (bottom) ----
-\node[gate, below=10mm of run.south west, anchor=north west] (g1)
+% ---- verification gates (bottom band) ----
+\node[gate, anchor=north west] at ([yshift=-14mm]seed.south west) (g1)
   {\textbf{Information flow.} language-layer input (Fig.~\ref{fig:evidence}) carries no pixels; a test over the payload, so the report's findings stay auditable against the classifier};
 \node[gate, right=7mm of g1] (g2)
   {\textbf{Post-hoc invariance.} max probability change $=0.000$ across conditions, asserted per modality (\code{test\_pipeline\_routing.py})};
-\node[font=\scriptsize\bfseries, text=mirrorgray, above=1mm of g1.north west, anchor=south west]
+\node[bandlabel, anchor=south west] at ([yshift=2.4mm]g1.north west)
   {Verification: properties checked by the \code{pytest} suite, not estimated by a benchmark};
-\draw[arr, dashed] (run.south) -- (g1.north);
-\draw[arr, dashed] (json.south) .. controls +(0,-6mm) and +(0,6mm) .. (g2.north);
 \end{tikzpicture}
 \caption{The trust machinery behind the numbers. \emph{Top:} the provenance chain.
 A seeded run writes \code{results/chestmnist/eval\_chestmnist\_densenet121.json},
@@ -887,8 +887,9 @@ from source.
 (\code{configs/synthetic.yaml}), regenerate from seed $42$, and their outputs are
 committed under \code{results/}. The test suite is deliberately torch-free and runs
 on synthetic inputs, so the logic that computes metrics, bootstraps confidence
-intervals, routes modalities, and enforces the grounding payload is testable without
-a GPU, a model, or a dataset download; that is what keeps the verification gates
+intervals, routes modalities, and builds the pixel-free evidence payload is testable
+without a GPU, a model, or a dataset download; that is what keeps the verification
+gates
 cheap enough to run on every change. A zero-setup CLI demo runs the local pipeline
 on ImageNet weights with the offline template backend, needing no checkpoint and no
 API key, which lets a reviewer exercise the full architecture in one command.
