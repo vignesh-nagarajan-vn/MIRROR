@@ -18,6 +18,15 @@ differently even where the words are identical.
 
 ## The active paper
 
+**Status: submitted** on 2026-08-17 to *Building Trustworthy AI Pipelines for Big
+Data: Verification, Provenance, and Reproducibility*, a workshop of IEEE BigData
+2026. As submitted on the confirmation page: title *MIRROR: Multimodal Intelligent
+Radiology Reasoning and Observation Reporter* (the form used the acronym-expansion
+line without the PDF's subtitle); sole author Vignesh Nagarajan (Student), Texas A&M
+University; keywords Trustworthy AI, Verification, Provenance, Reproducibility,
+Explainable AI. The committed `mirror_trustworthy_ai_pipelines.pdf` is the submitted
+version.
+
 [`mirror_trustworthy_ai_pipelines.tex`](mirror_trustworthy_ai_pipelines.tex),
 **10 pages**, for the Trustworthy AI Pipelines workshop. It decomposes trust into the
 workshop's three named pillars, in a dedicated section and a purpose-drawn figure
